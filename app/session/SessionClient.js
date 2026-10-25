@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Plus, Square, Search, X } from "lucide-react";
+import { Play, Plus, Square, Settings2 } from "lucide-react";
+import Link from "next/link";
 
 import {
   Card,
@@ -13,7 +14,10 @@ import {
   EmptyState,
   Columns,
 } from "@/components/ui";
-import { totauxSession, trierGrille } from "@/lib/session";
+import GrillePicker from "@/components/GrillePicker";
+import Feuille from "@/components/Feuille";
+import SiteBadge from "@/components/SiteBadge";
+import { totauxSession } from "@/lib/session";
 import { FORMAT_LABELS, SPEED_LABELS } from "@/lib/constants";
 import { formatEuro, formatPercent, formatDate, plural, toneClass } from "@/lib/format";
 
@@ -109,6 +113,16 @@ export default function SessionClient({ demo, session, grille, recentes }) {
           }
         />
 
+        <div className="mt-3 text-center">
+          <Link
+            href="/session/grille"
+            className="inline-flex min-h-[44px] items-center gap-2 text-base font-medium text-accent"
+          >
+            <Settings2 size={18} />
+            Gérer la grille
+          </Link>
+        </div>
+
         {grille.length === 0 && !demo ? (
           <Card className="mt-3 border-warning/40 bg-warning/5 p-4 text-sm text-ink-muted">
             Ta grille est vide. Lance <code className="num">npm run db:seed</code>{" "}
@@ -197,6 +211,14 @@ export default function SessionClient({ demo, session, grille, recentes }) {
               Terminer
             </Button>
           </div>
+
+          <Link
+            href="/session/grille"
+            className="mt-3 inline-flex min-h-[44px] items-center gap-2 text-base font-medium text-accent"
+          >
+            <Settings2 size={18} />
+            Gérer la grille
+          </Link>
         </div>
 
         <div>
@@ -212,11 +234,14 @@ export default function SessionClient({ demo, session, grille, recentes }) {
                   key={t.id}
                   className="flex items-center justify-between gap-3 px-4 py-3.5"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold">{t.name}</p>
-                    <p className="num text-sm text-ink-muted">
-                      {t.siteName} · {formatEuro(t.totalCost)}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <SiteBadge slug={t.siteSlug} taille={34} />
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{t.name}</p>
+                      <p className="num text-sm text-ink-muted">
+                        {formatEuro(t.totalCost)}
+                      </p>
+                    </div>
                   </div>
                   <Button
                     type="button"
@@ -266,8 +291,8 @@ export default function SessionClient({ demo, session, grille, recentes }) {
         <GrillePicker
           grille={grille}
           onClose={() => setPicker(false)}
-          onChoisir={(templateId) =>
-            appeler("/api/sessions/inscrire", { templateId }, () =>
+          onInscrire={(templateIds) =>
+            appeler("/api/sessions/inscrire", { templateIds }, () =>
               setPicker(false)
             )
           }
@@ -324,71 +349,6 @@ function HistoriqueSessions({ sessions }) {
         );
       })}
     </CardList>
-  );
-}
-
-/** Choix d'un tournoi dans la grille — un tap suffit à l'inscrire. */
-function GrillePicker({ grille, onClose, onChoisir, pending }) {
-  const [filtre, setFiltre] = useState("");
-
-  const liste = useMemo(() => {
-    const triee = trierGrille(grille);
-    const q = filtre.trim().toLowerCase();
-    if (!q) return triee;
-    return triee.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) || m.siteName.toLowerCase().includes(q)
-    );
-  }, [grille, filtre]);
-
-  return (
-    <Feuille titre="Inscrire un tournoi" onClose={onClose}>
-      <label className="relative mb-3 block">
-        <Search
-          size={18}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
-        />
-        <input
-          type="text"
-          value={filtre}
-          onChange={(e) => setFiltre(e.target.value)}
-          placeholder="Chercher dans la grille"
-          autoFocus
-          className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 pl-11 pr-4 text-base"
-        />
-      </label>
-
-      {liste.length === 0 ? (
-        <p className="px-1 py-6 text-center text-sm text-ink-muted">
-          Aucun tournoi ne correspond.
-        </p>
-      ) : (
-        <ul className="max-h-[50vh] divide-y divide-line overflow-y-auto rounded-card border border-line bg-surface">
-          {liste.map((m) => (
-            <li key={m.id}>
-              <button
-                type="button"
-                onClick={() => onChoisir(m.id)}
-                disabled={pending}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left disabled:opacity-50"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{m.name}</p>
-                  <p className="truncate text-sm text-ink-muted">
-                    {m.siteName} · {FORMAT_LABELS[m.format]}
-                    {m.speed !== "NORMAL" ? ` · ${SPEED_LABELS[m.speed]}` : ""}
-                    {m.usualHour !== null ? ` · ~${m.usualHour} h` : ""}
-                  </p>
-                </div>
-                <span className="num shrink-0 font-semibold">
-                  {formatEuro(m.cout)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Feuille>
   );
 }
 
@@ -478,35 +438,5 @@ function Champ({ label, value, onChange, ...rest }) {
         {...rest}
       />
     </label>
-  );
-}
-
-function Feuille({ titre, onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
-      <button
-        type="button"
-        aria-label="Fermer"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/60"
-      />
-      <div
-        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5 lg:rounded-[22px] lg:border"
-        style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
-      >
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="truncate text-xl font-bold">{titre}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="-mr-2 grid size-11 shrink-0 place-items-center text-ink-muted"
-          >
-            <X size={22} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   );
 }

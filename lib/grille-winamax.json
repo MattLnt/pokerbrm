@@ -211,16 +211,6 @@
   },
   {
     "site": "winamax",
-    "name": "Double or Nothing",
-    "buyIn": 1.86,
-    "fee": 0.14,
-    "bounty": 0,
-    "format": "CLASSIC",
-    "speed": "TURBO",
-    "heureUsuelle": 10
-  },
-  {
-    "site": "winamax",
     "name": "CYBER",
     "buyIn": 4,
     "fee": 1,
@@ -248,16 +238,6 @@
     "format": "KO",
     "speed": "SEMITURBO",
     "heureUsuelle": 11
-  },
-  {
-    "site": "winamax",
-    "name": "Double or Nothing",
-    "buyIn": 4.7,
-    "fee": 0.3,
-    "bounty": 0,
-    "format": "CLASSIC",
-    "speed": "TURBO",
-    "heureUsuelle": 17
   },
   {
     "site": "winamax",
@@ -361,36 +341,6 @@
   },
   {
     "site": "winamax",
-    "name": "MILLION WEEK SPACE KO 10 € - DAY 1",
-    "buyIn": 4,
-    "fee": 1,
-    "bounty": 5,
-    "format": "KO",
-    "speed": "NORMAL",
-    "heureUsuelle": 16
-  },
-  {
-    "site": "winamax",
-    "name": "MILKY WAY - ROAD TO WINAMAX SERIES 50 €",
-    "buyIn": 2.5,
-    "fee": 0.5,
-    "bounty": 2,
-    "format": "KO",
-    "speed": "NORMAL",
-    "heureUsuelle": 15
-  },
-  {
-    "site": "winamax",
-    "name": "Double or Nothing",
-    "buyIn": 2.82,
-    "fee": 0.18,
-    "bounty": 0,
-    "format": "CLASSIC",
-    "speed": "TURBO",
-    "heureUsuelle": 19
-  },
-  {
-    "site": "winamax",
     "name": "COSMIC",
     "buyIn": 4,
     "fee": 1,
@@ -408,26 +358,6 @@
     "format": "KO",
     "speed": "NORMAL",
     "heureUsuelle": 11
-  },
-  {
-    "site": "winamax",
-    "name": "SUNDAY ONE TIME TRIDENT 10 € - DAY 1",
-    "buyIn": 4,
-    "fee": 1,
-    "bounty": 5,
-    "format": "KO",
-    "speed": "TURBO",
-    "heureUsuelle": 15
-  },
-  {
-    "site": "winamax",
-    "name": "Qualif. Ticket 10€",
-    "buyIn": 1.8,
-    "fee": 0.2,
-    "bounty": 0,
-    "format": "CLASSIC",
-    "speed": "SEMITURBO",
-    "heureUsuelle": 15
   },
   {
     "site": "winamax",
@@ -451,16 +381,6 @@
   },
   {
     "site": "winamax",
-    "name": "SUNDAY ONE TIME SPACE KO 5 € - DAY 1",
-    "buyIn": 2,
-    "fee": 0.5,
-    "bounty": 2.5,
-    "format": "KO",
-    "speed": "TURBO",
-    "heureUsuelle": 15
-  },
-  {
-    "site": "winamax",
     "name": "TRIDENT SPACE KO",
     "buyIn": 2,
     "fee": 0.5,
@@ -471,16 +391,6 @@
   },
   {
     "site": "winamax",
-    "name": "ATOM - ROAD TO WINAMAX SERIES 50 €",
-    "buyIn": 2.5,
-    "fee": 0.5,
-    "bounty": 2,
-    "format": "KO",
-    "speed": "NORMAL",
-    "heureUsuelle": 18
-  },
-  {
-    "site": "winamax",
     "name": "MOONLIGHT MYSTERY",
     "buyIn": 6,
     "fee": 1,
@@ -488,16 +398,6 @@
     "format": "KO",
     "speed": "TURBO",
     "heureUsuelle": 21
-  },
-  {
-    "site": "winamax",
-    "name": "#5 - W SERIES - HIGH FIVE - DAY 1",
-    "buyIn": 2,
-    "fee": 0.5,
-    "bounty": 2.5,
-    "format": "KO",
-    "speed": "NORMAL",
-    "heureUsuelle": 14
   },
   {
     "site": "winamax",

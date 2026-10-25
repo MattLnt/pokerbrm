@@ -47,3 +47,7 @@ next-env.d.ts
 !.env.example
 
 .env*
+
+# Logos des rooms : marques déposées, non versionnées
+public/logos/*
+!public/logos/README.md

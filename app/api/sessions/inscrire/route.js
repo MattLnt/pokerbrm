@@ -5,9 +5,12 @@ import { getCurrentUser } from "@/lib/user";
 import { coutInscription, identifiantManuel } from "@/lib/session";
 
 /**
- * Inscrit un tournoi de la grille dans la session ouverte.
- * Le coût est engagé immédiatement : le résultat net vaut −coût tant que le
- * tournoi n'est pas terminé, ce qui garde la bankroll honnête en direct.
+ * Inscrit un ou plusieurs tournois de la grille dans la session ouverte.
+ * On coche plusieurs tournois d'un coup au moment de s'asseoir : l'appel
+ * accepte donc une liste.
+ *
+ * Le coût est engagé immédiatement : le résultat net vaut moins le coût tant
+ * que le tournoi n'est pas terminé, ce qui garde la bankroll juste en direct.
  */
 export async function POST(request) {
   if (!hasDatabase()) {
@@ -24,15 +27,18 @@ export async function POST(request) {
     return NextResponse.json({ error: "Corps JSON invalide." }, { status: 400 });
   }
 
-  const user = await getCurrentUser();
+  // Accepte une liste, ou un identifiant seul.
+  const ids = Array.isArray(body?.templateIds)
+    ? body.templateIds.map(String)
+    : body?.templateId
+      ? [String(body.templateId)]
+      : [];
 
-  const modele = await prisma.tournamentTemplate.findFirst({
-    where: { id: String(body?.templateId ?? ""), userId: user.id },
-    include: { site: true },
-  });
-  if (!modele) {
-    return NextResponse.json({ error: "Tournoi inconnu dans la grille." }, { status: 404 });
+  if (ids.length === 0) {
+    return NextResponse.json({ error: "Aucun tournoi sélectionné." }, { status: 400 });
   }
+
+  const user = await getCurrentUser();
 
   const session = await prisma.session.findFirst({
     where: { userId: user.id, endedAt: null },
@@ -42,31 +48,46 @@ export async function POST(request) {
     return NextResponse.json({ error: "Aucune session ouverte." }, { status: 409 });
   }
 
-  const totalCost = coutInscription(modele, 0);
+  const modeles = await prisma.tournamentTemplate.findMany({
+    where: { id: { in: ids }, userId: user.id },
+  });
+  if (modeles.length === 0) {
+    return NextResponse.json(
+      { error: "Aucun de ces tournois n'est dans la grille." },
+      { status: 404 }
+    );
+  }
 
-  const tournoi = await prisma.tournament.create({
-    data: {
+  const data = modeles.map((m) => {
+    const totalCost = coutInscription(m, 0);
+    return {
       userId: user.id,
-      siteId: modele.siteId,
+      siteId: m.siteId,
       externalId: identifiantManuel(),
-      name: modele.name,
+      name: m.name,
       playedAt: new Date(),
-      buyIn: modele.buyIn,
-      fee: modele.fee,
-      bounty: modele.bounty,
+      buyIn: m.buyIn,
+      fee: m.fee,
+      bounty: m.bounty,
       reEntries: 0,
       prize: 0,
       bountiesWon: 0,
       totalCost,
       netResult: -totalCost,
-      format: modele.format,
-      speed: modele.speed,
+      format: m.format,
+      speed: m.speed,
       source: "MANUAL",
       inProgress: true,
       sessionId: session.id,
-      templateId: modele.id,
-    },
+      templateId: m.id,
+    };
   });
 
-  return NextResponse.json({ id: tournoi.id, totalCost });
+  const res = await prisma.tournament.createMany({ data });
+  const engage = data.reduce((s, t) => s + t.totalCost, 0);
+
+  return NextResponse.json({
+    inscrits: res.count,
+    engage: Math.round(engage * 100) / 100,
+  });
 }
