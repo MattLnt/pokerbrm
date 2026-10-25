@@ -17,6 +17,7 @@ import {
 } from "@/components/ui";
 import PeriodSelect from "@/components/PeriodSelect";
 import BreakdownTabs from "@/components/BreakdownTabs";
+import SiteBadge from "@/components/SiteBadge";
 import { getBankrollOverview, getBreakdown } from "@/lib/data";
 import { PERIODS, TRANSACTION_LABELS } from "@/lib/constants";
 import {
@@ -76,32 +77,41 @@ export default async function BankrollPage({ searchParams }) {
         {/* Colonne gauche — où en est la bankroll */}
         <div className="contents lg:block">
           <div className="order-1">
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-base text-ink-muted">Bankroll totale</p>
-              <Suspense fallback={null}>
-                <PeriodSelect value={periodKey} />
-              </Suspense>
+          <Card tone="hero" className="overflow-hidden">
+            <div className="p-5 pb-0 lg:p-6 lg:pb-0">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="kicker">Bankroll totale</p>
+                <Suspense fallback={null}>
+                  <PeriodSelect value={periodKey} />
+                </Suspense>
+              </div>
+
+              <p className="chiffre-hero text-[3rem] lg:text-[3.75rem]">
+                {formatEuro(data.bankroll)}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                <Pill tone={data.results.variation >= 0 ? "positive" : "warning"}>
+                  {formatEuro(data.results.variation, { sign: true })}
+                </Pill>
+                <span className="text-[0.9375rem] text-ink-muted">
+                  dont{" "}
+                  <span className="num text-ink-section">
+                    {formatEuro(data.results.offGame, { sign: true })}
+                  </span>{" "}
+                  rakeback et bonus
+                </span>
+              </div>
             </div>
 
-            <p className="num text-[2.75rem] font-bold leading-none lg:text-[3.25rem]">
-              {formatEuro(data.bankroll)}
-            </p>
-
-            <p className="mt-3 text-base">
-              <span
-                className={`num font-semibold ${toneClass(data.results.variation)}`}
-              >
-                {formatEuro(data.results.variation, { sign: true })}
-              </span>{" "}
-              <span className="text-ink-muted">
-                dont {formatEuro(data.results.offGame, { sign: true })} rakeback
-                et bonus
-              </span>
-            </p>
-
-            <div className="mt-4">
-              <Sparkline points={data.curve} />
+            {/* La courbe mord sur les bords de la carte : elle est le fond. */}
+            <div className="-mb-px mt-5">
+              <Sparkline
+                points={data.curve}
+                tone={
+                  data.results.variation >= 0 ? "#3ddc97" : "#ff6b6b"
+                }
+              />
             </div>
           </Card>
           </div>
@@ -116,8 +126,10 @@ export default async function BankrollPage({ searchParams }) {
                   key={site.slug}
                   className="flex items-center justify-between gap-3 px-4 py-4"
                 >
-                  <div className="min-w-0">
-                    <p className="text-lg font-semibold">{site.name}</p>
+                  <div className="flex min-w-0 items-center gap-3.5">
+                    <SiteBadge slug={site.slug} taille={38} />
+                    <div className="min-w-0">
+                    <p className="text-[1.0625rem] font-semibold">{site.name}</p>
                     <p
                       className={`text-sm ${
                         stale ? "text-warning" : "text-ink-muted"
@@ -128,6 +140,7 @@ export default async function BankrollPage({ searchParams }) {
                         ? " · à mettre à jour"
                         : ` · ${plural(site.tournamentCount, "tournoi")}`}
                     </p>
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="num text-lg font-bold">
@@ -233,7 +246,7 @@ export default async function BankrollPage({ searchParams }) {
 
           <div className="order-4">
           <SectionTitle>Résultats · {periodLabel}</SectionTitle>
-          <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5">
             <StatTile
               label="Profit de jeu"
               value={formatEuro(data.results.gameProfit, { sign: true })}

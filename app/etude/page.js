@@ -66,7 +66,7 @@ export default async function EtudePage() {
               <ProgressBar
                 value={study.minutesDone}
                 max={study.minutesTarget}
-                tone={onTrack ? "bg-positive" : "bg-accent"}
+                tone={onTrack ? "positive" : "accent"}
               />
             </div>
           </Card>

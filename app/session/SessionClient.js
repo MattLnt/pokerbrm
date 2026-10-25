@@ -13,6 +13,8 @@ import {
   StatTile,
   EmptyState,
   Columns,
+  Pill,
+  StatusDot,
 } from "@/components/ui";
 import GrillePicker from "@/components/GrillePicker";
 import Feuille from "@/components/Feuille";
@@ -149,34 +151,39 @@ export default function SessionClient({ demo, session, grille, recentes }) {
       <Columns>
         <div>
           {/* Ce que la session coûte, en direct */}
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-base text-ink-muted">
-                En cours depuis {duree(session.startedAt)}
-              </p>
-              <span className="num text-sm text-ink-muted">
+          <Card tone="hero" className="p-5 lg:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <Pill tone="accent">
+                <StatusDot tone="accent" />
+                En cours · {duree(session.startedAt)}
+              </Pill>
+              <span className="num text-[0.8125rem] text-ink-muted">
                 {plural(totaux.total, "tournoi")}
               </span>
             </div>
 
-            <p className="kicker mb-1">Engagé</p>
-            <p className="num text-[2.75rem] font-bold leading-none lg:text-[3.25rem]">
+            <p className="kicker mb-2">Engagé</p>
+            <p className="chiffre-hero text-[3rem] lg:text-[3.75rem]">
               {formatEuro(totaux.engage)}
             </p>
 
-            <p className="mt-3 text-base">
-              <span className="text-ink-muted">Récupéré </span>
-              <span className="num font-semibold">
-                {formatEuro(totaux.recupere)}
-              </span>
-              <span className="text-ink-muted"> · net </span>
-              <span className={`num font-semibold ${toneClass(totaux.net)}`}>
-                {formatEuro(totaux.net, { sign: true })}
-              </span>
-            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line/70 pt-4">
+              <div>
+                <p className="kicker mb-1.5 text-[0.625rem]">Récupéré</p>
+                <p className="num text-lg font-bold">
+                  {formatEuro(totaux.recupere)}
+                </p>
+              </div>
+              <div>
+                <p className="kicker mb-1.5 text-[0.625rem]">Net</p>
+                <p className={`num text-lg font-bold ${toneClass(totaux.net)}`}>
+                  {formatEuro(totaux.net, { sign: true })}
+                </p>
+              </div>
+            </div>
 
             {totaux.enCours > 0 ? (
-              <p className="mt-2 text-sm text-ink-muted">
+              <p className="mt-4 text-[0.8125rem] text-ink-muted">
                 dont {plural(totaux.enCours, "tournoi")} encore en jeu
               </p>
             ) : null}

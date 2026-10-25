@@ -2,46 +2,50 @@
 
 /*
   Charte « Poker BRM »
-  Base : PROJET-APP-POKER.md §8 (maquettes bankroll)
-  Direction visuelle : encart Oreegami (fond indigo profond + dégradé pétrole,
-  cartes numérotées, pastilles de statut, accent rose sur l'élément actif).
-  Couleurs échantillonnées sur le screenshot de référence.
+  Base : PROJET-APP-POKER.md §8 et les maquettes bankroll.
+  Direction visuelle : encart Oreegami — indigo profond, dégradé pétrole,
+  cartes numérotées, accent rose sur l'élément actif.
+
+  Le principe qui tient tout : aucune surface n'est plate. Chaque carte a un
+  dégradé vertical très léger et un filet clair sur son bord haut, comme si
+  la lumière venait du dessus. C'est ce qui sépare les plans et évite
+  l'impression de rectangles gris posés les uns sur les autres.
 */
 
 @theme {
   /* Fonds */
-  --color-bg: #090a1f;
-  --color-bg-deep: #08091e;
+  --color-bg: #080917;
+  --color-bg-deep: #05060f;
   --color-bg-teal: #0a2037;
-  --color-surface: #131429;
-  --color-surface-2: #1a1b31;
-  --color-surface-3: #272437;
+  --color-surface: #12142a;
+  --color-surface-2: #181a33;
+  --color-surface-3: #23264a;
 
   /* Bordures */
-  --color-line: #272437;
-  --color-line-strong: #302d40;
+  --color-line: #232542;
+  --color-line-strong: #333764;
 
   /* Textes */
-  --color-ink: #eceef1;
-  --color-ink-muted: #9aa1ad;
+  --color-ink: #f2f4f8;
+  --color-ink-muted: #8d94a8;
   --color-ink-section: #c9cdd4;
 
   /* Accents */
   --color-accent: #6ea8fe;
   --color-accent-soft: #1d2a4a;
-  --color-rose: #d03e7c;
+  --color-rose: #ff4d91;
   --color-rose-line: #9c4276;
-  --color-rose-bg: #38213b;
+  --color-rose-bg: #2e1733;
   --color-teal: #3fa8c4;
   --color-teal-bg: #16323f;
 
   /* Sémantique */
-  --color-positive: #4cc38a;
-  --color-warning: #f2994a;
-  --color-negative: #f2994a;
+  --color-positive: #3ddc97;
+  --color-warning: #ffa951;
+  --color-negative: #ff6b6b;
 
   /* Rayons */
-  --radius-card: 16px;
+  --radius-card: 18px;
   --radius-tile: 14px;
   --radius-pill: 999px;
 
@@ -57,34 +61,107 @@ html {
 
 body {
   background-color: var(--color-bg);
-  /* Dégradé pétrole en haut à droite, repris de la créa de référence */
-  background-image: radial-gradient(
-    120% 70% at 100% 0%,
-    rgb(10 32 55 / 0.9) 0%,
-    rgb(9 10 31 / 0) 60%
-  );
-  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
+  /* Trois nappes superposées : halo pétrole en haut à droite, halo rose très
+     dilué en bas à gauche, et un assombrissement général vers le bas. */
+  background-image:
+    radial-gradient(90% 55% at 100% -5%, rgb(16 60 98 / 0.55) 0%, transparent 62%),
+    radial-gradient(70% 45% at -10% 105%, rgb(120 32 86 / 0.22) 0%, transparent 60%),
+    linear-gradient(180deg, transparent 0%, rgb(5 6 15 / 0.65) 100%);
+  background-attachment: fixed;
 }
 
-/* Chiffres : mono, tabulaire, pour que les montants s'alignent */
+/* ---- Matière des surfaces ------------------------------------------- */
+
+/* Carte : dégradé vertical, filet lumineux en haut, ombre portée douce. */
+.surface {
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.045) 0%,
+    rgb(255 255 255 / 0.012) 38%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 12px 28px -14px rgb(0 0 0 / 0.75);
+}
+
+/* Variante discrète, pour les éléments imbriqués dans une carte. */
+.surface-soft {
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.03) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+/* Surface mise en avant : le halo d'accent déborde derrière la carte. */
+.surface-hero {
+  position: relative;
+  background-image:
+    radial-gradient(120% 90% at 0% 0%, rgb(110 168 254 / 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.05) 0%, transparent 60%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    0 1px 2px rgb(0 0 0 / 0.35),
+    0 24px 48px -24px rgb(0 0 0 / 0.9);
+}
+
+/* Réaction au survol, sur les cartes cliquables uniquement. */
+.liftable {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+@media (hover: hover) {
+  .liftable:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-line-strong);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.09),
+      0 2px 4px rgb(0 0 0 / 0.3),
+      0 20px 40px -18px rgb(0 0 0 / 0.85);
+  }
+}
+.liftable:active {
+  transform: translateY(0);
+}
+
+/* ---- Typographie ----------------------------------------------------- */
+
+/* Chiffres : mono tabulaire, pour que les montants s'alignent en colonne. */
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
-/* Intertitre en capitales espacées (idiome de la créa) */
+/* Le montant principal d'un écran : très serré, légèrement lumineux. */
+.chiffre-hero {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-shadow: 0 0 36px rgb(255 255 255 / 0.14);
+}
+
+/* Intertitre en capitales espacées, repris de la créa de référence. */
 .kicker {
   font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-ink-muted);
 }
 
-/* Masque la barre de scroll des rangées horizontales */
+/* ---- Détails --------------------------------------------------------- */
+
+/* Masque la barre de scroll des rangées horizontales. */
 .no-scrollbar {
   scrollbar-width: none;
 }
@@ -101,5 +178,41 @@ body {
 @media (min-width: 1024px) {
   .pb-nav {
     padding-bottom: 0;
+  }
+}
+
+/* Halo coloré derrière un élément actif. */
+.glow-accent {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 0 0 1px rgb(110 168 254 / 0.3),
+    0 8px 24px -10px rgb(110 168 254 / 0.5);
+}
+.glow-rose {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 0 0 1px rgb(255 77 145 / 0.35),
+    0 8px 24px -12px rgb(255 77 145 / 0.45);
+}
+
+/* Barre de scroll des listes longues, discrète mais visible. */
+.scroll-fin::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-fin::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: 999px;
+}
+.scroll-fin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liftable {
+    transition: none;
+  }
+  .liftable:hover {
+    transform: none;
   }
 }

@@ -179,3 +179,11 @@ test("le solde d'un site compte TOUS les tournois, Spins inclus", () => {
   });
   assert.equal(balance, 958);
 });
+
+test("buy-in max : une bankroll négative donne zéro, pas moins un", () => {
+  const limits = computeBuyInLimits(-5);
+  assert.deepEqual(
+    limits.map((l) => l.maxBuyIn),
+    [0, 0, 0]
+  );
+});
