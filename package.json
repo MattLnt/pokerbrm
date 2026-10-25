@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "next build",
+    "build": "node scripts/migrer-si-base.mjs && next build",
     "start": "next start -p 3100",
     "lint": "eslint",
     "test": "node --test test/*.test.mjs",
@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.mjs",
     "postinstall": "prisma generate",
-    "historiques": "node scripts/inspect-historiques.mjs"
+    "historiques": "node scripts/inspect-historiques.mjs",
+    "db:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

@@ -158,7 +158,7 @@ async function main() {
   // Extraite de l'historique Winamax réel, ordonnée par fréquence de jeu.
   // Les Spins en sont absents : seuls les MTT sont suivis.
   const grille = JSON.parse(
-    readFileSync(join(ici, "grille-winamax.json"), "utf8")
+    readFileSync(join(ici, "..", "lib", "grille-winamax.json"), "utf8")
   );
   const sites = await prisma.site.findMany({ where: { userId: user.id } });
   const parSlug = new Map(sites.map((s) => [s.slug, s]));

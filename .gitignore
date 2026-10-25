@@ -45,3 +45,5 @@ next-env.d.ts
 
 # On versionne le gabarit, jamais les vraies variables.
 !.env.example
+
+.env*
