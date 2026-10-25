@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { totauxSession, coutInscription, trierGrille } from "../lib/session.js";
+import {
+  totauxSession,
+  coutInscription,
+  grouperParHeure,
+  libelleTranche,
+} from "../lib/session.js";
 
 test("engagé compte aussi les tournois encore en cours", () => {
   // L'argent sort à l'inscription, pas à la sortie du tournoi.
@@ -56,31 +61,57 @@ test("le coût d'inscription inclut la prime et les re-entries", () => {
   assert.equal(coutInscription({ buyIn: 3, fee: 0.5, bounty: 1.5 }, 2), 15);
 });
 
-test("la grille remonte les tournois dont l'heure approche", () => {
-  const modeles = [
-    { name: "matin", usualHour: 10, position: 0 },
-    { name: "soir", usualHour: 20, position: 1 },
-    { name: "sans heure", usualHour: null, position: 2 },
-  ];
-  const a20h = trierGrille(modeles, new Date("2026-10-25T20:00:00Z"));
-  assert.equal(a20h[0].name, "soir");
-  assert.equal(a20h.at(-1).name, "sans heure");
+test("la grille est classée par heure de début, dans l'ordre", () => {
+  const tranches = grouperParHeure([
+    { name: "soir", usualHour: 20, position: 0 },
+    { name: "matin", usualHour: 9, position: 1 },
+    { name: "aprem", usualHour: 15, position: 2 },
+  ]);
+  assert.deepEqual(
+    tranches.map((t) => t.heure),
+    [9, 15, 20]
+  );
+  assert.deepEqual(
+    tranches.map((t) => t.tournois[0].name),
+    ["matin", "aprem", "soir"]
+  );
 });
 
-test("l'heure est cyclique : 23 h est proche de 1 h", () => {
-  const modeles = [
-    { name: "midi", usualHour: 12, position: 0 },
-    { name: "minuit", usualHour: 1, position: 1 },
-  ];
-  const a23h = trierGrille(modeles, new Date("2026-10-25T23:00:00Z"));
-  assert.equal(a23h[0].name, "minuit", "2 h d'écart, pas 22");
+test("les tournois d'une même heure forment une seule tranche", () => {
+  const tranches = grouperParHeure([
+    { name: "a", usualHour: 19, position: 1 },
+    { name: "b", usualHour: 19, position: 0 },
+    { name: "c", usualHour: 21, position: 2 },
+  ]);
+  assert.equal(tranches.length, 2);
+  // À heure égale, l'ordre de la grille départage.
+  assert.deepEqual(
+    tranches[0].tournois.map((t) => t.name),
+    ["b", "a"]
+  );
 });
 
-test("à heure égale, la grille garde son ordre", () => {
-  const modeles = [
-    { name: "b", usualHour: 20, position: 1 },
-    { name: "a", usualHour: 20, position: 0 },
-  ];
-  const t = trierGrille(modeles, new Date("2026-10-25T20:00:00Z"));
-  assert.deepEqual(t.map((m) => m.name), ["a", "b"]);
+test("les tournois sans heure ferment la marche", () => {
+  const tranches = grouperParHeure([
+    { name: "inconnu", usualHour: null, position: 0 },
+    { name: "minuit", usualHour: 0, position: 1 },
+    { name: "soir", usualHour: 22, position: 2 },
+  ]);
+  assert.deepEqual(
+    tranches.map((t) => t.heure),
+    [0, 22, null]
+  );
+});
+
+test("minuit est une heure comme une autre, pas une absence d'heure", () => {
+  // 0 est falsy : le confondre avec null mettrait les tournois de minuit
+  // à la fin au lieu du début.
+  const tranches = grouperParHeure([{ name: "minuit", usualHour: 0 }]);
+  assert.equal(tranches[0].heure, 0);
+  assert.equal(libelleTranche(0), "0 h");
+  assert.equal(libelleTranche(null), "Sans heure");
+});
+
+test("une grille vide ne produit aucune tranche", () => {
+  assert.deepEqual(grouperParHeure([]), []);
 });

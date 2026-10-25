@@ -13,6 +13,7 @@ import {
   DUREES_NIVEAU,
   libelleVitesse,
 } from "@/lib/constants";
+import { grouperParHeure, libelleTranche } from "@/lib/session";
 import { formatEuro, plural } from "@/lib/format";
 
 export default function GrilleManager({ grille, sites, demo }) {
@@ -28,6 +29,8 @@ export default function GrilleManager({ grille, sites, demo }) {
   );
   const actifs = liste.filter((m) => m.active);
   const inactifs = liste.filter((m) => !m.active);
+  // La grille se lit comme un programme : par heure de début.
+  const tranches = useMemo(() => grouperParHeure(actifs), [actifs]);
 
   function appeler(url, options, apres) {
     if (demo) {
@@ -115,18 +118,33 @@ export default function GrilleManager({ grille, sites, demo }) {
           Aucun tournoi actif ici.
         </Card>
       ) : (
-        <CardList>
-          {actifs.map((m) => (
-            <Ligne
-              key={m.id}
-              modele={m}
-              pending={pending}
-              onEditer={() => setEdition(m)}
-              onBasculer={() => basculer(m)}
-              onSupprimer={() => supprimer(m)}
-            />
+        <div className="space-y-5">
+          {tranches.map((tranche) => (
+            <section key={String(tranche.heure)}>
+              <header className="mb-2.5 flex items-center gap-3">
+                <span className="num text-[0.9375rem] font-bold text-ink-section">
+                  {libelleTranche(tranche.heure)}
+                </span>
+                <span className="h-px flex-1 bg-line" aria-hidden />
+                <span className="num text-sm text-ink-muted">
+                  {plural(tranche.tournois.length, "tournoi")}
+                </span>
+              </header>
+              <CardList>
+                {tranche.tournois.map((m) => (
+                  <Ligne
+                    key={m.id}
+                    modele={m}
+                    pending={pending}
+                    onEditer={() => setEdition(m)}
+                    onBasculer={() => basculer(m)}
+                    onSupprimer={() => supprimer(m)}
+                  />
+                ))}
+              </CardList>
+            </section>
           ))}
-        </CardList>
+        </div>
       )}
 
       {inactifs.length > 0 ? (
@@ -196,7 +214,6 @@ function Ligne({ modele: m, pending, onEditer, onBasculer, onSupprimer }) {
         <p className="num truncate text-sm text-ink-muted">
           {formatEuro(m.cout)} · {FORMAT_LABELS[m.format]}
           {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
-          {m.usualHour !== null ? ` · ~${m.usualHour} h` : ""}
         </p>
       </div>
 
