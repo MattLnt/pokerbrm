@@ -128,3 +128,17 @@ test("courbe : elle se termine sur la bankroll actuelle", () => {
   assert.equal(curve[0], 8420 - (300 - 100 + 185));
   assert.equal(curve.length, 4);
 });
+
+test("ITM : une prime KO sans place payée ne compte pas", () => {
+  const r = computePeriodResults({
+    tournaments: [
+      // Éliminé avant la bulle, mais a ramassé deux primes.
+      { playedAt: daysAgo(1), netResult: -10, totalCost: 30, prize: 0, bountiesWon: 20 },
+      // Place payée.
+      { playedAt: daysAgo(1), netResult: 70, totalCost: 30, prize: 100, bountiesWon: 0 },
+    ],
+    transactions: [],
+    days: 30,
+  });
+  assert.equal(r.itm, 50, "1 ITM sur 2, pas 2 sur 2");
+});
