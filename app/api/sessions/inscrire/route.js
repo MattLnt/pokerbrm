@@ -76,6 +76,7 @@ export async function POST(request) {
       netResult: -totalCost,
       format: m.format,
       speed: m.speed,
+      levelMinutes: m.levelMinutes,
       source: "MANUAL",
       inProgress: true,
       sessionId: session.id,
@@ -90,4 +91,42 @@ export async function POST(request) {
     inscrits: res.count,
     engage: Math.round(engage * 100) / 100,
   });
+}
+
+/**
+ * Retire un tournoi inscrit par erreur.
+ * On s'inscrit vite, en plein multi-tabling : le mauvais clic est inévitable.
+ * Seul un tournoi encore en jeu peut partir — une fois le résultat saisi,
+ * c'est de l'historique.
+ */
+export async function DELETE(request) {
+  if (!hasDatabase()) {
+    return NextResponse.json(
+      { error: "Aucune base configurée (DATABASE_URL manquante)." },
+      { status: 503 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "Identifiant manquant." }, { status: 400 });
+  }
+
+  const user = await getCurrentUser();
+  const tournoi = await prisma.tournament.findFirst({
+    where: { id, userId: user.id },
+  });
+  if (!tournoi) {
+    return NextResponse.json({ error: "Tournoi introuvable." }, { status: 404 });
+  }
+  if (!tournoi.inProgress) {
+    return NextResponse.json(
+      { error: "Ce tournoi est terminé : son résultat est déjà enregistré." },
+      { status: 409 }
+    );
+  }
+
+  await prisma.tournament.delete({ where: { id: tournoi.id } });
+  return NextResponse.json({ id: tournoi.id, supprime: true });
 }

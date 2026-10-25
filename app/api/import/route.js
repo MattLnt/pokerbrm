@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma, hasDatabase } from "@/lib/db";
 import { getCurrentUser, getSiteMap } from "@/lib/user";
 
-const FORMATS = new Set(["CLASSIC", "KO", "SPIN"]);
+// SPIN reste accepté : les imports Betclic en contiennent.
+const FORMATS = new Set(["CLASSIC", "KO", "MYSTERY", "SPACE_KO", "SPIN"]);
 const SPEEDS = new Set(["NORMAL", "SEMITURBO", "TURBO", "HYPER"]);
 
 /** Ne garde que les champs attendus : le corps de requête n'est pas de confiance. */
@@ -33,6 +34,7 @@ function sanitize(t) {
     netResult: num(t.netResult),
     format: FORMATS.has(t.format) ? t.format : "CLASSIC",
     speed: SPEEDS.has(t.speed) ? t.speed : "NORMAL",
+    levelMinutes: t.levelMinutes ? Math.trunc(num(t.levelMinutes)) : null,
     currency: String(t.currency ?? "EUR").slice(0, 3),
   };
 }

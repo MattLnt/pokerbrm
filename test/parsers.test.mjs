@@ -31,7 +31,25 @@ test("winamax : un tournoi présent deux fois ne compte qu'une fois", () => {
   const tous = winamax.parse(WINAMAX);
   const ids = tous.map((t) => t.tournamentId);
   assert.equal(new Set(ids).size, ids.length, "aucun doublon");
-  assert.equal(tous.length, 4);
+  assert.equal(tous.length, 6);
+});
+
+test("winamax : Mystery et Space KO ne sont pas rangés en KO générique", () => {
+  assert.equal(parWinamax["1099000002"].format, "MYSTERY");
+  assert.equal(parWinamax["1099000003"].format, "SPACE_KO");
+  // Celui-ci ne porte ni Mystery ni Space dans son nom : il reste KO.
+  assert.equal(parWinamax["1100183164"].format, "KO");
+});
+
+test("winamax : la durée de niveau est lue dans la ligne Levels", () => {
+  // 420 s sur la majorité des niveaux → 7 min. Le premier niveau, rallongé
+  // par l'inscription tardive, ne doit pas fausser la lecture.
+  assert.equal(parWinamax["1099000002"].levelMinutes, 7);
+  assert.equal(parWinamax["1099000003"].levelMinutes, 3);
+});
+
+test("winamax : pas de ligne Levels, pas de durée inventée", () => {
+  assert.equal(parWinamax["1042567871"].levelMinutes, null);
 });
 
 test("winamax : c'est le bloc final qui gagne, pas la late registration", () => {
@@ -158,10 +176,10 @@ test("parseFiles : chaque fichier part vers le bon parser", () => {
 
   const w = report.bySite.find((s) => s.site === "winamax");
   const b = report.bySite.find((s) => s.site === "betclic");
-  assert.equal(w.newCount, 4);
+  assert.equal(w.newCount, 6);
   assert.equal(b.newCount, 3);
   assert.equal(b.needsSpec, false, "le format Betclic est maintenant codé");
-  assert.equal(report.tournaments.length, 7);
+  assert.equal(report.tournaments.length, 9);
   assert.ok(report.unrecognized.some((u) => u.name === "bizarre.txt"));
 });
 
@@ -171,9 +189,9 @@ test("parseFiles : le même fichier deux fois ne double pas les tournois", () =>
     { name: "copie.txt", content: WINAMAX },
   ]);
   const w = report.bySite.find((s) => s.site === "winamax");
-  assert.equal(w.newCount, 4);
-  assert.equal(w.duplicateCount, 4);
-  assert.equal(report.tournaments.length, 4);
+  assert.equal(w.newCount, 6);
+  assert.equal(w.duplicateCount, 6);
+  assert.equal(report.tournaments.length, 6);
 });
 
 test("les tournois sortent du plus récent au plus ancien", () => {

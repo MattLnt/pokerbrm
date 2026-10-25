@@ -7,7 +7,9 @@
     "bounty": 0,
     "format": "CLASSIC",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -15,9 +17,11 @@
     "buyIn": 3,
     "fee": 0.5,
     "bounty": 1.5,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 14
+    "levelMinutes": 6,
+    "heureUsuelle": 14,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -27,7 +31,9 @@
     "bounty": 0,
     "format": "CLASSIC",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -35,9 +41,11 @@
     "buyIn": 3,
     "fee": 0.5,
     "bounty": 1.5,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 17
+    "levelMinutes": 7,
+    "heureUsuelle": 17,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -47,7 +55,9 @@
     "bounty": 0.9,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 5,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -57,7 +67,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 7,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -67,7 +79,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 16
+    "levelMinutes": 5,
+    "heureUsuelle": 16,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -77,7 +91,9 @@
     "bounty": 0,
     "format": "CLASSIC",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -87,7 +103,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 19
+    "levelMinutes": 6,
+    "heureUsuelle": 19,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -97,7 +115,9 @@
     "bounty": 1.5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 19
+    "levelMinutes": 5,
+    "heureUsuelle": 19,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -107,7 +127,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 6,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -117,7 +139,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 20
+    "levelMinutes": 4,
+    "heureUsuelle": 20,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -127,7 +151,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 18
+    "levelMinutes": 5,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -137,7 +163,9 @@
     "bounty": 0,
     "format": "CLASSIC",
     "speed": "NORMAL",
-    "heureUsuelle": 18
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -147,7 +175,9 @@
     "bounty": 4.5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 19
+    "levelMinutes": 6,
+    "heureUsuelle": 19,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -157,7 +187,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 14
+    "levelMinutes": 6,
+    "heureUsuelle": 14,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -167,7 +199,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 19
+    "levelMinutes": 5,
+    "heureUsuelle": 19,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -177,7 +211,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 12
+    "levelMinutes": 6,
+    "heureUsuelle": 12,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -187,7 +223,9 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 17
+    "levelMinutes": 6,
+    "heureUsuelle": 17,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -195,9 +233,11 @@
     "buyIn": 6,
     "fee": 1,
     "bounty": 3,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -207,7 +247,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 14
+    "levelMinutes": 7,
+    "heureUsuelle": 14,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -217,7 +259,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 16
+    "levelMinutes": 8,
+    "heureUsuelle": 16,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -227,7 +271,9 @@
     "bounty": 4.5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 20
+    "levelMinutes": 5,
+    "heureUsuelle": 20,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -237,7 +283,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 11
+    "levelMinutes": 5,
+    "heureUsuelle": 11,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -247,7 +295,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 11
+    "levelMinutes": 7,
+    "heureUsuelle": 11,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -257,7 +307,9 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 12
+    "levelMinutes": 6,
+    "heureUsuelle": 12,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -265,9 +317,11 @@
     "buyIn": 6,
     "fee": 1,
     "bounty": 3,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 18
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -277,7 +331,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 18
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -287,7 +343,9 @@
     "bounty": 4.5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 18
+    "levelMinutes": 5,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -297,7 +355,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 13
+    "levelMinutes": 6,
+    "heureUsuelle": 13,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -305,9 +365,11 @@
     "buyIn": 3,
     "fee": 0.5,
     "bounty": 1.5,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "TURBO",
-    "heureUsuelle": 22
+    "levelMinutes": 3,
+    "heureUsuelle": 22,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -315,9 +377,11 @@
     "buyIn": 1.2,
     "fee": 0.2,
     "bounty": 0.6,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 7,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -325,9 +389,11 @@
     "buyIn": 6,
     "fee": 1,
     "bounty": 3,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 11
+    "levelMinutes": 7,
+    "heureUsuelle": 11,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -337,7 +403,33 @@
     "bounty": 2.5,
     "format": "KO",
     "speed": "TURBO",
-    "heureUsuelle": 22
+    "levelMinutes": 3,
+    "heureUsuelle": 22,
+    "tag": null
+  },
+  {
+    "site": "winamax",
+    "name": "MILLION WEEK SPACE KO 10 € - DAY 1",
+    "buyIn": 4,
+    "fee": 1,
+    "bounty": 5,
+    "format": "SPACE_KO",
+    "speed": "NORMAL",
+    "levelMinutes": 9,
+    "heureUsuelle": 16,
+    "tag": "Event"
+  },
+  {
+    "site": "winamax",
+    "name": "MILKY WAY - ROAD TO WINAMAX SERIES 50 €",
+    "buyIn": 2.5,
+    "fee": 0.5,
+    "bounty": 2,
+    "format": "KO",
+    "speed": "NORMAL",
+    "levelMinutes": 6,
+    "heureUsuelle": 15,
+    "tag": "Event"
   },
   {
     "site": "winamax",
@@ -347,7 +439,9 @@
     "bounty": 5,
     "format": "KO",
     "speed": "SEMITURBO",
-    "heureUsuelle": 20
+    "levelMinutes": 4,
+    "heureUsuelle": 20,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -357,7 +451,21 @@
     "bounty": 5,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 11
+    "levelMinutes": 8,
+    "heureUsuelle": 11,
+    "tag": null
+  },
+  {
+    "site": "winamax",
+    "name": "SUNDAY ONE TIME TRIDENT 10 € - DAY 1",
+    "buyIn": 4,
+    "fee": 1,
+    "bounty": 5,
+    "format": "KO",
+    "speed": "TURBO",
+    "levelMinutes": 3,
+    "heureUsuelle": 15,
+    "tag": "Event"
   },
   {
     "site": "winamax",
@@ -365,9 +473,11 @@
     "buyIn": 6,
     "fee": 1,
     "bounty": 3,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "NORMAL",
-    "heureUsuelle": 18
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -377,7 +487,21 @@
     "bounty": 2.25,
     "format": "KO",
     "speed": "TURBO",
-    "heureUsuelle": 19
+    "levelMinutes": 3,
+    "heureUsuelle": 19,
+    "tag": null
+  },
+  {
+    "site": "winamax",
+    "name": "SUNDAY ONE TIME SPACE KO 5 € - DAY 1",
+    "buyIn": 2,
+    "fee": 0.5,
+    "bounty": 2.5,
+    "format": "SPACE_KO",
+    "speed": "TURBO",
+    "levelMinutes": 3,
+    "heureUsuelle": 15,
+    "tag": "Event"
   },
   {
     "site": "winamax",
@@ -385,9 +509,23 @@
     "buyIn": 2,
     "fee": 0.5,
     "bounty": 2.5,
-    "format": "KO",
+    "format": "SPACE_KO",
     "speed": "TURBO",
-    "heureUsuelle": 19
+    "levelMinutes": 3,
+    "heureUsuelle": 19,
+    "tag": null
+  },
+  {
+    "site": "winamax",
+    "name": "ATOM - ROAD TO WINAMAX SERIES 50 €",
+    "buyIn": 2.5,
+    "fee": 0.5,
+    "bounty": 2,
+    "format": "KO",
+    "speed": "NORMAL",
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": "Event"
   },
   {
     "site": "winamax",
@@ -395,9 +533,23 @@
     "buyIn": 6,
     "fee": 1,
     "bounty": 3,
-    "format": "KO",
+    "format": "MYSTERY",
     "speed": "TURBO",
-    "heureUsuelle": 21
+    "levelMinutes": 3,
+    "heureUsuelle": 21,
+    "tag": null
+  },
+  {
+    "site": "winamax",
+    "name": "#5 - W SERIES - HIGH FIVE - DAY 1",
+    "buyIn": 2,
+    "fee": 0.5,
+    "bounty": 2.5,
+    "format": "KO",
+    "speed": "NORMAL",
+    "levelMinutes": 11,
+    "heureUsuelle": 14,
+    "tag": "Event"
   },
   {
     "site": "winamax",
@@ -407,7 +559,9 @@
     "bounty": 9,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -415,9 +569,11 @@
     "buyIn": 4,
     "fee": 1,
     "bounty": 5,
-    "format": "KO",
+    "format": "SPACE_KO",
     "speed": "NORMAL",
-    "heureUsuelle": 18
+    "levelMinutes": 6,
+    "heureUsuelle": 18,
+    "tag": null
   },
   {
     "site": "winamax",
@@ -427,6 +583,8 @@
     "bounty": 10,
     "format": "KO",
     "speed": "NORMAL",
-    "heureUsuelle": 15
+    "levelMinutes": 8,
+    "heureUsuelle": 15,
+    "tag": null
   }
 ]

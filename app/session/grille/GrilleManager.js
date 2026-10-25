@@ -6,11 +6,14 @@ import { Plus, Pencil, Trash2, EyeOff, Eye } from "lucide-react";
 
 import SiteBadge from "@/components/SiteBadge";
 import Feuille from "@/components/Feuille";
-import { Card, CardList, SectionTitle, Button } from "@/components/ui";
-import { FORMATS, FORMAT_LABELS, SPEED_LABELS } from "@/lib/constants";
+import { Card, CardList, SectionTitle, Button, Pill } from "@/components/ui";
+import {
+  FORMATS,
+  FORMAT_LABELS,
+  DUREES_NIVEAU,
+  libelleVitesse,
+} from "@/lib/constants";
 import { formatEuro, plural } from "@/lib/format";
-
-const VITESSES = ["NORMAL", "SEMITURBO", "TURBO", "HYPER"];
 
 export default function GrilleManager({ grille, sites, demo }) {
   const router = useRouter();
@@ -182,10 +185,17 @@ function Ligne({ modele: m, pending, onEditer, onBasculer, onSupprimer }) {
       <SiteBadge slug={m.siteSlug} taille={34} />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{m.name}</p>
+        <p className="flex items-center gap-2 truncate font-semibold">
+          <span className="truncate">{m.name}</span>
+          {m.tag ? (
+            <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
+              {m.tag}
+            </span>
+          ) : null}
+        </p>
         <p className="num truncate text-sm text-ink-muted">
           {formatEuro(m.cout)} · {FORMAT_LABELS[m.format]}
-          {m.speed !== "NORMAL" ? ` · ${SPEED_LABELS[m.speed]}` : ""}
+          {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
           {m.usualHour !== null ? ` · ~${m.usualHour} h` : ""}
         </p>
       </div>
@@ -232,7 +242,8 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
     fee: modele.fee ?? "",
     bounty: modele.bounty ?? "",
     format: modele.format ?? "CLASSIC",
-    speed: modele.speed ?? "NORMAL",
+    levelMinutes: modele.levelMinutes ?? "",
+    tag: modele.tag ?? "",
     usualHour: modele.usualHour ?? "",
   });
 
@@ -285,26 +296,41 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
         </p>
 
         <p className="kicker mb-2 mt-4">Format</p>
-        <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="mb-4 grid grid-cols-2 gap-2">
           {FORMATS.map((f) => (
             <Option
               key={f.key}
               actif={v.format === f.key}
               onClick={() => set("format")(f.key)}
             >
-              {f.label}
+              {f.court}
             </Option>
           ))}
         </div>
 
-        <p className="kicker mb-2">Vitesse</p>
+        {/* La durée réelle d'un niveau dit ce que « turbo » ne dit pas. */}
+        <p className="kicker mb-2">Durée d&apos;un niveau</p>
         <div className="mb-4 grid grid-cols-4 gap-2">
-          {VITESSES.map((k) => (
-            <Option key={k} actif={v.speed === k} onClick={() => set("speed")(k)}>
-              {SPEED_LABELS[k]}
+          {DUREES_NIVEAU.map((d) => (
+            <Option
+              key={d}
+              actif={Number(v.levelMinutes) === d}
+              onClick={() => set("levelMinutes")(d)}
+            >
+              <span className="num">{d} min</span>
             </Option>
           ))}
         </div>
+
+        <Champ
+          label="Étiquette (facultatif)"
+          value={v.tag}
+          onChange={set("tag")}
+          placeholder="ex. Event, Série"
+        />
+        <p className="mb-4 mt-1.5 text-sm text-ink-muted">
+          Sert à repérer les rendez-vous ponctuels sans les sortir de la grille.
+        </p>
 
         <Champ
           label="Heure habituelle (0–23, facultatif)"

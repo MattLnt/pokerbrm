@@ -59,7 +59,12 @@ test("buy-in max : bankroll / nombre de caves, arrondi au plancher", () => {
   const limits = computeBuyInLimits(8420);
   assert.deepEqual(
     limits.map((l) => [l.format, l.maxBuyIn]),
-    [["CLASSIC", 42], ["KO", 56], ["SPIN", 84]]
+    [
+      ["CLASSIC", 42],
+      ["KO", 56],
+      ["MYSTERY", 56],
+      ["SPACE_KO", 56],
+    ]
   );
 });
 
@@ -184,6 +189,6 @@ test("buy-in max : une bankroll négative donne zéro, pas moins un", () => {
   const limits = computeBuyInLimits(-5);
   assert.deepEqual(
     limits.map((l) => l.maxBuyIn),
-    [0, 0, 0]
+    [0, 0, 0, 0]
   );
 });

@@ -6,7 +6,7 @@ import { Search, Check, ChevronLeft } from "lucide-react";
 import SiteBadge from "@/components/SiteBadge";
 import Feuille from "@/components/Feuille";
 import { Button } from "@/components/ui";
-import { FORMAT_LABELS, SPEED_LABELS } from "@/lib/constants";
+import { FORMAT_LABELS, libelleVitesse } from "@/lib/constants";
 import { trierGrille } from "@/lib/session";
 import { formatEuro, plural } from "@/lib/format";
 
@@ -149,10 +149,17 @@ export default function GrillePicker({ grille, onClose, onInscrire, pending }) {
                     {coche ? <Check size={15} strokeWidth={3} /> : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{m.name}</span>
-                    <span className="block truncate text-sm text-ink-muted">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{m.name}</span>
+                      {m.tag ? (
+                        <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
+                          {m.tag}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="num block truncate text-sm text-ink-muted">
                       {FORMAT_LABELS[m.format]}
-                      {m.speed !== "NORMAL" ? ` · ${SPEED_LABELS[m.speed]}` : ""}
+                      {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
                       {m.usualHour !== null ? ` · ~${m.usualHour} h` : ""}
                     </span>
                   </span>

@@ -7,7 +7,7 @@ import { FolderDown, Plus, Minus, RefreshCw, Gift } from "lucide-react";
 import { Card, CardList, SectionTitle, Button } from "@/components/ui";
 import MovementSheet from "@/components/MovementSheet";
 import { parseFiles } from "@/lib/parsers";
-import { SITES, FORMAT_LABELS, SPEED_LABELS } from "@/lib/constants";
+import { SITES, FORMAT_LABELS, libelleVitesse } from "@/lib/constants";
 import { formatEuro, plural, toneClass } from "@/lib/format";
 
 const SITE_NAMES = Object.fromEntries(SITES.map((s) => [s.slug, s.name]));
@@ -187,10 +187,8 @@ export default function ImportClient({ demo }) {
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{t.name}</p>
                       <p className="truncate text-sm text-ink-muted">
-                        {SITE_NAMES[t.site]} ·{" "}
-                        {t.speed === "NORMAL"
-                          ? FORMAT_LABELS[t.format]
-                          : SPEED_LABELS[t.speed]}
+                        {SITE_NAMES[t.site]} · {FORMAT_LABELS[t.format]}
+                        {libelleVitesse(t) ? ` · ${libelleVitesse(t)}` : ""}
                         {t.reEntries
                           ? ` · ${plural(t.reEntries, "re-entry", "re-entries")}`
                           : ""}

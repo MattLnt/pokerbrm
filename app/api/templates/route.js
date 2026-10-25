@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma, hasDatabase } from "@/lib/db";
 import { getCurrentUser, getSiteMap } from "@/lib/user";
 
-const FORMATS = new Set(["CLASSIC", "KO", "SPIN"]);
+// Le Spin n'est plus proposé à la saisie.
+const FORMATS = new Set(["CLASSIC", "KO", "MYSTERY", "SPACE_KO"]);
 const SPEEDS = new Set(["NORMAL", "SEMITURBO", "TURBO", "HYPER"]);
 
 function sansBase() {
@@ -36,6 +37,16 @@ function valider(body) {
     return { erreur: "L'heure doit être comprise entre 0 et 23." };
   }
 
+  const minutes =
+    body?.levelMinutes === "" || body?.levelMinutes == null
+      ? null
+      : Math.trunc(Number(body.levelMinutes));
+  if (minutes !== null && (!Number.isFinite(minutes) || minutes < 1 || minutes > 120)) {
+    return { erreur: "La durée de niveau doit être comprise entre 1 et 120 minutes." };
+  }
+
+  const tag = String(body?.tag ?? "").trim();
+
   return {
     valeurs: {
       name: name.slice(0, 120),
@@ -44,6 +55,8 @@ function valider(body) {
       bounty,
       format: FORMATS.has(body?.format) ? body.format : "CLASSIC",
       speed: SPEEDS.has(body?.speed) ? body.speed : "NORMAL",
+      levelMinutes: minutes,
+      tag: tag ? tag.slice(0, 24) : null,
       usualHour: heure,
       active: body?.active === undefined ? true : Boolean(body.active),
     },

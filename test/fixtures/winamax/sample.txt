@@ -67,3 +67,32 @@ Tournament started 2026/05/24 20:10:00 UTC
 You played 6min 12s
 You finished in 1st place
 You won 5€ + Ticket 20€ + Bounty 1€
+
+Winamax Poker - Tournament summary : SILVER MYSTERY(1099000002)
+Player : JOUEUR
+Buy-In : 6€ + 3€ + 1€
+Registered players : 980
+Mode : tt
+Type : knockout
+Speed : normal
+Flight ID : 0
+Levels : Levels : [100-200:25:1221:holdem-no-limit,125-250:30:420:holdem-no-limit,150-300:35:420:holdem-no-limit,175-350:40:420:holdem-no-limit]
+Prizepool : 5880€
+Tournament started 2026/05/25 19:00:00 UTC
+You played 1h 2min 
+You finished in 88th place
+You won 24€ + Bounty 6€
+
+Winamax Poker - Tournament summary : TRIDENT SPACE KO(1099000003)
+Player : JOUEUR
+Buy-In : 2€ + 2.50€ + 0.50€
+Registered players : 2400
+Mode : tt
+Type : knockout
+Speed : turbo
+Flight ID : 0
+Levels : Levels : [100-200:25:900:holdem-no-limit,125-250:30:180:holdem-no-limit,150-300:35:180:holdem-no-limit,175-350:40:180:holdem-no-limit]
+Prizepool : 9600€
+Tournament started 2026/05/26 20:00:00 UTC
+You played 22min 
+You finished in 1455th place
