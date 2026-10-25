@@ -5,10 +5,9 @@ import { identiteSite } from "@/lib/constants";
 /**
  * Pastille d'une room.
  *
- * Si `public/logos/<slug>.svg` existe, il est utilisé ; sinon on retombe sur
- * une pastille colorée à l'initiale. Les logos officiels des opérateurs sont
- * des marques déposées et ce dépôt est public : ils ne sont pas versionnés.
- * Déposer les fichiers dans public/logos/ suffit à les faire apparaître.
+ * Affiche `public/logos/<slug>.png` s'il existe, sinon une pastille colorée à
+ * l'initiale. L'initiale reste sous le logo : elle ne se voit que si l'image
+ * manque, ce qui évite un trou pendant le chargement.
  */
 export default function SiteBadge({ slug, taille = 40, avecLogo = true }) {
   const site = identiteSite(slug);
@@ -27,9 +26,10 @@ export default function SiteBadge({ slug, taille = 40, avecLogo = true }) {
       {avecLogo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={`/logos/${slug}.svg`}
+          src={`/logos/${slug}.png`}
           alt=""
-          className="absolute inset-0 size-full object-contain"
+          loading="lazy"
+          className="absolute inset-0 size-full object-cover"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}

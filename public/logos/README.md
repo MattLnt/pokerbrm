@@ -1,7 +1,13 @@
 # Logos des rooms
 
-Dépose ici `winamax.svg` et `betclic.svg` : ils remplaceront automatiquement
-la pastille colorée à l'initiale.
+`winamax.png` et `betclic.png`, en 128×128.
 
-Ces fichiers ne sont pas versionnés — ce sont des marques déposées et le dépôt
-est public. Ils sont ignorés par git (voir .gitignore).
+Extraits des clients installés sur la machine : l'icône de `Winamax.exe` et
+`Square150x150Logo` du paquet Microsoft Store de Betclic Poker.
+
+Ce sont des marques déposées. Elles ne sont versionnées que parce que ce dépôt
+est **privé**, et l'application est à usage strictement personnel. Repasser le
+dépôt en public imposerait de les retirer.
+
+`components/SiteBadge.js` les affiche, et retombe sur une pastille colorée à
+l'initiale si un fichier manque. Ajouter une room ne casse donc rien.
