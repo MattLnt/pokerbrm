@@ -23,12 +23,25 @@ function valider(body) {
   const name = String(body?.name ?? "").trim();
   if (!name) return { erreur: "Le nom est obligatoire." };
 
-  const buyIn = nombre(body?.buyIn);
-  const fee = nombre(body?.fee);
-  const bounty = nombre(body?.bounty);
-  if (buyIn + fee + bounty <= 0) {
+  /*
+   * Un modèle de grille ne retient que le coût total d'une entrée : c'est
+   * tout ce dont la bankroll a besoin. Le détail buy-in / rake / prime n'a de
+   * sens que sur un tournoi importé, où il vient du fichier du site.
+   *
+   * On accepte quand même le détail s'il arrive — un ancien client, ou un
+   * appel direct — et on le replie sur le total.
+   */
+  const total =
+    body?.cout !== undefined && body?.cout !== null && body?.cout !== ""
+      ? nombre(body.cout)
+      : nombre(body?.buyIn) + nombre(body?.fee) + nombre(body?.bounty);
+
+  if (total <= 0) {
     return { erreur: "Le coût total doit être supérieur à zéro." };
   }
+  const buyIn = total;
+  const fee = 0;
+  const bounty = 0;
 
   const heure = body?.usualHour === "" || body?.usualHour === null || body?.usualHour === undefined
     ? null
@@ -152,10 +165,32 @@ export async function PATCH(request) {
 
   const sites = await getSiteMap(user.id);
   const site = body?.site ? sites.get(body.site) : null;
+  const siteId = site ? site.id : modele.siteId;
+
+  // La clé d'unicité porte sur (room, nom, buy-in, prime) : modifier le coût
+  // ou le nom peut heurter un autre modèle. Mieux vaut un message qu'une
+  // erreur de contrainte.
+  const collision = await prisma.tournamentTemplate.findFirst({
+    where: {
+      userId: user.id,
+      siteId,
+      name: valeurs.name,
+      buyIn: valeurs.buyIn,
+      bounty: valeurs.bounty,
+      NOT: { id: modele.id },
+    },
+    select: { id: true },
+  });
+  if (collision) {
+    return NextResponse.json(
+      { error: "Un tournoi identique existe déjà dans la grille." },
+      { status: 409 }
+    );
+  }
 
   await prisma.tournamentTemplate.update({
     where: { id: modele.id },
-    data: { ...valeurs, ...(site ? { siteId: site.id } : {}) },
+    data: { ...valeurs, siteId },
   });
 
   return NextResponse.json({ id: modele.id });

@@ -255,9 +255,7 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
   const [v, setV] = useState({
     name: modele.name ?? "",
     site: modele.siteSlug ?? sites[0].slug,
-    buyIn: modele.buyIn ?? "",
-    fee: modele.fee ?? "",
-    bounty: modele.bounty ?? "",
+    cout: modele.cout ?? "",
     format: modele.format ?? "CLASSIC",
     levelMinutes: modele.levelMinutes ?? "",
     tag: modele.tag ?? "",
@@ -265,10 +263,6 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
   });
 
   const set = (k) => (val) => setV((p) => ({ ...p, [k]: val }));
-  const cout =
-    (Number(String(v.buyIn).replace(",", ".")) || 0) +
-    (Number(String(v.fee).replace(",", ".")) || 0) +
-    (Number(String(v.bounty).replace(",", ".")) || 0);
 
   return (
     <Feuille
@@ -303,14 +297,19 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5">
-          <Champ label="Buy-in" value={v.buyIn} onChange={set("buyIn")} inputMode="decimal" />
-          <Champ label="Rake" value={v.fee} onChange={set("fee")} inputMode="decimal" />
-          <Champ label="Prime" value={v.bounty} onChange={set("bounty")} inputMode="decimal" />
+        <div className="mt-4">
+          <Champ
+            label="Coût total (€)"
+            value={v.cout}
+            onChange={set("cout")}
+            inputMode="decimal"
+            placeholder="5"
+          />
+          <p className="mt-1.5 text-sm text-ink-muted">
+            Ce que coûte une entrée, tout compris. Le détail buy-in / rake /
+            prime ne sert qu&apos;aux imports, où il vient du fichier.
+          </p>
         </div>
-        <p className="num mt-2 text-sm text-ink-muted">
-          Coût total : {formatEuro(cout)}
-        </p>
 
         <p className="kicker mb-2 mt-4">Format</p>
         <div className="mb-4 grid grid-cols-2 gap-2">
