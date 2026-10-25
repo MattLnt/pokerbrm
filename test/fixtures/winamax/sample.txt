@@ -1,0 +1,24 @@
+Winamax Poker - Tournament summary : Monster Stack 50 € (123456789)
+Player : MattLnt
+Buy-In : 45€ + 5€
+Registered players : 1234
+Prizepool : 55530€
+Mode : tt
+Type : normal
+Speed : normal
+Tournament started 2026/10/12 19:00:00 UTC
+You played 4h 11min
+You finished in 14th place
+You won 386€
+
+Winamax Poker - Tournament summary : Hyper KO 10 € (987654321)
+Player : MattLnt
+Buy-In : 4€ + 5€ + 1€
+Registered players : 582
+Mode : tt
+Type : knockout
+Speed : hyper
+Tournament started 2026/10/14 21:30:00 UTC
+You re-entered the tournament 2 times
+You finished in 58th place
+You won 38€ (including 20€ of bounties)

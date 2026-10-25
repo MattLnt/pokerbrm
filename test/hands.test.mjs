@@ -1,0 +1,78 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  handAt,
+  ALL_HANDS,
+  combosOf,
+  rangeStats,
+  cellBackground,
+  TOTAL_COMBOS,
+} from "../lib/hands.js";
+import { RANGE_BRUSHES } from "../lib/constants.js";
+
+test("la grille place paires, suited et offsuit aux bons endroits", () => {
+  assert.equal(handAt(0, 0), "AA");
+  assert.equal(handAt(12, 12), "22");
+  assert.equal(handAt(0, 1), "AKs", "au-dessus de la diagonale");
+  assert.equal(handAt(1, 0), "AKo", "en dessous de la diagonale");
+  assert.equal(handAt(3, 7), "J7s");
+  assert.equal(handAt(7, 3), "J7o");
+});
+
+test("169 mains distinctes, 1326 combos au total", () => {
+  assert.equal(ALL_HANDS.length, 169);
+  assert.equal(new Set(ALL_HANDS).size, 169);
+  const total = ALL_HANDS.reduce((s, h) => s + combosOf(h), 0);
+  assert.equal(total, TOTAL_COMBOS);
+});
+
+test("combos : 6 par paire, 4 suited, 12 offsuit", () => {
+  assert.equal(combosOf("AA"), 6);
+  assert.equal(combosOf("AKs"), 4);
+  assert.equal(combosOf("AKo"), 12);
+});
+
+test("stats : une range pleine vaut 100 %", () => {
+  const cells = Object.fromEntries(
+    ALL_HANDS.map((h) => [h, { raise: 100 }])
+  );
+  const stats = rangeStats(cells);
+  assert.equal(stats.combos, TOTAL_COMBOS);
+  assert.equal(stats.percent, 100);
+});
+
+test("stats : les fréquences partielles comptent au prorata", () => {
+  // AA à 50 % = 3 combos, AKs à 100 % = 4 combos.
+  const stats = rangeStats({ AA: { raise: 50 }, AKs: { raise: 100 } });
+  assert.equal(stats.combos, 7);
+  assert.equal(stats.byAction.raise.combos, 7);
+});
+
+test("stats : plusieurs actions sur une main sont ventilées", () => {
+  const stats = rangeStats({ AKs: { raise: 60, call: 40 } });
+  assert.equal(stats.byAction.raise.combos, 2.4);
+  assert.equal(stats.byAction.call.combos, 1.6);
+  assert.equal(stats.combos, 4);
+});
+
+test("stats : fold ne compte pas dans la range", () => {
+  const stats = rangeStats({ AA: { fold: 100 }, KK: { raise: 100 } });
+  assert.equal(stats.combos, 6);
+  assert.equal(stats.byAction.fold, undefined);
+});
+
+test("fond de case : couleur pleine, partielle, puis bandes", () => {
+  const plein = cellBackground({ raise: 100 }, RANGE_BRUSHES);
+  assert.equal(plein, "#d03e7c");
+
+  const partiel = cellBackground({ raise: 50 }, RANGE_BRUSHES);
+  assert.match(partiel, /linear-gradient.*50%/);
+
+  const mixte = cellBackground({ raise: 60, call: 40 }, RANGE_BRUSHES);
+  assert.match(mixte, /#d03e7c 0% 60%/);
+  assert.match(mixte, /#4cc38a 60% 100%/);
+
+  assert.equal(cellBackground({}, RANGE_BRUSHES), null);
+  assert.equal(cellBackground({ fold: 100 }, RANGE_BRUSHES), null);
+});

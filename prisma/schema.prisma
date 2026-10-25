@@ -1,0 +1,253 @@
+// Schéma Prisma — App poker BRM
+// Mono-utilisateur au départ, mais tout est rattaché à un userId.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TournamentFormat {
+  CLASSIC
+  KO
+  SPIN
+}
+
+enum TournamentSpeed {
+  NORMAL
+  TURBO
+  HYPER
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  RAKEBACK
+  BONUS
+  TICKET
+  ADJUSTMENT
+}
+
+enum StudySessionType {
+  THEORIE
+  DRILL
+  REVUE_MAINS
+  REVUE_BDD
+}
+
+enum TaggedHandStatus {
+  A_REVOIR
+  REVUE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  createdAt DateTime @default(now())
+
+  sites          Site[]
+  tournaments    Tournament[]
+  transactions   Transaction[]
+  importBatches  ImportBatch[]
+  bankrollRules  BankrollRule[]
+  bankrollLevels BankrollLevel[]
+  ranges         Range[]
+  studyThemes    StudyTheme[]
+  studySessions  StudySession[]
+  taggedHands    TaggedHand[]
+  drillAttempts  DrillAttempt[]
+  settings       Settings?
+}
+
+model Site {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String // Winamax, PokerStars, PMU
+  slug         String // winamax, pokerstars, pmu
+  lastImportAt DateTime?
+
+  tournaments  Tournament[]
+  transactions Transaction[]
+
+  @@unique([userId, slug])
+}
+
+model Tournament {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteId         String
+  site           Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  externalId     String
+  name           String
+  playedAt       DateTime
+  buyIn          Decimal          @db.Decimal(12, 2)
+  fee            Decimal          @db.Decimal(12, 2)
+  bounty         Decimal          @default(0) @db.Decimal(12, 2)
+  reEntries      Int              @default(0)
+  entrants       Int?
+  finishPosition Int?
+  prize          Decimal          @default(0) @db.Decimal(12, 2)
+  bountiesWon    Decimal          @default(0) @db.Decimal(12, 2)
+  totalCost      Decimal          @db.Decimal(12, 2)
+  netResult      Decimal          @db.Decimal(12, 2)
+  format         TournamentFormat @default(CLASSIC)
+  speed          TournamentSpeed  @default(NORMAL)
+  currency       String           @default("EUR")
+  importBatchId  String?
+  importBatch    ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now())
+
+  @@unique([siteId, externalId])
+  @@index([userId, playedAt])
+  @@index([userId, format])
+}
+
+model ImportBatch {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  fileCount      Int      @default(0)
+  newCount       Int      @default(0)
+  duplicateCount Int      @default(0)
+
+  tournaments Tournament[]
+}
+
+model Transaction {
+  id     String          @id @default(cuid())
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteId String
+  site   Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  type   TransactionType
+  amount Decimal         @db.Decimal(12, 2)
+  date   DateTime
+  note   String?
+
+  @@index([userId, date])
+}
+
+model BankrollRule {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  format          TournamentFormat
+  buyInsRequired  Int
+
+  @@unique([userId, format])
+}
+
+model BankrollLevel {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetAbi         Decimal @db.Decimal(12, 2)
+  bankrollRequired  Decimal @db.Decimal(12, 2)
+  stopLoss          Decimal @db.Decimal(12, 2)
+  position          Int     @default(0)
+
+  @@index([userId, position])
+}
+
+model Range {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String?
+  position    String // UTG, UTG1, MP, HJ, CO, BTN, SB, BB
+  action      String // RFI, DEF_VS_OPEN, 3BET, VS_3BET, SHOVE, CALL_SHOVE
+  // Chaîne vide plutôt que NULL : en Postgres, deux NULL ne violent pas une
+  // contrainte unique, ce qui casserait la déduplication des spots.
+  vsPosition  String   @default("")
+  stackDepth  String // 60BB_PLUS, 40BB, 25BB, 15_20BB, SUB_12BB
+  cells       Json // { "AKs": { "raise": 60, "call": 40 }, ... }
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  drillAttempts DrillAttempt[]
+
+  @@unique([userId, position, action, vsPosition, stackDepth])
+}
+
+model StudyTheme {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  block     String?
+  weekFrom  Int?
+  weekTo    Int?
+  position  Int      @default(0)
+  objectives Json    @default("[]") // [{ label, done }]
+  createdAt DateTime @default(now())
+
+  sessions StudySession[]
+
+  @@index([userId, position])
+}
+
+model StudySession {
+  id      String           @id @default(cuid())
+  userId  String
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themeId String?
+  theme   StudyTheme?      @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  date    DateTime
+  minutes Int
+  type    StudySessionType
+  notes   String?
+
+  @@index([userId, date])
+}
+
+model TaggedHand {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spot        String
+  stackDepth  String?
+  description String?
+  handHistory String?
+  link        String?
+  status      TaggedHandStatus @default(A_REVOIR)
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, status])
+}
+
+model DrillAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rangeId   String
+  range     Range    @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  hand      String
+  answer    String
+  correct   Boolean
+  createdAt DateTime @default(now())
+
+  // répétition espacée (SM-2 simplifié)
+  easiness   Float    @default(2.5)
+  interval   Int      @default(0)
+  repetition Int      @default(0)
+  dueAt      DateTime @default(now())
+
+  @@index([userId, dueAt])
+  @@index([userId, rangeId])
+}
+
+model Settings {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyStudyDays  Int     @default(5)
+  dailyStudyMinutes Int    @default(75)
+  importStaleDays  Int     @default(7)
+}

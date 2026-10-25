@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# pokerbrm
 
-## Getting Started
+Application poker personnelle pour joueur de MTT : bankroll, éditeur de ranges,
+plan d'étude et trainer. Usage strictement privé.
 
-First, run the development server:
+Le cahier des charges est dans [`docs/PROJET-APP-POKER.md`](docs/PROJET-APP-POKER.md).
+
+## Stack
+
+- Next.js 16 (App Router) en **JavaScript**, Tailwind CSS v4
+- Prisma 7 + PostgreSQL (Railway), via driver adapter `@prisma/adapter-pg`
+- Déploiement Vercel
+- Mobile first, thème sombre
+
+## Démarrer
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sans `DATABASE_URL`, l'app démarre sur un **jeu de données d'exemple** — toutes
+les pages sont navigables et l'en-tête affiche « Données d'exemple ». L'écriture
+(import, mouvements, ranges, sessions) est désactivée tant qu'aucune base n'est
+branchée.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Brancher la base
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Copier `.env.example` vers `.env` et renseigner l'URL Railway :
 
-## Learn More
+   ```
+   DATABASE_URL="postgresql://…@…railway…/railway"
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Créer le schéma puis l'amorcer :
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npm run db:push     # ou npm run db:migrate pour une migration versionnée
+   npm run db:seed
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Relancer `npm run dev`. Le bandeau « Données d'exemple » disparaît.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Script | Effet |
+| --- | --- |
+| `npm run dev` | Serveur de développement |
+| `npm run build` | Build de production |
+| `npm run lint` | ESLint |
+| `npm test` | Tests unitaires (parsers, bankroll, grille, répétition espacée) |
+| `npm run db:push` | Applique le schéma à la base |
+| `npm run db:migrate` | Migration versionnée |
+| `npm run db:seed` | Sites, règles, paliers et programme d'étude |
+| `npm run db:studio` | Explorateur Prisma |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Organisation
+
+```
+app/
+  page.js              Accueil — agrège les 4 modules
+  bankroll/            Vue d'ensemble + écran d'import
+  ranges/              Éditeur de grille 13×13
+  etude/               Plan d'étude et journal
+  trainer/             Drills préflop sur tes propres ranges
+  api/                 Routes d'écriture (import, transactions, ranges, …)
+lib/
+  parsers/             Un parser par site + registre de détection
+  bankroll.js          Soldes, ROI/ITM, buy-in max, paliers, courbe
+  hands.js             Grille 169 mains, combos, statistiques de range
+  spaced.js            Répétition espacée (SM-2 simplifié)
+  data.js              Accès aux données — bascule base / exemple
+  demo.js              Jeu de données d'exemple
+prisma/schema.prisma   Modèle de données
+test/                  Tests Node (`node --test`)
+design/                Maquettes et référence graphique
+```
+
+## Points ouverts
+
+- **Parser PMU** : le format des résumés PMU n'est pas spécifié. `lib/parsers/pmu.js`
+  détecte le site et affiche « format à valider » sans bloquer les autres imports.
+  Déposer un vrai fichier pour coder le parser.
+- **Parsers Winamax et PokerStars** : écrits d'après le format public documenté,
+  pas encore validés sur de vrais fichiers. Déposer des résumés réels dans
+  `test/fixtures/<site>/` et compléter `test/parsers.test.mjs`.
+- **Paliers de bankroll** : les valeurs du seed sont des exemples.
+- **Authentification** : la V1 tourne sur un utilisateur unique
+  (`lib/user.js`). Le modèle porte déjà un `userId` partout, donc brancher
+  NextAuth ne demandera que de remplacer `getCurrentUser()`.
