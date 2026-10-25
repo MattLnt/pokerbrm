@@ -59,7 +59,8 @@ branchée.
 
 ```
 app/
-  page.js              Accueil — agrège les 4 modules
+  page.js              Accueil — agrège les modules
+  session/             Session de jeu : saisie en direct sur la grille
   bankroll/            Vue d'ensemble + écran d'import
   ranges/              Éditeur de grille 13×13
   etude/               Plan d'étude et journal
@@ -70,6 +71,7 @@ lib/
                        winamax : résumés de tournoi
                        betclic : mains regroupées par tournoi
   bankroll.js          Soldes, ROI/ITM, buy-in max, paliers, courbe
+  session.js           Totaux de session, tri de la grille
   hands.js             Grille 169 mains, combos, statistiques de range
   spaced.js            Répétition espacée (SM-2 simplifié)
   data.js              Accès aux données — bascule base / exemple
@@ -82,8 +84,9 @@ design/                Maquettes et référence graphique
 ## Points ouverts
 
 - **Re-entries Winamax** : le résumé de tournoi ne les mentionne pas. Un tournoi
-  ré-entré compte une seule cave, ce qui sous-estime le coût et surestime le ROI.
-  Voir [docs/IMPORT.md](docs/IMPORT.md).
+  ré-entré compte une seule cave, ce qui sous-estime le coût et surestime le ROI
+  sur les données importées. La saisie en session les récupère.
+  Voir [docs/IMPORT.md](docs/IMPORT.md) et [docs/SESSION.md](docs/SESSION.md).
 - **Paliers de bankroll** : les valeurs du seed sont des exemples.
 - **Parser PokerStars** : site inactif, parser écrit d'après le format public et
   jamais confronté à un vrai fichier. PMU de même, et son format est inconnu.

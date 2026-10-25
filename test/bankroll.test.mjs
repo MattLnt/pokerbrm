@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  filtrerFormatsComptes,
   computeSiteBalance,
   computePeriodResults,
   computeBuyInLimits,
@@ -26,9 +27,9 @@ test("solde : les retraits sont soustraits même saisis en positif", () => {
 
 test("résultats : le hors-jeu est séparé du profit de jeu", () => {
   const tournaments = [
-    { playedAt: daysAgo(2), netResult: 336, totalCost: 50, prize: 386, bountiesWon: 0 },
-    { playedAt: daysAgo(5), netResult: -22, totalCost: 22, prize: 0, bountiesWon: 0 },
-    { playedAt: daysAgo(99), netResult: 500, totalCost: 50, prize: 550, bountiesWon: 0 },
+    { playedAt: daysAgo(2), format: "KO", netResult: 336, totalCost: 50, prize: 386, bountiesWon: 0 },
+    { playedAt: daysAgo(5), format: "CLASSIC", netResult: -22, totalCost: 22, prize: 0, bountiesWon: 0 },
+    { playedAt: daysAgo(99), format: "CLASSIC", netResult: 500, totalCost: 50, prize: 550, bountiesWon: 0 },
   ];
   const transactions = [
     { date: daysAgo(3), type: "RAKEBACK", amount: 185 },
@@ -133,12 +134,48 @@ test("ITM : une prime KO sans place payée ne compte pas", () => {
   const r = computePeriodResults({
     tournaments: [
       // Éliminé avant la bulle, mais a ramassé deux primes.
-      { playedAt: daysAgo(1), netResult: -10, totalCost: 30, prize: 0, bountiesWon: 20 },
+      { playedAt: daysAgo(1), format: "KO", netResult: -10, totalCost: 30, prize: 0, bountiesWon: 20 },
       // Place payée.
-      { playedAt: daysAgo(1), netResult: 70, totalCost: 30, prize: 100, bountiesWon: 0 },
+      { playedAt: daysAgo(1), format: "KO", netResult: 70, totalCost: 30, prize: 100, bountiesWon: 0 },
     ],
     transactions: [],
     days: 30,
   });
   assert.equal(r.itm, 50, "1 ITM sur 2, pas 2 sur 2");
+});
+
+test("les Spins sont exclus des résultats : seuls les MTT sont suivis", () => {
+  const tournaments = [
+    { playedAt: daysAgo(1), format: "CLASSIC", netResult: -22, totalCost: 22, prize: 0, bountiesWon: 0 },
+    { playedAt: daysAgo(1), format: "SPIN", netResult: 980, totalCost: 20, prize: 1000, bountiesWon: 0 },
+  ];
+  const r = computePeriodResults({ tournaments, transactions: [], days: 30 });
+  assert.equal(r.tournamentCount, 1, "le Spin ne compte pas");
+  assert.equal(r.gameProfit, -22, "sa variance n'écrase pas le profit MTT");
+  assert.equal(r.itm, 0);
+});
+
+test("le filtre de formats garde les MTT classiques et les KO", () => {
+  const liste = [
+    { format: "CLASSIC" },
+    { format: "KO" },
+    { format: "SPIN" },
+  ];
+  assert.deepEqual(
+    filtrerFormatsComptes(liste).map((t) => t.format),
+    ["CLASSIC", "KO"]
+  );
+});
+
+test("le solde d'un site compte TOUS les tournois, Spins inclus", () => {
+  // L'argent d'un Spin sort et rentre vraiment : il doit être dans le solde,
+  // même s'il n'entre pas dans les statistiques de performance.
+  const balance = computeSiteBalance({
+    tournaments: [
+      { format: "CLASSIC", netResult: -22 },
+      { format: "SPIN", netResult: 980 },
+    ],
+    transactions: [],
+  });
+  assert.equal(balance, 958);
 });

@@ -6,8 +6,13 @@
  */
 
 import "dotenv/config";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+const ici = dirname(fileURLToPath(import.meta.url));
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -148,6 +153,47 @@ async function main() {
   } else {
     console.log(`${existingThemes} thèmes déjà en base — inchangés`);
   }
+
+  // --- Grille : les MTT habituellement joués ---
+  // Extraite de l'historique Winamax réel, ordonnée par fréquence de jeu.
+  // Les Spins en sont absents : seuls les MTT sont suivis.
+  const grille = JSON.parse(
+    readFileSync(join(ici, "grille-winamax.json"), "utf8")
+  );
+  const sites = await prisma.site.findMany({ where: { userId: user.id } });
+  const parSlug = new Map(sites.map((s) => [s.slug, s]));
+
+  let ajoutes = 0;
+  for (const [i, m] of grille.entries()) {
+    const site = parSlug.get(m.site);
+    if (!site) continue;
+    await prisma.tournamentTemplate.upsert({
+      where: {
+        userId_siteId_name_buyIn_bounty: {
+          userId: user.id,
+          siteId: site.id,
+          name: m.name,
+          buyIn: m.buyIn,
+          bounty: m.bounty,
+        },
+      },
+      update: { fee: m.fee, format: m.format, speed: m.speed, usualHour: m.heureUsuelle, position: i },
+      create: {
+        userId: user.id,
+        siteId: site.id,
+        name: m.name,
+        buyIn: m.buyIn,
+        fee: m.fee,
+        bounty: m.bounty,
+        format: m.format,
+        speed: m.speed,
+        usualHour: m.heureUsuelle,
+        position: i,
+      },
+    });
+    ajoutes += 1;
+  }
+  console.log(`${ajoutes} tournois dans la grille`);
 
   await prisma.settings.upsert({
     where: { userId: user.id },

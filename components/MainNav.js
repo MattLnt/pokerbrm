@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid3x3, BookOpen, Target, CreditCard } from "lucide-react";
+import { Home, Grid3x3, BookOpen, Target, CreditCard, Play } from "lucide-react";
 
+/**
+ * Six onglets au lieu des cinq prévus : la session est l'écran le plus
+ * sollicité pendant qu'on joue, il doit être à un tap depuis n'importe où.
+ */
 const TABS = [
   { href: "/", label: "Accueil", icon: Home },
+  { href: "/session", label: "Session", icon: Play },
   { href: "/ranges", label: "Ranges", icon: Grid3x3 },
   { href: "/etude", label: "Étude", icon: BookOpen },
   { href: "/trainer", label: "Trainer", icon: Target },
@@ -40,11 +45,11 @@ export default function BottomNav() {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-full flex-col items-center justify-center gap-1.5 text-[11px] transition-colors ${
+                  className={`flex h-full flex-col items-center justify-center gap-1.5 text-[10px] transition-colors ${
                     active ? "text-accent" : "text-ink-muted"
                   }`}
                 >
-                  <Icon size={22} strokeWidth={active ? 2.2 : 1.8} />
+                  <Icon size={21} strokeWidth={active ? 2.2 : 1.8} />
                   {label}
                 </Link>
               </li>

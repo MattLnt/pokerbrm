@@ -22,6 +22,11 @@ enum TournamentSpeed {
   HYPER
 }
 
+enum TournamentSource {
+  IMPORT
+  MANUAL
+}
+
 enum TransactionType {
   DEPOSIT
   WITHDRAWAL
@@ -54,6 +59,8 @@ model User {
   tournaments    Tournament[]
   transactions   Transaction[]
   importBatches  ImportBatch[]
+  templates      TournamentTemplate[]
+  sessions       Session[]
   bankrollRules  BankrollRule[]
   bankrollLevels BankrollLevel[]
   ranges         Range[]
@@ -74,6 +81,7 @@ model Site {
 
   tournaments  Tournament[]
   transactions Transaction[]
+  templates    TournamentTemplate[]
 
   @@unique([userId, slug])
 }
@@ -102,11 +110,64 @@ model Tournament {
   currency       String           @default("EUR")
   importBatchId  String?
   importBatch    ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  createdAt      DateTime         @default(now())
+
+  // Saisie en direct pendant une session
+  source     TournamentSource    @default(IMPORT)
+  inProgress Boolean             @default(false)
+  sessionId  String?
+  session    Session?            @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  templateId String?
+  template   TournamentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
 
   @@unique([siteId, externalId])
   @@index([userId, playedAt])
   @@index([userId, format])
+  @@index([userId, sessionId])
+}
+
+/// Modèle de tournoi de la grille : ce que le joueur joue habituellement.
+/// Sert à inscrire un tournoi en un tap pendant une session — le buy-in, le
+/// rake, la prime et le format viennent de là, il ne reste que le résultat
+/// à saisir à la sortie.
+model TournamentTemplate {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteId    String
+  site      Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name      String
+  buyIn     Decimal          @db.Decimal(12, 2)
+  fee       Decimal          @db.Decimal(12, 2)
+  bounty    Decimal          @default(0) @db.Decimal(12, 2)
+  format    TournamentFormat @default(CLASSIC)
+  speed     TournamentSpeed  @default(NORMAL)
+  /// Heure habituelle de lancement (UTC), pour remonter les bons tournois
+  /// en tête de grille au moment où on joue.
+  usualHour Int?
+  position  Int              @default(0)
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  entries Tournament[]
+
+  @@unique([userId, siteId, name, buyIn, bounty])
+  @@index([userId, active, position])
+}
+
+/// Une session de jeu : la fenêtre pendant laquelle on inscrit des tournois.
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  note      String?
+
+  tournaments Tournament[]
+
+  @@index([userId, startedAt])
 }
 
 model ImportBatch {
