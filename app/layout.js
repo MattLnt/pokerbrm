@@ -1,5 +1,5 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
-import BottomNav from "@/components/BottomNav";
+import MainNav from "@/components/MainNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,8 +33,9 @@ export default function RootLayout({ children }) {
       className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <div className="mx-auto w-full max-w-[480px] pb-nav">{children}</div>
-        <BottomNav />
+        <MainNav />
+        {/* Décalé du rail latéral à partir de lg ; sinon place pour la nav basse. */}
+        <div className="pb-nav lg:pl-[240px]">{children}</div>
       </body>
     </html>
   );

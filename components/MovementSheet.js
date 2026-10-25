@@ -48,7 +48,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
       <button
         type="button"
         aria-label="Fermer"
@@ -58,7 +58,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
 
       <form
         onSubmit={submit}
-        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5"
+        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5 lg:rounded-[22px] lg:border"
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
       >
         <div className="mb-4 flex items-center justify-between">

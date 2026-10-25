@@ -9,7 +9,7 @@ import {
   CardList,
   Button,
   ProgressBar,
-  StatTile,
+  Columns,
 } from "@/components/ui";
 import { getDashboard } from "@/lib/data";
 import { formatEuro, formatPercent, toneClass } from "@/lib/format";
@@ -29,133 +29,138 @@ function formatHours(minutes) {
 export default async function HomePage() {
   const data = await getDashboard();
   const { study } = data;
-  const weakest = data.weakSpots[0] ?? null;
+  const hasWeakSpots = data.weakSpots.length > 0;
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow={data.demo ? "Données d'exemple" : null}
         title="Accueil"
       />
 
-      {/* Bankroll */}
-      <Card as={Link} href="/bankroll" className="block p-5">
-        <p className="mb-2 text-base text-ink-muted">Bankroll totale</p>
-        <p className="num text-[2.5rem] font-bold leading-none">
-          {formatEuro(data.bankroll)}
-        </p>
-        <p className={`num mt-2 font-semibold ${toneClass(data.variation)}`}>
-          {formatEuro(data.variation, { sign: true })}
-          <span className="ml-2 font-normal text-ink-muted">sur 30 jours</span>
-        </p>
-      </Card>
+      <Columns>
+        {/* Colonne gauche — l'argent */}
+        <div>
+          <Card as={Link} href="/bankroll" className="block p-5">
+            <p className="mb-2 text-base text-ink-muted">Bankroll totale</p>
+            <p className="num text-[2.5rem] font-bold leading-none lg:text-[3rem]">
+              {formatEuro(data.bankroll)}
+            </p>
+            <p className={`num mt-2 font-semibold ${toneClass(data.variation)}`}>
+              {formatEuro(data.variation, { sign: true })}
+              <span className="ml-2 font-normal text-ink-muted">
+                sur 30 jours
+              </span>
+            </p>
+          </Card>
 
-      {/* Rappel d'import */}
-      {data.staleSites.length > 0 ? (
-        <Card className="mt-2.5 border-warning/40 bg-warning/5 p-4">
-          <p className="mb-1.5 flex items-center gap-2 font-semibold text-warning">
-            <AlertTriangle size={18} />
-            Import à faire
-          </p>
-          <p className="text-sm text-ink-muted">
-            {data.staleSites.map((s) => s.name).join(", ")} —{" "}
-            {data.staleSites.length > 1 ? "pas importés" : "pas importé"} depuis
-            plus de 7 jours.
-          </p>
-          <Link
-            href="/bankroll/import"
-            className="mt-3 inline-block min-h-[44px] pt-3 text-base font-medium text-accent"
-          >
-            Importer maintenant →
-          </Link>
-        </Card>
-      ) : null}
-
-      {/* Étude de la semaine */}
-      <SectionTitle>Étude de la semaine</SectionTitle>
-      <Card className="p-4">
-        {study.currentTheme ? (
-          <>
-            {study.currentTheme.block ? (
-              <p className="kicker mb-2">{study.currentTheme.block}</p>
-            ) : null}
-            <h3 className="mb-3 text-lg font-semibold">
-              {study.currentTheme.title}
-            </h3>
-          </>
-        ) : (
-          <p className="mb-3 text-base text-ink-muted">
-            Aucun thème défini pour l&apos;instant.
-          </p>
-        )}
-
-        <div className="mb-2 flex items-baseline justify-between text-sm">
-          <span className="text-ink-muted">Temps fait</span>
-          <span className="num text-ink">
-            {formatHours(study.minutesDone)} / {formatHours(study.minutesTarget)}
-          </span>
-        </div>
-        <ProgressBar value={study.minutesDone} max={study.minutesTarget} />
-
-        <Link
-          href="/etude"
-          className="mt-3 inline-block min-h-[44px] pt-3 text-base font-medium text-accent"
-        >
-          Ouvrir le plan d&apos;étude →
-        </Link>
-      </Card>
-
-      {/* Spots les plus faibles */}
-      <SectionTitle>Spots les plus faibles</SectionTitle>
-      {data.weakSpots.length === 0 ? (
-        <Card className="px-4 py-5 text-center text-sm text-ink-muted">
-          Pas encore assez de drills pour dégager une tendance.
-        </Card>
-      ) : (
-        <>
-          <CardList>
-            {data.weakSpots.map((s, i) => (
-              <div
-                key={s.spot}
-                className="flex items-center justify-between gap-3 px-4 py-3.5"
+          {data.staleSites.length > 0 ? (
+            <Card className="mt-2.5 border-warning/40 bg-warning/5 p-4">
+              <p className="mb-1.5 flex items-center gap-2 font-semibold text-warning">
+                <AlertTriangle size={18} />
+                Import à faire
+              </p>
+              <p className="text-sm text-ink-muted">
+                {data.staleSites.map((s) => s.name).join(", ")} —{" "}
+                {data.staleSites.length > 1 ? "pas importés" : "pas importé"}{" "}
+                depuis plus de 7 jours.
+              </p>
+              <Link
+                href="/bankroll/import"
+                className="mt-3 inline-block min-h-[44px] pt-3 text-base font-medium text-accent"
               >
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="num mt-0.5 text-[11px] tracking-widest text-ink-muted/60">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{s.spot}</p>
-                    <p className="num text-sm text-ink-muted">
-                      {s.attempts} mains
+                Importer maintenant →
+              </Link>
+            </Card>
+          ) : null}
+        </div>
+
+        {/* Colonne droite — le travail */}
+        <div>
+          <SectionTitle tight>Étude de la semaine</SectionTitle>
+          <Card className="p-4">
+            {study.currentTheme ? (
+              <>
+                {study.currentTheme.block ? (
+                  <p className="kicker mb-2">{study.currentTheme.block}</p>
+                ) : null}
+                <h3 className="mb-3 text-lg font-semibold">
+                  {study.currentTheme.title}
+                </h3>
+              </>
+            ) : (
+              <p className="mb-3 text-base text-ink-muted">
+                Aucun thème défini pour l&apos;instant.
+              </p>
+            )}
+
+            <div className="mb-2 flex items-baseline justify-between text-sm">
+              <span className="text-ink-muted">Temps fait</span>
+              <span className="num text-ink">
+                {formatHours(study.minutesDone)} /{" "}
+                {formatHours(study.minutesTarget)}
+              </span>
+            </div>
+            <ProgressBar value={study.minutesDone} max={study.minutesTarget} />
+
+            <Link
+              href="/etude"
+              className="mt-3 inline-block min-h-[44px] pt-3 text-base font-medium text-accent"
+            >
+              Ouvrir le plan d&apos;étude →
+            </Link>
+          </Card>
+
+          <SectionTitle>Spots les plus faibles</SectionTitle>
+          {!hasWeakSpots ? (
+            <Card className="px-4 py-5 text-center text-sm text-ink-muted">
+              Pas encore assez de drills pour dégager une tendance.
+            </Card>
+          ) : (
+            <>
+              <CardList>
+                {data.weakSpots.map((s, i) => (
+                  <div
+                    key={s.spot}
+                    className="flex items-center justify-between gap-3 px-4 py-3.5"
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="num mt-0.5 text-[11px] tracking-widest text-ink-muted/60">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{s.spot}</p>
+                        <p className="num text-sm text-ink-muted">
+                          {s.attempts} mains
+                        </p>
+                      </div>
+                    </div>
+                    <p
+                      className={`num shrink-0 font-semibold ${
+                        s.success < 65 ? "text-warning" : "text-ink-section"
+                      }`}
+                    >
+                      {formatPercent(s.success, { decimals: 0 })}
                     </p>
                   </div>
-                </div>
-                <p
-                  className={`num shrink-0 font-semibold ${
-                    s.success < 65 ? "text-warning" : "text-ink-section"
-                  }`}
-                >
-                  {formatPercent(s.success, { decimals: 0 })}
-                </p>
-              </div>
-            ))}
-          </CardList>
+                ))}
+              </CardList>
 
-          {weakest ? (
-            <Button
-              as={Link}
-              href="/trainer"
-              variant="primary"
-              className="mt-3 w-full"
-            >
-              <Target size={18} />
-              Lancer un drill sur ce spot
-            </Button>
-          ) : null}
-        </>
-      )}
+              <Button
+                as={Link}
+                href="/trainer"
+                variant="primary"
+                className="mt-3 w-full"
+              >
+                <Target size={18} />
+                Lancer un drill sur ce spot
+              </Button>
+            </>
+          )}
+        </div>
+      </Columns>
 
-      <div className="h-6" />
+      <div className="h-10" />
     </Screen>
   );
 }

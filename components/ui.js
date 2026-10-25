@@ -1,17 +1,31 @@
-// Primitives d'interface partagées. Mobile first, thème sombre.
+// Primitives d'interface partagées. Mobile first puis desktop, thème sombre.
 
-export function Screen({ children }) {
-  return <main className="px-4 pt-6">{children}</main>;
+/**
+ * Conteneur de page.
+ * `width="narrow"` (défaut) : colonne unique, lecture confortable — convient
+ * aux écrans dont le contenu reste linéaire (trainer).
+ * `width="wide"` : laisse la place à une mise en page multi-colonnes sur
+ * grand écran. Sur mobile les deux sont identiques.
+ */
+export function Screen({ children, width = "narrow" }) {
+  const max = width === "wide" ? "lg:max-w-[1180px]" : "lg:max-w-[640px]";
+  return (
+    <main
+      className={`mx-auto w-full max-w-[560px] px-4 pt-6 lg:px-8 lg:pt-10 ${max}`}
+    >
+      {children}
+    </main>
+  );
 }
 
 export function PageHeader({ eyebrow, title, action }) {
   return (
-    <header className="mb-5 flex items-start justify-between gap-4">
+    <header className="mb-5 flex items-start justify-between gap-4 lg:mb-7">
       <div>
         {eyebrow ? (
           <p className="mb-1 text-sm text-ink-muted">{eyebrow}</p>
         ) : null}
-        <h1 className="text-[2rem] font-bold leading-none tracking-tight">
+        <h1 className="text-[2rem] font-bold leading-none tracking-tight lg:text-[2.5rem]">
           {title}
         </h1>
       </div>
@@ -20,11 +34,37 @@ export function PageHeader({ eyebrow, title, action }) {
   );
 }
 
-export function SectionTitle({ children, action }) {
+/**
+ * `tight` : pour le premier titre d'une colonne de droite — on garde l'espace
+ * au-dessus quand tout est empilé sur mobile, on le supprime sur grand écran
+ * pour que les deux colonnes démarrent à la même hauteur.
+ */
+export function SectionTitle({ children, action, tight = false }) {
   return (
-    <div className="mb-3 mt-7 flex items-center justify-between gap-3">
+    <div
+      className={`mb-3 flex items-center justify-between gap-3 ${
+        tight ? "mt-7 lg:mt-0" : "mt-7"
+      }`}
+    >
       <h2 className="text-lg font-semibold text-ink-section">{children}</h2>
       {action}
+    </div>
+  );
+}
+
+/**
+ * Colonnes de tableau de bord : empilées sur mobile, côte à côte sur grand
+ * écran. Chaque enfant direct est une colonne.
+ *
+ * Une colonne peut porter `contents lg:block` : ses blocs deviennent alors
+ * des enfants directs du flex sur mobile, ce qui permet de leur donner un
+ * `order-*` et de retrouver l'ordre de la maquette malgré le découpage en
+ * colonnes, qui n'existe que sur grand écran.
+ */
+export function Columns({ children }) {
+  return (
+    <div className="flex flex-col lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+      {children}
     </div>
   );
 }

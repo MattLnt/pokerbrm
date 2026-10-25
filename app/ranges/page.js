@@ -12,7 +12,7 @@ export default async function RangesPage() {
   const initialRanges = await getRanges();
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader
         eyebrow={DEMO ? "Données d'exemple" : null}
         title="Ranges"

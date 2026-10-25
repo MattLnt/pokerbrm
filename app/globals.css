@@ -92,7 +92,14 @@ body {
   display: none;
 }
 
-/* Zone sûre iOS pour la nav basse */
+/* Place pour la nav basse (mobile) + zone sûre iOS.
+   À partir de lg la nav passe en rail latéral : plus besoin de réserve. */
 .pb-nav {
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .pb-nav {
+    padding-bottom: 0;
+  }
 }

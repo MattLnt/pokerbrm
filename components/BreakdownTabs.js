@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatEuro, formatPercent, toneClass } from "@/lib/format";
+import { formatEuro, formatPercent, plural, toneClass } from "@/lib/format";
 import { FORMAT_LABELS } from "@/lib/constants";
 
 const DIMENSIONS = [
@@ -53,7 +53,8 @@ export default function BreakdownTabs({ data }) {
                   {FORMAT_LABELS[r.key] ?? r.key}
                 </p>
                 <p className="num text-sm text-ink-muted">
-                  {r.count} tournois · ROI {formatPercent(r.roi, { sign: true })}{" "}
+                  {plural(r.count, "tournoi")} · ROI{" "}
+                  {formatPercent(r.roi, { sign: true })}{" "}
                   · ITM {formatPercent(r.itm)}
                 </p>
               </div>

@@ -8,7 +8,7 @@ import { Card, CardList, SectionTitle, Button } from "@/components/ui";
 import MovementSheet from "@/components/MovementSheet";
 import { parseFiles } from "@/lib/parsers";
 import { SITES, FORMAT_LABELS, SPEED_LABELS } from "@/lib/constants";
-import { formatEuro, toneClass } from "@/lib/format";
+import { formatEuro, plural, toneClass } from "@/lib/format";
 
 const SITE_NAMES = Object.fromEntries(SITES.map((s) => [s.slug, s.name]));
 
@@ -144,11 +144,11 @@ export default function ImportClient({ demo }) {
                     }`}
                   >
                     {s.needsSpec
-                      ? `${s.fileCount} fichiers · format à valider`
+                      ? `${plural(s.fileCount, "fichier")} · format à valider`
                       : [
-                          `${s.newCount} nouveaux`,
+                          plural(s.newCount, "nouveau", "nouveaux"),
                           s.duplicateCount
-                            ? `${s.duplicateCount} doublons ignorés`
+                            ? `${plural(s.duplicateCount, "doublon")} ignoré${s.duplicateCount > 1 ? "s" : ""}`
                             : null,
                         ]
                           .filter(Boolean)
@@ -189,7 +189,7 @@ export default function ImportClient({ demo }) {
                           ? FORMAT_LABELS[t.format]
                           : SPEED_LABELS[t.speed]}
                         {t.reEntries
-                          ? ` · ${t.reEntries} re-entry${t.reEntries > 1 ? "s" : ""}`
+                          ? ` · ${plural(t.reEntries, "re-entry", "re-entries")}`
                           : ""}
                       </p>
                     </div>
@@ -215,7 +215,7 @@ export default function ImportClient({ demo }) {
                   onClick={() => setShowAll((v) => !v)}
                   className="mt-3 min-h-[44px] text-base font-medium text-accent"
                 >
-                  {showAll ? "Réduire" : `Voir les ${total} tournois`}
+                  {showAll ? "Réduire" : `Voir les ${plural(total, "tournoi")}`}
                 </button>
               ) : null}
             </>
@@ -242,10 +242,10 @@ export default function ImportClient({ demo }) {
       {/* Barre d'action fixe */}
       {total > 0 ? (
         <div
-          className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur"
+          className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-[240px] lg:px-8"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <div className="mx-auto w-full max-w-[480px]">
+          <div className="mx-auto w-full max-w-[560px] lg:max-w-[640px]">
             <Button
               type="button"
               variant="primary"
@@ -253,7 +253,9 @@ export default function ImportClient({ demo }) {
               onClick={confirmImport}
               disabled={pending || demo}
             >
-              {pending ? "Import en cours…" : `Importer ${total} tournois`}
+              {pending
+                ? "Import en cours…"
+                : `Importer ${plural(total, "tournoi")}`}
             </Button>
             {demo || pmuPending ? (
               <p className="mt-2 text-center text-sm text-ink-muted">

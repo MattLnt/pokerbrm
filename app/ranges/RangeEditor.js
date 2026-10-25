@@ -113,9 +113,11 @@ export default function RangeEditor({ initialRanges, demo }) {
     .map(([k]) => k);
 
   return (
-    <>
-      {/* Sélecteur de spot */}
-      <Card className="p-4">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+      {/* Colonne principale : choix du spot, grille, statistiques */}
+      <div>
+        {/* Sélecteur de spot */}
+        <Card className="p-4">
         <p className="kicker mb-2">Position</p>
         <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1">
           {POSITIONS.map((p) => (
@@ -201,8 +203,12 @@ export default function RangeEditor({ initialRanges, demo }) {
         )}
       </Card>
 
-      {/* Pinceaux */}
-      <SectionTitle>Pinceau</SectionTitle>
+      </div>
+
+      {/* Colonne des réglages */}
+      <div className="max-lg:mt-0 lg:sticky lg:top-6">
+        {/* Pinceaux */}
+        <SectionTitle tight>Pinceau</SectionTitle>
       <div className="grid grid-cols-4 gap-2">
         {RANGE_BRUSHES.map((b) => (
           <button
@@ -316,15 +322,17 @@ export default function RangeEditor({ initialRanges, demo }) {
           {error}
         </p>
       ) : null}
+      </div>
 
-      <div className="h-28" />
+      {/* Réserve sous la barre d'enregistrement, qui reste fixe aux deux tailles */}
+      <div className="h-28 lg:col-span-2" />
 
       {/* Barre d'enregistrement */}
       <div
-        className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur"
+        className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-[240px] lg:px-8"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="mx-auto w-full max-w-[480px]">
+        <div className="mx-auto w-full max-w-[560px] lg:max-w-[1180px]">
           <Button
             type="button"
             variant="primary"
@@ -353,7 +361,7 @@ export default function RangeEditor({ initialRanges, demo }) {
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -382,7 +390,7 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
     .reduce((s, [, v]) => s + (v ?? 0), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
       <button
         type="button"
         aria-label="Fermer"
@@ -390,7 +398,7 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
         className="absolute inset-0 bg-black/60"
       />
       <div
-        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5"
+        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5 lg:rounded-[22px] lg:border"
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
       >
         <h2 className="mb-1 text-xl font-bold">{hand}</h2>
