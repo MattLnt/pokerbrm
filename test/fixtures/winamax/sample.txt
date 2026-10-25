@@ -1,24 +1,69 @@
-Winamax Poker - Tournament summary : Monster Stack 50 € (123456789)
-Player : MattLnt
-Buy-In : 45€ + 5€
-Registered players : 1234
-Prizepool : 55530€
-Mode : tt
-Type : normal
-Speed : normal
-Tournament started 2026/10/12 19:00:00 UTC
-You played 4h 11min
-You finished in 14th place
-You won 386€
-
-Winamax Poker - Tournament summary : Hyper KO 10 € (987654321)
-Player : MattLnt
+Winamax Poker - Tournament summary : SUPERNOVA(1100183164) - Late Registration
+Player : JOUEUR
 Buy-In : 4€ + 5€ + 1€
-Registered players : 582
+Registered players : 1406
 Mode : tt
 Type : knockout
-Speed : hyper
-Tournament started 2026/10/14 21:30:00 UTC
-You re-entered the tournament 2 times
-You finished in 58th place
-You won 38€ (including 20€ of bounties)
+Speed : normal
+Flight ID : 0
+Levels : Levels : [100-200:25:1221:holdem-no-limit]
+Prizepool : 17365€
+Tournament started 2026/05/23 18:00:01 UTC
+You played 19min 39s
+You finished in 1328th place
+
+Winamax Poker - Tournament summary : SUPERNOVA(1100183164)
+Player : JOUEUR
+Buy-In : 4€ + 5€ + 1€
+Registered players : 2163
+Mode : tt
+Type : knockout
+Speed : normal
+Flight ID : 0
+Levels : Levels : [100-200:25:1221:holdem-no-limit]
+Prizepool : 11470€
+Tournament started 2026/05/23 18:00:01 UTC
+You played 5h 23min 59s
+You finished in 1st place
+You won 1260.70€ + Bounty 504.84€
+
+Winamax Poker - Tournament summary : MONSTER STACK(1042567871)
+Player : JOUEUR
+Buy-In : 9€ + 1€
+Registered players : 4378
+Mode : tt
+Type : normal
+Speed : semiturbo
+Flight ID : 0
+Prizepool : 12090€
+Tournament started 2026/02/04 18:45:01 UTC
+You played 40min 52s
+You finished in 3739th place
+
+Winamax Poker - Tournament summary : SPACE KO(1052493766)
+Player : JOUEUR
+Buy-In : 4€ + 5€ + 1€
+Registered players : 1957
+Mode : tt
+Type : knockout
+Speed : turbo
+Flight ID : 0
+Prizepool : 11032€
+Tournament started 2026/02/04 16:30:01 UTC
+You played 3h 9min 43s
+You finished in 418th place
+You won Bounty 3€
+
+Winamax Poker - Tournament summary : EXPRESSO 5 €(1099000001)
+Player : JOUEUR
+Buy-In : 4.50€ + 0.50€
+Registered players : 3
+Mode : sng
+Type : normal
+Speed : turbo
+Flight ID : 0
+Prizepool : 15€
+Tournament started 2026/05/24 20:10:00 UTC
+You played 6min 12s
+You finished in 1st place
+You won 5€ + Ticket 20€ + Bounty 1€

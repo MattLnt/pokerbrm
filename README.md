@@ -53,6 +53,7 @@ branchée.
 | `npm run db:migrate` | Migration versionnée |
 | `npm run db:seed` | Sites, règles, paliers et programme d'étude |
 | `npm run db:studio` | Explorateur Prisma |
+| `npm run historiques` | Cherche les historiques de poker sur la machine |
 
 ## Organisation
 
@@ -66,6 +67,8 @@ app/
   api/                 Routes d'écriture (import, transactions, ranges, …)
 lib/
   parsers/             Un parser par site + registre de détection
+                       winamax : résumés de tournoi
+                       betclic : mains regroupées par tournoi
   bankroll.js          Soldes, ROI/ITM, buy-in max, paliers, courbe
   hands.js             Grille 169 mains, combos, statistiques de range
   spaced.js            Répétition espacée (SM-2 simplifié)
@@ -78,13 +81,12 @@ design/                Maquettes et référence graphique
 
 ## Points ouverts
 
-- **Parser PMU** : le format des résumés PMU n'est pas spécifié. `lib/parsers/pmu.js`
-  détecte le site et affiche « format à valider » sans bloquer les autres imports.
-  Déposer un vrai fichier pour coder le parser.
-- **Parsers Winamax et PokerStars** : écrits d'après le format public documenté,
-  pas encore validés sur de vrais fichiers. Déposer des résumés réels dans
-  `test/fixtures/<site>/` et compléter `test/parsers.test.mjs`.
+- **Re-entries Winamax** : le résumé de tournoi ne les mentionne pas. Un tournoi
+  ré-entré compte une seule cave, ce qui sous-estime le coût et surestime le ROI.
+  Voir [docs/IMPORT.md](docs/IMPORT.md).
 - **Paliers de bankroll** : les valeurs du seed sont des exemples.
+- **Parser PokerStars** : site inactif, parser écrit d'après le format public et
+  jamais confronté à un vrai fichier. PMU de même, et son format est inconnu.
 - **Authentification** : la V1 tourne sur un utilisateur unique
   (`lib/user.js`). Le modèle porte déjà un `userId` partout, donc brancher
   NextAuth ne demandera que de remplacer `getCurrentUser()`.

@@ -79,7 +79,10 @@ export default function ImportClient({ demo }) {
   const preview = showAll
     ? (report?.tournaments ?? [])
     : (report?.tournaments ?? []).slice(0, 3);
-  const pmuPending = report?.bySite.some((s) => s.needsSpec && s.fileCount > 0);
+  // Sites présents dans le lot mais dont le format n'est pas encore codé.
+  const sitesASpecifier = (report?.bySite ?? [])
+    .filter((s) => s.needsSpec && s.fileCount > 0)
+    .map((s) => SITE_NAMES[s.site] ?? s.site);
 
   return (
     <>
@@ -257,11 +260,11 @@ export default function ImportClient({ demo }) {
                 ? "Import en cours…"
                 : `Importer ${plural(total, "tournoi")}`}
             </Button>
-            {demo || pmuPending ? (
+            {demo || sitesASpecifier.length > 0 ? (
               <p className="mt-2 text-center text-sm text-ink-muted">
                 {demo
                   ? "Branche la base Railway pour enregistrer l'import."
-                  : "PMU sera importé une fois le format validé"}
+                  : `${sitesASpecifier.join(" et ")} sera importé une fois le format validé`}
               </p>
             ) : null}
           </div>

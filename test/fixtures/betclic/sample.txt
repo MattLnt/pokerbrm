@@ -1,0 +1,133 @@
+*** HEADER ***
+Site: Betclic.fr
+Game Mode: Spin
+Game Type: NL Texas Hold'em
+Game Name: Spin & Rush 10€
+Game ID: 01M4EEFBFPAG4H7GRECG5GHMB3
+Prize pool: 40.00€
+Multiplier: x4
+Buy In: 10.00€
+Hand ID: 01M4EEXD2A0EDFFWDN4JW3E09F
+Date & Time: 2026-10-08 19:12:48 (UTC)
+Table ID: 01M4EEFBG2D9FQ4VRPGPYWQAR2
+Blinds: 40/80
+Total Pot: 552
+Rake: 0
+*** PLAYERS ***
+Seat 1: jo DUPONT (276) [BTN SB Hero]
+Seat 2: Adversaire Un (1224) [BB]
+*** HOLE CARDS ***
+jo DUPONT: [Qd 6d]
+*** PRE-FLOP ***
+19:12:51 - jo DUPONT: Raises to 276 and is all-in
+19:12:55 - Adversaire Un: Calls 196
+*** FLOP *** [9s 9h Ac]
+*** TURN *** [9s 9h Ac 2d]
+*** RIVER *** [9s 9h Ac 2d Td]
+*** SHOWDOWN ***
+Adversaire Un shows [Ad 2c] (Two Pair) [Ad Ac 9s 9h Td]
+*** SUMMARY ***
+Adversaire Un wins main pot of 552
+Adversaire Un finished 1st and wins 40.00 EUR
+jo DUPONT finished 2nd
+
+------------
+
+*** HEADER ***
+Site: Betclic.fr
+Game Mode: Spin
+Game Type: NL Texas Hold'em
+Game Name: Spin & Rush 20€
+Game ID: 01M4HZTFQ686VQP75WAFS9TVMP
+Prize pool: 60.00€
+Multiplier: x3
+Buy In: 20.00€
+Hand ID: 01M4HZTFQ686VQP75WAFS9AAAA
+Date & Time: 2026-10-10 04:06:15 (UTC)
+Table ID: 01M4HZTFQ686VQP75WAFS9BBBB
+Blinds: 30/60
+Total Pot: 300
+Rake: 0
+*** PLAYERS ***
+Seat 1: jo DUPONT (500) [BTN Hero]
+Seat 2: Adversaire Deux (500) [SB]
+Seat 3: joueur3 (500) [BB]
+*** SUMMARY ***
+jo DUPONT wins main pot of 300
+Adversaire Deux finished 3rd
+
+------------
+
+*** HEADER ***
+Site: Betclic.fr
+Game Mode: Spin
+Game Type: NL Texas Hold'em
+Game Name: Spin & Rush 20€
+Game ID: 01M4HZTFQ686VQP75WAFS9TVMP
+Prize pool: 60.00€
+Multiplier: x3
+Buy In: 20.00€
+Hand ID: 01M4HZTFQ686VQP75WAFS9CCCC
+Date & Time: 2026-10-10 04:09:40 (UTC)
+Table ID: 01M4HZTFQ686VQP75WAFS9BBBB
+Blinds: 50/100
+Total Pot: 1500
+Rake: 0
+*** PLAYERS ***
+Seat 1: jo DUPONT (1000) [BTN SB Hero]
+Seat 2: joueur3 (500) [BB]
+*** SUMMARY ***
+jo DUPONT wins main pot of 1500
+jo DUPONT finished 1st and wins 60.00 EUR
+joueur3 finished 2nd
+
+------------
+
+*** HEADER ***
+Site: Betclic.fr
+Game Mode: Tournament
+Game Type: NL Texas Hold'em
+Tournament Type: SKO
+Game Name: TRIAD - SMASH KO
+Game ID: 01M4EZB900VXS2NTHRE1QECQX4
+Buy In: 5.00€
+Hand ID: 01M4G41M4FHBW79YHV70M6B2ND
+Date & Time: 2026-10-09 10:41:21 (UTC)
+Table ID: 01M4G37CDWNT0HTHW07YPBN2E4
+Ante: 5
+Blinds: 25/50
+Total Pot: 435
+Rake: 0
+*** PLAYERS ***
+Seat 1: joueur4 (1217, €2.50 bounty) [BB]
+Seat 2: jo DUPONT (190, €5.00 bounty) [BTN Hero]
+Seat 3: joueur5 (851, €3.00 bounty) [SB]
+*** SUMMARY ***
+jo DUPONT wins main pot of 435
+jo DUPONT wins €1.25 for eliminating joueur5 (x1), jo DUPONT own bounty increases from €5.00 to €6.25
+joueur4 finished 221th
+
+------------
+
+*** HEADER ***
+Site: Betclic.fr
+Game Mode: Tournament
+Game Type: NL Texas Hold'em
+Tournament Type: SKO
+Game Name: TRIAD - SMASH KO
+Game ID: 01M4EZB900VXS2NTHRE1QECQX4
+Buy In: 5.00€
+Hand ID: 01M4G41M4FHBW79YHV70M6B2NE
+Date & Time: 2026-10-09 11:02:03 (UTC)
+Table ID: 01M4G37CDWNT0HTHW07YPBN2E4
+Ante: 5
+Blinds: 50/100
+Total Pot: 900
+Rake: 0
+*** PLAYERS ***
+Seat 1: joueur6 (2000, €2.50 bounty) [BB]
+Seat 2: jo DUPONT (400, €6.25 bounty) [BTN Hero]
+*** SUMMARY ***
+joueur6 wins main pot of 900
+joueur6 wins €3.12 for eliminating jo DUPONT (x1), joueur6 own bounty increases from €2.50 to €5.62
+jo DUPONT finished 145th

@@ -4,7 +4,7 @@ import { prisma, hasDatabase } from "@/lib/db";
 import { getCurrentUser, getSiteMap } from "@/lib/user";
 
 const FORMATS = new Set(["CLASSIC", "KO", "SPIN"]);
-const SPEEDS = new Set(["NORMAL", "TURBO", "HYPER"]);
+const SPEEDS = new Set(["NORMAL", "SEMITURBO", "TURBO", "HYPER"]);
 
 /** Ne garde que les champs attendus : le corps de requête n'est pas de confiance. */
 function sanitize(t) {

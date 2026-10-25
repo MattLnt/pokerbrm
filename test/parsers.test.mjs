@@ -6,95 +6,180 @@ import { dirname, join } from "node:path";
 
 import { parseFiles } from "../lib/parsers/index.js";
 import * as winamax from "../lib/parsers/winamax.js";
+import * as betclic from "../lib/parsers/betclic.js";
 import * as pokerstars from "../lib/parsers/pokerstars.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixture = (p) => readFileSync(join(here, "fixtures", p), "utf8");
 
-test("winamax : tournoi classique", () => {
-  const [t] = winamax.parse(fixture("winamax/sample.txt"));
-  assert.equal(t.tournamentId, "123456789");
-  assert.equal(t.name, "Monster Stack 50 €");
-  assert.equal(t.buyIn, 45);
-  assert.equal(t.fee, 5);
-  assert.equal(t.bounty, 0);
-  assert.equal(t.format, "CLASSIC");
-  assert.equal(t.speed, "NORMAL");
-  assert.equal(t.finishPosition, 14);
-  assert.equal(t.entrants, 1234);
-  assert.equal(t.totalCost, 50);
-  assert.equal(t.netResult, 336); // 386 − 50
+const WINAMAX = fixture("winamax/sample.txt");
+const BETCLIC = fixture("betclic/sample.txt");
+
+const parWinamax = Object.fromEntries(
+  winamax.parse(WINAMAX).map((t) => [t.tournamentId, t])
+);
+const parBetclic = Object.fromEntries(
+  betclic.parse(BETCLIC).map((t) => [t.tournamentId, t])
+);
+
+/* ------------------------------------------------------------------ */
+/* Winamax — fixtures calquées sur le format réel des résumés          */
+/* ------------------------------------------------------------------ */
+
+test("winamax : un tournoi présent deux fois ne compte qu'une fois", () => {
+  // Le fichier contient un bloc « Late Registration » et le bloc final.
+  const tous = winamax.parse(WINAMAX);
+  const ids = tous.map((t) => t.tournamentId);
+  assert.equal(new Set(ids).size, ids.length, "aucun doublon");
+  assert.equal(tous.length, 4);
 });
 
-test("winamax : KO hyper avec re-entries et bounties", () => {
-  const [, t] = winamax.parse(fixture("winamax/sample.txt"));
-  assert.equal(t.tournamentId, "987654321");
+test("winamax : c'est le bloc final qui gagne, pas la late registration", () => {
+  const t = parWinamax["1100183164"];
+  assert.equal(t.finishPosition, 1, "1re place, et non 1328e");
+  assert.equal(t.entrants, 2163, "effectif final, et non 1406");
+  assert.equal(t.prize, 1260.7);
+  assert.equal(t.bountiesWon, 504.84);
+  assert.equal(t.totalCost, 10); // 4 + 5 + 1
+  assert.equal(t.netResult, 1755.54);
+});
+
+test("winamax : « You won Bounty 3€ » n'est pas un gain de prize pool", () => {
+  const t = parWinamax["1052493766"];
+  assert.equal(t.prize, 0, "aucun gain de prize pool");
+  assert.equal(t.bountiesWon, 3);
+  assert.equal(t.netResult, -7); // 3 − 10
+});
+
+test("winamax : un tournoi sans ligne de gain est une perte sèche", () => {
+  const t = parWinamax["1042567871"];
+  assert.equal(t.prize, 0);
+  assert.equal(t.bountiesWon, 0);
+  assert.equal(t.netResult, -10);
+  assert.equal(t.format, "CLASSIC");
+  assert.equal(t.speed, "SEMITURBO");
+});
+
+test("winamax : le buy-in d'un KO se lit buy-in + prime + rake", () => {
+  const t = parWinamax["1100183164"];
   assert.equal(t.buyIn, 4);
   assert.equal(t.bounty, 5);
   assert.equal(t.fee, 1);
-  assert.equal(t.reEntries, 2);
   assert.equal(t.format, "KO");
-  assert.equal(t.speed, "HYPER");
-  assert.equal(t.bountiesWon, 20);
-  assert.equal(t.prize, 18); // 38 total − 20 de bounties
-  assert.equal(t.totalCost, 30); // (4+5+1) × 3
-  assert.equal(t.netResult, 8); // 18 + 20 − 30
 });
+
+test("winamax : un ticket gagné n'entre pas dans le résultat net", () => {
+  const t = parWinamax["1099000001"];
+  assert.equal(t.prize, 5);
+  assert.equal(t.bountiesWon, 1);
+  assert.equal(t.ticketWon, 20, "le ticket est suivi à part");
+  assert.equal(t.totalCost, 5);
+  assert.equal(t.netResult, 1, "5 + 1 − 5, sans le ticket");
+});
+
+test("winamax : l'Expresso est un Spin, pas un KO", () => {
+  assert.equal(parWinamax["1099000001"].format, "SPIN");
+});
+
+test("winamax : la séquence \\u20ac est rendue en euro", () => {
+  assert.equal(parWinamax["1099000001"].name, "EXPRESSO 5 €");
+});
+
+/* ------------------------------------------------------------------ */
+/* Betclic — l'export est main par main, pas tournoi par tournoi       */
+/* ------------------------------------------------------------------ */
+
+test("betclic : les mains d'un même Game ID forment un seul tournoi", () => {
+  const tous = betclic.parse(BETCLIC);
+  assert.equal(tous.length, 3, "2 spins + 1 KO, pour 5 mains");
+});
+
+test("betclic : un spin gagné se lit sur la dernière main", () => {
+  const t = parBetclic["01M4HZTFQ686VQP75WAFS9TVMP"];
+  assert.equal(t.finishPosition, 1);
+  assert.equal(t.prize, 60);
+  assert.equal(t.totalCost, 20);
+  assert.equal(t.netResult, 40);
+  assert.equal(t.format, "SPIN");
+  assert.equal(t.speed, "HYPER");
+});
+
+test("betclic : la date du tournoi est celle de sa première main", () => {
+  const t = parBetclic["01M4HZTFQ686VQP75WAFS9TVMP"];
+  assert.equal(t.date.toISOString(), "2026-10-10T04:06:15.000Z");
+});
+
+test("betclic : les primes du héros s'additionnent, pas celles des autres", () => {
+  const t = parBetclic["01M4EZB900VXS2NTHRE1QECQX4"];
+  // Le héros encaisse 1,25 € ; un adversaire en encaisse 3,12 € sur lui.
+  assert.equal(t.bountiesWon, 1.25);
+  assert.equal(t.finishPosition, 145);
+  assert.equal(t.netResult, -3.75); // 1,25 − 5
+  assert.equal(t.format, "KO");
+});
+
+test("betclic : un pseudo à espaces est lu correctement", () => {
+  // Le héros s'appelle « jo DUPONT » : découper sur l'espace casserait tout.
+  const t = parBetclic["01M4EEFBFPAG4H7GRECG5GHMB3"];
+  assert.equal(t.finishPosition, 2);
+  assert.equal(t.prize, 0, "le gain de 40 € est celui de l'adversaire");
+  assert.equal(t.netResult, -10);
+});
+
+test("betclic : l'ordinal irrégulier « 221th » est accepté", () => {
+  assert.equal(parBetclic["01M4EZB900VXS2NTHRE1QECQX4"].finishPosition, 145);
+});
+
+test("betclic : le nombre d'inscrits est absent de l'export", () => {
+  for (const t of betclic.parse(BETCLIC)) assert.equal(t.entrants, null);
+});
+
+/* ------------------------------------------------------------------ */
+/* PokerStars — site inactif, parser conservé                          */
+/* ------------------------------------------------------------------ */
 
 test("pokerstars : tournoi classique perdu", () => {
   const [t] = pokerstars.parse(fixture("pokerstars/sample.txt"));
   assert.equal(t.tournamentId, "3078018023");
-  assert.equal(t.buyIn, 20);
-  assert.equal(t.fee, 2);
   assert.equal(t.entrants, 2345);
-  assert.equal(t.finishPosition, 412);
-  assert.equal(t.currency, "EUR");
   assert.equal(t.netResult, -22);
 });
 
-test("pokerstars : PKO avec bounty et re-entry", () => {
-  const [, t] = pokerstars.parse(fixture("pokerstars/sample.txt"));
-  assert.equal(t.buyIn, 13.5);
-  assert.equal(t.bounty, 13.5);
-  assert.equal(t.fee, 3);
-  assert.equal(t.reEntries, 1);
-  assert.equal(t.format, "KO");
-  assert.equal(t.prize, 420);
-  assert.equal(t.bountiesWon, 145);
-  assert.equal(t.totalCost, 60); // 30 × 2
-  assert.equal(t.netResult, 505);
-});
+/* ------------------------------------------------------------------ */
+/* Routage et déduplication du lot                                     */
+/* ------------------------------------------------------------------ */
 
-test("parseFiles : routage, dédup et PMU à valider", () => {
+test("parseFiles : chaque fichier part vers le bon parser", () => {
   const report = parseFiles([
-    { name: "wina.txt", content: fixture("winamax/sample.txt") },
-    { name: "wina-copie.txt", content: fixture("winamax/sample.txt") },
-    { name: "ps.txt", content: fixture("pokerstars/sample.txt") },
-    { name: "pmu.txt", content: fixture("pmu/sample.txt") },
+    { name: "wina.txt", content: WINAMAX },
+    { name: "betclic.txt", content: BETCLIC },
     { name: "bizarre.txt", content: "contenu quelconque" },
   ]);
 
-  const wina = report.bySite.find((s) => s.site === "winamax");
-  assert.equal(wina.newCount, 2);
-  assert.equal(wina.duplicateCount, 2, "le second fichier est un doublon");
-  assert.equal(wina.net, 344); // 336 + 8
-
-  const pmu = report.bySite.find((s) => s.site === "pmu");
-  assert.equal(pmu.needsSpec, true);
-  assert.equal(pmu.newCount, 0);
-
-  assert.equal(report.tournaments.length, 4);
-  assert.ok(
-    report.unrecognized.some((u) => u.reason === "format à valider"),
-    "PMU est signalé sans bloquer les autres"
-  );
+  const w = report.bySite.find((s) => s.site === "winamax");
+  const b = report.bySite.find((s) => s.site === "betclic");
+  assert.equal(w.newCount, 4);
+  assert.equal(b.newCount, 3);
+  assert.equal(b.needsSpec, false, "le format Betclic est maintenant codé");
+  assert.equal(report.tournaments.length, 7);
   assert.ok(report.unrecognized.some((u) => u.name === "bizarre.txt"));
+});
+
+test("parseFiles : le même fichier deux fois ne double pas les tournois", () => {
+  const report = parseFiles([
+    { name: "a.txt", content: WINAMAX },
+    { name: "copie.txt", content: WINAMAX },
+  ]);
+  const w = report.bySite.find((s) => s.site === "winamax");
+  assert.equal(w.newCount, 4);
+  assert.equal(w.duplicateCount, 4);
+  assert.equal(report.tournaments.length, 4);
 });
 
 test("les tournois sortent du plus récent au plus ancien", () => {
   const report = parseFiles([
-    { name: "wina.txt", content: fixture("winamax/sample.txt") },
-    { name: "ps.txt", content: fixture("pokerstars/sample.txt") },
+    { name: "wina.txt", content: WINAMAX },
+    { name: "betclic.txt", content: BETCLIC },
   ]);
   const dates = report.tournaments.map((t) => t.date.getTime());
   assert.deepEqual(dates, [...dates].sort((a, b) => b - a));

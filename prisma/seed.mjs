@@ -17,10 +17,10 @@ if (!connectionString) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
+// Repris de lib/constants.js pour que le seed suive la liste des sites actifs.
 const SITES = [
   { slug: "winamax", name: "Winamax" },
-  { slug: "pokerstars", name: "PokerStars" },
-  { slug: "pmu", name: "PMU" },
+  { slug: "betclic", name: "Betclic" },
 ];
 
 const RULES = [

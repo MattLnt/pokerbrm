@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "historiques": "node scripts/inspect-historiques.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

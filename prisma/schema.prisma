@@ -17,6 +17,7 @@ enum TournamentFormat {
 
 enum TournamentSpeed {
   NORMAL
+  SEMITURBO // Winamax expose cette vitesse, vue sur 502 tournois réels
   TURBO
   HYPER
 }
