@@ -66,7 +66,7 @@ test("stats : fold ne compte pas dans la range", () => {
 test("fond de case : couleur pleine, partielle, puis bandes", () => {
   // Les couleurs se lisent sur les pinceaux : la charte peut changer de
   // palette sans casser ce test.
-  const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).cellColor;
+  const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).color;
 
   const plein = cellBackground({ raise: 100 }, RANGE_BRUSHES);
   assert.equal(plein, couleur("raise"));
