@@ -337,6 +337,26 @@ export default function RangeEditor({ initialRanges, demo }) {
             Dupliquer
           </Button>
         </div>
+
+        {/* Sur grand écran l'enregistrement est une action parmi les autres :
+            il se range ici, là où on cherche les boutons. La barre fixe du bas
+            n'existe plus que sur mobile, où le pouce ne remonte pas. */}
+        <div className="mt-2 max-lg:hidden">
+          <Button
+            type="button"
+            variant="primary"
+            className="w-full"
+            onClick={save}
+            disabled={pending}
+          >
+            {saved ? <Check size={18} /> : null}
+            {pending
+              ? "Enregistrement…"
+              : saved
+                ? "Range enregistrée"
+                : "Enregistrer la range"}
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -346,15 +366,15 @@ export default function RangeEditor({ initialRanges, demo }) {
       ) : null}
       </div>
 
-      {/* Réserve sous la barre d'enregistrement, qui reste fixe aux deux tailles */}
-      <div className="h-28 lg:col-span-2" />
+      {/* Réserve sous la barre fixe, mobile seulement */}
+      <div className="h-28 lg:hidden" />
 
-      {/* Barre d'enregistrement */}
+      {/* Barre d'enregistrement, mobile seulement */}
       <div
-        className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-[240px] lg:px-8"
+        className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:hidden"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
       >
-        <div className="mx-auto w-full max-w-[560px] lg:max-w-[1440px]">
+        <div className="mx-auto w-full max-w-[560px]">
           <Button
             type="button"
             variant="primary"
