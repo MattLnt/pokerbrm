@@ -397,17 +397,45 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
         </Button>
       </div>
 
-      {/* Centre : la table */}
-      <Card className="p-3 lg:p-4">
-        <PokerTable
-          heros={position}
-          main={question.main}
-          profondeur={profondeur}
-          scene={question.scene}
-        />
-      </Card>
+      {/* Centre : la table, et les réponses juste en dessous */}
+      <div>
+        <Card className="p-2 lg:p-3">
+          <PokerTable
+            heros={position}
+            main={question.main}
+            profondeur={profondeur}
+            scene={question.scene}
+          />
+        </Card>
 
-      {/* Droite : la décision, et la correction juste au-dessus */}
+        {/* Une rangée de boutons pleins, du plus passif au plus agressif :
+            c'est l'ordre dans lequel on les cherche, et la couleur dit la
+            force de l'action sans qu'on ait à lire. */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {ANSWERS.map((a) => (
+            <button
+              key={a.key}
+              type="button"
+              onClick={() => repondre(a.key)}
+              disabled={Boolean(verdict)}
+              style={
+                verdict && verdict.given !== a.key
+                  ? undefined
+                  : { background: a.color }
+              }
+              className={`min-h-[52px] rounded-sm text-base font-bold tracking-[var(--ls-heading)] transition-opacity ${
+                verdict && verdict.given !== a.key
+                  ? "bg-surface-2 text-ink-muted opacity-45"
+                  : "text-[#0a0f1c]"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Droite : la correction */}
       <div className="max-lg:mt-4 xl:sticky xl:top-6">
         {verdict ? (
           <Card
@@ -435,40 +463,24 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           </Card>
         ) : null}
 
-        <p className="kicker mb-2">Ton action</p>
-        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-1">
-          {ANSWERS.map((a) => (
-            <button
-              key={a.key}
-              type="button"
-              onClick={() => repondre(a.key)}
-              disabled={Boolean(verdict)}
-              className={`flex min-h-[56px] items-center justify-center gap-2 rounded-tile border text-base font-medium transition-opacity disabled:opacity-40 ${
-                verdict?.given === a.key
-                  ? "border-ink/40 bg-surface-3"
-                  : "border-line bg-surface"
-              }`}
-            >
-              <span
-                className="size-3 rounded-[2px]"
-                style={{ background: a.color }}
-                aria-hidden
-              />
-              {a.label}
-            </button>
-          ))}
-        </div>
-
         {verdict ? (
           <Button
             type="button"
             variant="primary"
-            className="mt-2.5 w-full"
+            className="w-full"
             onClick={suivante}
           >
             Main suivante
           </Button>
-        ) : null}
+        ) : (
+          <Card className="p-4">
+            <p className="kicker mb-2">À toi</p>
+            <p className="text-sm leading-[var(--lh-normal)] text-ink-muted">
+              Choisis ton action sous la table. La correction s&apos;affiche
+              ici, avec les fréquences de ta range.
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );
