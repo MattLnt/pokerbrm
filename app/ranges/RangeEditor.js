@@ -15,7 +15,7 @@ import {
   QUICK_SELECTS,
   rangeStats,
   melanger,
-  basculerSelection,
+  basculerSelectionRapide,
   selectionPosee,
 } from "@/lib/hands";
 
@@ -75,9 +75,9 @@ export default function RangeEditor({ initialRanges, demo }) {
     });
   }
 
-  function applyQuickSelect(hands) {
+  function applyQuickSelect(cle) {
     updateCells((current) =>
-      basculerSelection(current, hands, brush, frequency)
+      basculerSelectionRapide(current, cle, brush, frequency)
     );
   }
 
@@ -285,7 +285,7 @@ export default function RangeEditor({ initialRanges, demo }) {
               key={q.key}
               type="button"
               aria-pressed={posee}
-              onClick={() => applyQuickSelect(hands)}
+              onClick={() => applyQuickSelect(q.key)}
               className={`min-h-[44px] rounded-pill border px-4 text-sm transition-colors ${
                 posee
                   ? "border-rose-line bg-rose-bg text-rose-hover"
