@@ -288,7 +288,7 @@ export default function RangeEditor({ initialRanges, demo }) {
               onClick={() => applyQuickSelect(q.key)}
               className={`min-h-[44px] rounded-pill border px-4 text-sm transition-colors ${
                 posee
-                  ? "border-rose-line bg-rose-bg text-rose-hover"
+                  ? "border-accent-line bg-accent-soft text-accent-hover"
                   : "border-line bg-surface text-ink-section"
               }`}
             >
@@ -428,7 +428,7 @@ function Chip({ active, children, onClick }) {
       aria-pressed={active}
       className={`min-h-[40px] shrink-0 rounded-pill border px-4 text-sm transition-colors ${
         active
-          ? "border-rose-line bg-rose-bg text-rose-hover"
+          ? "border-negative/40 bg-negative/15 text-negative"
           : "border-line bg-surface-2 text-ink-section"
       }`}
     >
