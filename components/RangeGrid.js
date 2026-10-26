@@ -139,11 +139,13 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
               role="gridcell"
               aria-label={hand}
               className={`relative aspect-square rounded-[3px] text-[var(--fs-overline)] font-semibold leading-none transition-colors ${
-                painted ? "text-white" : "bg-surface-2 text-ink-muted"
+                painted
+                  ? "text-bg-deep"
+                  : "bg-surface-2 text-ink-muted"
               }`}
               style={background ? { background } : undefined}
             >
-              <span className="pointer-events-none absolute inset-0 grid place-items-center drop-shadow-[0_1px_1px_rgba(0,0,0,0.7)]">
+              <span className="pointer-events-none absolute inset-0 grid place-items-center">
                 {hand}
               </span>
             </button>

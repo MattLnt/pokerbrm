@@ -7,6 +7,7 @@ import {
   combosOf,
   rangeStats,
   cellBackground,
+  melanger,
   TOTAL_COMBOS,
 } from "../lib/hands.js";
 import { RANGE_BRUSHES } from "../lib/constants.js";
@@ -65,7 +66,7 @@ test("stats : fold ne compte pas dans la range", () => {
 test("fond de case : couleur pleine, partielle, puis bandes", () => {
   // Les couleurs se lisent sur les pinceaux : la charte peut changer de
   // palette sans casser ce test.
-  const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).color;
+  const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).cellColor;
 
   const plein = cellBackground({ raise: 100 }, RANGE_BRUSHES);
   assert.equal(plein, couleur("raise"));
@@ -79,4 +80,36 @@ test("fond de case : couleur pleine, partielle, puis bandes", () => {
 
   assert.equal(cellBackground({}, RANGE_BRUSHES), null);
   assert.equal(cellBackground({ fold: 100 }, RANGE_BRUSHES), null);
+});
+
+test("mélange : le pinceau n'efface pas les actions qui tiennent encore", () => {
+  assert.deepEqual(melanger({ raise: 50 }, "call", 30), { call: 30, raise: 50 });
+  assert.deepEqual(melanger(undefined, "raise", 50), { raise: 50 });
+});
+
+test("mélange : les autres actions sont rabotées pour tenir dans 100 %", () => {
+  // raise seul remplissait la case : il laisse la place au call.
+  assert.deepEqual(melanger({ raise: 100 }, "call", 30), {
+    call: 30,
+    raise: 70,
+  });
+  // Deux actions à raboter gardent leur équilibre relatif.
+  assert.deepEqual(melanger({ raise: 60, call: 40 }, "shove", 50), {
+    shove: 50,
+    raise: 30,
+    call: 20,
+  });
+});
+
+test("mélange : repasser le même pinceau remplace sa propre fréquence", () => {
+  assert.deepEqual(melanger({ raise: 50, call: 30 }, "raise", 80), {
+    raise: 80,
+    call: 20,
+  });
+});
+
+test("mélange : un pinceau à 100 % chasse tout le reste", () => {
+  assert.deepEqual(melanger({ raise: 50, call: 50 }, "shove", 100), {
+    shove: 100,
+  });
 });

@@ -11,7 +11,7 @@ import {
   RANGE_ACTIONS,
   RANGE_BRUSHES,
 } from "@/lib/constants";
-import { QUICK_SELECTS, rangeStats } from "@/lib/hands";
+import { QUICK_SELECTS, rangeStats, melanger } from "@/lib/hands";
 
 function spotKey({ position, action, stackDepth }) {
   return `${position}|${action}|${stackDepth}`;
@@ -65,7 +65,7 @@ export default function RangeEditor({ initialRanges, demo }) {
         const { [hand]: _removed, ...rest } = current;
         return rest;
       }
-      return { ...current, [hand]: { [brush]: frequency } };
+      return { ...current, [hand]: melanger(current[hand], brush, frequency) };
     });
   }
 
@@ -352,9 +352,9 @@ export default function RangeEditor({ initialRanges, demo }) {
       {/* Barre d'enregistrement */}
       <div
         className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-[240px] lg:px-8"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
       >
-        <div className="mx-auto w-full max-w-[560px] lg:max-w-[1180px]">
+        <div className="mx-auto w-full max-w-[560px] lg:max-w-[1440px]">
           <Button
             type="button"
             variant="primary"
@@ -453,11 +453,21 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
           </label>
         ))}
 
+        {/* Le fold n'a pas de curseur : c'est ce qui reste. L'afficher évite
+            d'avoir à faire la soustraction de tête. */}
         <p
           className={`mb-3 text-sm ${total > 100 ? "text-warning" : "text-ink-muted"}`}
         >
-          Total : <span className="num">{total} %</span>
-          {total > 100 ? " — au-dessus de 100 %" : ""}
+          {total > 100 ? (
+            <>
+              Total : <span className="num">{total} %</span> — au-dessus de
+              100 %
+            </>
+          ) : (
+            <>
+              Fold : <span className="num">{100 - total} %</span>
+            </>
+          )}
         </p>
 
         <Button
