@@ -145,26 +145,26 @@ test("sélection rapide : une seule main en trop et le bouton repose", () => {
 
 test("sélection rapide : relâcher un ensemble n'emporte pas celui d'à côté", () => {
   const mains = (cle) => QUICK_SELECTS.find((q) => q.key === cle).hands();
-  const axo = mains("ax-o");
-  const broadway = mains("broadway");
-  const communes = axo.filter((h) => broadway.includes(h));
+  const axs = mains("ax-s");
+  const connecteurs = mains("suited-connectors");
+  const communes = axs.filter((h) => connecteurs.includes(h));
   assert.ok(communes.length > 0, "les deux ensembles doivent se recouvrir");
 
-  let cells = basculerSelectionRapide({}, "ax-o", "raise", 100);
-  cells = basculerSelectionRapide(cells, "broadway", "raise", 100);
-  assert.equal(selectionPosee(cells, axo, "raise", 100), true);
-  assert.equal(selectionPosee(cells, broadway, "raise", 100), true);
+  let cells = basculerSelectionRapide({}, "ax-s", "raise", 100);
+  cells = basculerSelectionRapide(cells, "suited-connectors", "raise", 100);
+  assert.equal(selectionPosee(cells, axs, "raise", 100), true);
+  assert.equal(selectionPosee(cells, connecteurs, "raise", 100), true);
 
-  // On relâche Ax offsuit : Broadway tient toujours debout.
-  cells = basculerSelectionRapide(cells, "ax-o", "raise", 100);
-  assert.equal(selectionPosee(cells, broadway, "raise", 100), true);
-  assert.equal(selectionPosee(cells, axo, "raise", 100), false);
-  // Seules les mains qui n'appartenaient qu'à Ax offsuit sont parties.
-  for (const hand of axo.filter((h) => !broadway.includes(h))) {
+  // On relâche Ax suited : les connecteurs tiennent toujours debout.
+  cells = basculerSelectionRapide(cells, "ax-s", "raise", 100);
+  assert.equal(selectionPosee(cells, connecteurs, "raise", 100), true);
+  assert.equal(selectionPosee(cells, axs, "raise", 100), false);
+  // Seules les mains qui n'appartenaient qu'à Ax suited sont parties.
+  for (const hand of axs.filter((h) => !connecteurs.includes(h))) {
     assert.equal(cells[hand], undefined, hand);
   }
 
-  // Puis Broadway, que plus rien ne retient.
-  cells = basculerSelectionRapide(cells, "broadway", "raise", 100);
+  // Puis les connecteurs, que plus rien ne retient.
+  cells = basculerSelectionRapide(cells, "suited-connectors", "raise", 100);
   assert.deepEqual(cells, {});
 });
