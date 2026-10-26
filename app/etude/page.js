@@ -1,183 +1,242 @@
 import Link from "next/link";
 
 import {
-  Screen,
-  PageHeader,
   SectionTitle,
   Card,
-  CardList,
   ProgressBar,
   Pill,
   StatusDot,
-  Columns,
+  StatTile,
 } from "@/components/ui";
-import StudyLogger from "./StudyLogger";
-import { getStudyOverview, DEMO } from "@/lib/data";
-import { formatDate } from "@/lib/format";
+import { getStudyOverview, getWeakSpots, DEMO } from "@/lib/data";
+import { formatDuree } from "@/lib/format";
+import { STUDY_SESSION_TYPES } from "@/lib/constants";
 
 export const metadata = { title: "Étude · Poker BRM" };
 
-// Données propres à l'utilisateur : jamais figées au moment du build.
-export const dynamic = "force-dynamic";
+// Deux lettres : « M » seul ne distingue pas mardi de mercredi, et la
+// barre de régularité ne sert à rien si on ne sait pas quel jour on lit.
+const JOURS = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
 
-const SESSION_LABELS = {
-  THEORIE: "Théorie",
-  DRILL: "Drill",
-  REVUE_MAINS: "Revue de mains",
-  REVUE_BDD: "Revue de base",
-};
+/**
+ * Barre de régularité : sept colonnes, une par jour.
+ *
+ * Le total hebdomadaire cache le rythme — cinq heures faites d'un bloc le
+ * dimanche ne valent pas cinq heures étalées. C'est la forme de la semaine
+ * qu'on vient lire ici, pas son volume.
+ */
+function Regularite({ jours, cibleParJour }) {
+  const plafond = Math.max(cibleParJour, ...jours.map((j) => j.minutes), 1);
 
-function formatHours(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+  return (
+    <div className="flex items-end gap-1.5">
+      {jours.map((jour) => {
+        const hauteur = Math.round((jour.minutes / plafond) * 100);
+        const atteint = jour.minutes >= cibleParJour;
+        return (
+          <div key={jour.date.toISOString()} className="flex-1 text-center">
+            <div
+              className="relative mb-1.5 h-16 overflow-hidden rounded-xs bg-bg-sunken ring-1 ring-inset ring-line"
+              title={`${formatDuree(jour.minutes)}`}
+            >
+              <div
+                className={`absolute inset-x-0 bottom-0 ${
+                  atteint ? "bg-positive" : "bg-accent"
+                }`}
+                style={{ height: `${hauteur}%` }}
+              />
+            </div>
+            <span className="num text-[var(--fs-overline)] text-ink-muted">
+              {JOURS[jour.date.getDay()]}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default async function EtudePage() {
   const study = await getStudyOverview();
+  const weakSpots = await getWeakSpots();
   const theme = study.currentTheme;
-  const onTrack = study.minutesDone >= study.minutesTarget;
+  const dansLesClous = study.minutesDone >= study.minutesTarget;
+
+  const objectifs = Array.isArray(theme?.objectives) ? theme.objectives : [];
+  const faits = objectifs.filter((o) => o.done).length;
+  const spotLePlusFaible = weakSpots[0] ?? null;
 
   return (
-    <Screen width="wide">
-      <PageHeader eyebrow={DEMO ? "Données d'exemple" : null} title="Étude" />
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+      {/* Colonne principale — l'état de la semaine */}
+      <div>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="kicker">Cette semaine</p>
+            <Pill tone={dansLesClous ? "positive" : "neutral"}>
+              <StatusDot tone={dansLesClous ? "positive" : "accent"} />
+              {study.daysDone} / {study.daysTarget} jours
+            </Pill>
+          </div>
 
-      <Columns>
-        {/* Colonne gauche — où j'en suis */}
-        <div>
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-base text-ink-muted">Cette semaine</p>
-              <Pill tone={onTrack ? "positive" : "neutral"}>
-                <StatusDot tone={onTrack ? "positive" : "accent"} />
-                {study.daysDone} / {study.daysTarget} jours
-              </Pill>
+          <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)]">
+            {formatDuree(study.minutesDone)}
+            <span className="ml-2 text-base font-normal text-ink-muted">
+              / {formatDuree(study.minutesTarget)}
+            </span>
+          </p>
+
+          <div className="mt-4">
+            <ProgressBar
+              value={study.minutesDone}
+              max={study.minutesTarget}
+              tone={dansLesClous ? "positive" : "accent"}
+            />
+          </div>
+
+          <div className="mt-5">
+            <p className="kicker mb-2.5">Régularité</p>
+            <Regularite
+              jours={study.joursSemaine}
+              cibleParJour={study.minutesPerDay}
+            />
+          </div>
+        </Card>
+
+        <SectionTitle>Où part le temps</SectionTitle>
+        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          {STUDY_SESSION_TYPES.map((type, i) => (
+            <StatTile
+              key={type.key}
+              index={i + 1}
+              label={type.label}
+              value={formatDuree(study.parType[type.key] ?? 0)}
+            />
+          ))}
+        </div>
+
+        {theme ? (
+          <>
+            <SectionTitle
+              action={
+                <Link
+                  href="/etude/programme"
+                  className="text-sm font-medium text-accent-hover"
+                >
+                  Modifier →
+                </Link>
+              }
+            >
+              Thème de la semaine
+            </SectionTitle>
+            <Card className="p-4">
+              {theme.block ? <p className="kicker mb-2">{theme.block}</p> : null}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <h3 className="text-xl font-semibold tracking-[var(--ls-heading)]">
+                  {theme.title}
+                </h3>
+                {objectifs.length > 0 ? (
+                  <span className="num text-sm text-ink-muted">
+                    {faits} / {objectifs.length} objectifs
+                  </span>
+                ) : null}
+              </div>
+              {theme.weekFrom ? (
+                <p className="mt-1 text-sm text-ink-muted">
+                  Semaines {theme.weekFrom}
+                  {theme.weekTo && theme.weekTo !== theme.weekFrom
+                    ? `–${theme.weekTo}`
+                    : ""}
+                </p>
+              ) : null}
+
+              {objectifs.length > 0 ? (
+                <ul className="mt-4 space-y-2.5">
+                  {objectifs.map((o, i) => (
+                    <li key={i} className="flex items-start gap-3 text-base">
+                      <span
+                        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-[var(--fs-xs)] ${
+                          o.done
+                            ? "border-positive bg-positive text-accent-fg"
+                            : "border-line-strong"
+                        }`}
+                        aria-hidden
+                      >
+                        {o.done ? "✓" : ""}
+                      </span>
+                      <span className={o.done ? "text-ink-muted line-through" : ""}>
+                        {o.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </Card>
+          </>
+        ) : null}
+      </div>
+
+      {/* Colonne des raccourcis — ce qui attend */}
+      <div className="max-lg:mt-0 lg:sticky lg:top-6">
+        <SectionTitle tight>Ce qui attend</SectionTitle>
+        <div className="grid gap-2.5">
+          <Card
+            as={Link}
+            href="/etude/revue"
+            liftable
+            className="flex items-center justify-between gap-3 p-4"
+          >
+            <div>
+              <p className="font-medium">Mains à revoir</p>
+              <p className="text-sm text-ink-muted">
+                {study.aRevoir === 0
+                  ? "Rien en attente"
+                  : `${study.aRevoir} en attente`}
+              </p>
             </div>
-
-            <p className="num text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] lg:text-[var(--fs-2xl)]">
-              {formatHours(study.minutesDone)}
-              <span className="ml-2 text-base font-normal text-ink-muted">
-                / {formatHours(study.minutesTarget)}
-              </span>
-            </p>
-
-            <div className="mt-4">
-              <ProgressBar
-                value={study.minutesDone}
-                max={study.minutesTarget}
-                tone={onTrack ? "positive" : "accent"}
-              />
-            </div>
+            <span
+              className={`num text-[var(--fs-xl)] font-bold ${
+                study.aRevoir > 0 ? "text-negative" : "text-ink-muted"
+              }`}
+            >
+              {study.aRevoir}
+            </span>
           </Card>
 
-          {theme ? (
-            <>
-              <SectionTitle>Thème de la semaine</SectionTitle>
-              <Card className="p-4">
-                {theme.block ? (
-                  <p className="kicker mb-2">{theme.block}</p>
-                ) : null}
-                <h3 className="text-lg font-semibold">{theme.title}</h3>
-                {theme.weekFrom ? (
-                  <p className="mt-1 text-sm text-ink-muted">
-                    Semaines {theme.weekFrom}
-                    {theme.weekTo && theme.weekTo !== theme.weekFrom
-                      ? `–${theme.weekTo}`
-                      : ""}
-                  </p>
-                ) : null}
-
-                {Array.isArray(theme.objectives) &&
-                theme.objectives.length > 0 ? (
-                  <ul className="mt-4 space-y-2.5">
-                    {theme.objectives.map((o, i) => (
-                      <li key={i} className="flex items-start gap-3 text-base">
-                        <span
-                          className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-[var(--fs-xs)] ${
-                            o.done
-                              ? "border-positive bg-positive text-accent-fg"
-                              : "border-line-strong"
-                          }`}
-                          aria-hidden
-                        >
-                          {o.done ? "✓" : ""}
-                        </span>
-                        <span
-                          className={
-                            o.done ? "text-ink-muted line-through" : ""
-                          }
-                        >
-                          {o.label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                <Link
-                  href="/ranges"
-                  className="mt-4 inline-block min-h-[44px] pt-3 text-base font-medium text-accent"
-                >
-                  Ouvrir les ranges du thème →
-                </Link>
-              </Card>
-            </>
-          ) : null}
-
-        </div>
-
-        {/* Colonne droite — le journal */}
-        <div>
-          <SectionTitle tight>Journal d&apos;étude</SectionTitle>
-          <StudyLogger themes={study.themes} demo={DEMO} />
-
-          {study.sessions.length > 0 ? (
-            <div className="mt-3">
-              <CardList>
-                {study.sessions.slice(0, 10).map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center justify-between gap-3 px-4 py-3.5"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {SESSION_LABELS[s.type] ?? s.type}
-                      </p>
-                      <p className="truncate text-sm text-ink-muted">
-                        {formatDate(s.date)}
-                        {s.notes ? ` · ${s.notes}` : ""}
-                      </p>
-                    </div>
-                    <p className="num shrink-0 text-ink-section">
-                      {formatHours(s.minutes)}
-                    </p>
-                  </div>
-                ))}
-              </CardList>
-            </div>
-          ) : null}
-
-          <SectionTitle>Programme</SectionTitle>
-          <CardList>
-            {study.themes.map((t, i) => (
-              <div key={t.id} className="flex items-start gap-3 px-4 py-3.5">
-                <span className="num mt-0.5 text-[var(--fs-xs)] tracking-widest text-ink-muted/60">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium">{t.title}</p>
-                  {t.block ? (
-                    <p className="text-sm text-ink-muted">{t.block}</p>
-                  ) : null}
-                </div>
+          {spotLePlusFaible ? (
+            <Card
+              as={Link}
+              href="/etude/faiblesses"
+              liftable
+              className="flex items-center justify-between gap-3 p-4"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium">{spotLePlusFaible.spot}</p>
+                <p className="text-sm text-ink-muted">Ton spot le plus faible</p>
               </div>
-            ))}
-          </CardList>
-        </div>
-      </Columns>
+              <span className="num shrink-0 text-[var(--fs-xl)] font-bold text-warning">
+                {spotLePlusFaible.success} %
+              </span>
+            </Card>
+          ) : null}
 
-      <div className="h-10" />
-    </Screen>
+          <Card
+            as={Link}
+            href="/etude/journal"
+            liftable
+            className="flex items-center justify-between gap-3 p-4"
+          >
+            <div>
+              <p className="font-medium">Noter une session</p>
+              <p className="text-sm text-ink-muted">
+                {study.sessions.length === 0
+                  ? "Aucune session"
+                  : `${study.sessions.length} au journal`}
+              </p>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -8,8 +8,16 @@ export const metadata = { title: "Ranges · Poker BRM" };
 // Données propres à l'utilisateur : jamais figées au moment du build.
 export const dynamic = "force-dynamic";
 
-export default async function RangesPage() {
+export default async function RangesPage({ searchParams }) {
   const initialRanges = await getRanges();
+  // Une main taguée ouvre la page sur son propre spot : sans ça, on
+  // retombait sur BTN · RFI et il fallait recliquer trois pastilles.
+  const params = await searchParams;
+  const spot = {
+    position: typeof params?.position === "string" ? params.position : null,
+    action: typeof params?.action === "string" ? params.action : null,
+    stackDepth: typeof params?.depth === "string" ? params.depth : null,
+  };
 
   return (
     <Screen width="wide">
@@ -17,7 +25,7 @@ export default async function RangesPage() {
         eyebrow={DEMO ? "Données d'exemple" : null}
         title="Ranges"
       />
-      <RangeEditor initialRanges={initialRanges} demo={DEMO} />
+      <RangeEditor initialRanges={initialRanges} spot={spot} demo={DEMO} />
     </Screen>
   );
 }

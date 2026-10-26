@@ -23,10 +23,22 @@ function spotKey({ position, action, stackDepth }) {
   return `${position}|${action}|${stackDepth}`;
 }
 
-export default function RangeEditor({ initialRanges, demo }) {
-  const [position, setPosition] = useState("BTN");
-  const [action, setAction] = useState("RFI");
-  const [stackDepth, setStackDepth] = useState("60BB_PLUS");
+export default function RangeEditor({ initialRanges, spot, demo }) {
+  // Le spot peut venir de l'URL (une main taguée qui ouvre sa range). On ne
+  // garde que des valeurs connues : le reste de l'app suppose partout que
+  // ces trois clés existent dans les listes.
+  const connu = (valeur, liste, defaut) =>
+    liste.some((x) => (x.key ?? x) === valeur) ? valeur : defaut;
+
+  const [position, setPosition] = useState(() =>
+    connu(spot?.position, POSITIONS, "BTN")
+  );
+  const [action, setAction] = useState(() =>
+    connu(spot?.action, RANGE_ACTIONS, "RFI")
+  );
+  const [stackDepth, setStackDepth] = useState(() =>
+    connu(spot?.stackDepth, STACK_DEPTHS, "60BB_PLUS")
+  );
   const [brush, setBrush] = useState(RANGE_BRUSHES[0].key);
   const [frequency, setFrequency] = useState(100);
   const [tuning, setTuning] = useState(null);

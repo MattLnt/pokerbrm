@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui";
-
-const TYPES = [
-  { key: "THEORIE", label: "Théorie" },
-  { key: "DRILL", label: "Drill" },
-  { key: "REVUE_MAINS", label: "Revue de mains" },
-  { key: "REVUE_BDD", label: "Revue de base" },
-];
+import { STUDY_SESSION_TYPES as TYPES } from "@/lib/constants";
 
 const DURATIONS = [30, 45, 60, 90, 120];
 
@@ -74,7 +68,7 @@ export default function StudyLogger({ themes, demo }) {
             aria-pressed={type === t.key}
             className={`min-h-[44px] rounded-tile border text-sm ${
               type === t.key
-                ? "border-rose-line bg-rose-bg text-rose-hover"
+                ? "border-negative/40 bg-negative/15 text-negative"
                 : "border-line bg-surface-2 text-ink-section"
             }`}
           >
@@ -93,7 +87,7 @@ export default function StudyLogger({ themes, demo }) {
             aria-pressed={minutes === d}
             className={`num min-h-[44px] rounded-tile border text-sm ${
               minutes === d
-                ? "border-rose-line bg-rose-bg text-rose-hover"
+                ? "border-negative/40 bg-negative/15 text-negative"
                 : "border-line bg-surface-2 text-ink-section"
             }`}
           >
