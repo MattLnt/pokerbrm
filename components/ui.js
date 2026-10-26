@@ -8,10 +8,10 @@
  * grand écran. Sur mobile les deux sont identiques.
  */
 export function Screen({ children, width = "narrow" }) {
-  const max = width === "wide" ? "lg:max-w-[1180px]" : "lg:max-w-[640px]";
+  const max = width === "wide" ? "lg:max-w-[1440px]" : "lg:max-w-[760px]";
   return (
     <main
-      className={`mx-auto w-full max-w-[560px] px-4 pt-6 lg:px-10 lg:pt-12 ${max}`}
+      className={`mx-auto w-full max-w-[560px] px-4 pt-6 lg:px-8 lg:pt-10 xl:px-12 ${max}`}
     >
       {children}
     </main>

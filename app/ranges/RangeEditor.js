@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { Check, Copy, Eraser } from "lucide-react";
 
 import RangeGrid from "@/components/RangeGrid";
@@ -28,6 +28,7 @@ export default function RangeEditor({ initialRanges, demo }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
   const [pending, startTransition] = useTransition();
+  const modeGeste = useRef("peindre");
 
   const key = spotKey({ position, action, stackDepth });
   // useMemo sur l'objet lui-même : sans ça, le `?? {}` crée une nouvelle
@@ -43,11 +44,24 @@ export default function RangeEditor({ initialRanges, demo }) {
     });
   }
 
-  function paint(hand) {
+  /**
+   * `premier` marque le début d'un geste. C'est lui seul qui décide du mode :
+   * repartir d'une main déjà peinte à l'identique efface, sinon on peint. Le
+   * reste du glissement garde ce mode, sinon un trait qui repasse sur ses
+   * propres cases les effacerait au fur et à mesure.
+   */
+  function paint(hand, premier = true) {
+    if (premier) {
+      const existante = cells[hand] ?? {};
+      modeGeste.current =
+        existante[brush] === frequency && Object.keys(existante).length === 1
+          ? "effacer"
+          : "peindre";
+    }
+    const mode = modeGeste.current;
+
     updateCells((current) => {
-      const existing = current[hand] ?? {};
-      // Repeindre une main déjà entièrement peinte avec le même pinceau l'efface.
-      if (existing[brush] === frequency && Object.keys(existing).length === 1) {
+      if (mode === "effacer") {
         const { [hand]: _removed, ...rest } = current;
         return rest;
       }
@@ -114,12 +128,17 @@ export default function RangeEditor({ initialRanges, demo }) {
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
-      {/* Colonne principale : choix du spot, grille, statistiques */}
-      <div>
+      {/* Colonne principale : choix du spot, grille, statistiques.
+          À partir de xl il y a assez de largeur pour ranger le spot et les
+          stats à gauche de la grille : la grille n'est plus bornée que par la
+          hauteur de l'écran, et la place gagnée en largeur ne reste pas vide
+          à côté d'un carré centré. En dessous, tout s'empile dans l'ordre
+          spot → grille → stats. */}
+      <div className="flex flex-col xl:grid xl:grid-cols-[260px_minmax(0,1fr)] xl:grid-rows-[auto_1fr] xl:items-start xl:gap-5">
         {/* Sélecteur de spot */}
-        <Card className="p-4">
+        <Card className="order-1 p-4 xl:col-start-1 xl:row-start-1">
         <p className="kicker mb-2">Position</p>
-        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1">
+        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
           {POSITIONS.map((p) => (
             <Chip key={p} active={p === position} onClick={() => setPosition(p)}>
               {p}
@@ -128,7 +147,7 @@ export default function RangeEditor({ initialRanges, demo }) {
         </div>
 
         <p className="kicker mb-2">Action</p>
-        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1">
+        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
           {RANGE_ACTIONS.map((a) => (
             <Chip
               key={a.key}
@@ -141,7 +160,7 @@ export default function RangeEditor({ initialRanges, demo }) {
         </div>
 
         <p className="kicker mb-2">Profondeur</p>
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
           {STACK_DEPTHS.map((d) => (
             <Chip
               key={d.key}
@@ -154,8 +173,11 @@ export default function RangeEditor({ initialRanges, demo }) {
         </div>
       </Card>
 
-      {/* Grille */}
-      <div className="mt-4">
+      {/* Grille. Elle est carrée : sans plafond, elle prend la largeur de la
+          colonne et dépasse le bas de l'écran. On la borne donc par la hauteur
+          restante — sur mobile le plafond est plus large que l'écran, la
+          grille y garde toute la largeur. */}
+      <div className="order-2 mx-auto mt-4 w-full max-w-[min(100%,calc(100dvh-230px))] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-0">
         <RangeGrid
           cells={cells}
           brushes={RANGE_BRUSHES}
@@ -165,7 +187,7 @@ export default function RangeEditor({ initialRanges, demo }) {
       </div>
 
       {/* Stats en direct */}
-      <Card className="mt-4 p-4">
+      <Card className="order-3 mt-4 p-4 xl:col-start-1 xl:row-start-2">
         <div className="flex items-baseline justify-between">
           <p className="text-base text-ink-muted">Range</p>
           <p className="num text-xl font-bold">
