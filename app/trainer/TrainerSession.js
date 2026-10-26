@@ -347,12 +347,9 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   const { position, profondeur } = decouper(question.spot);
 
   return (
-    /* Trois zones, comme l'éditeur de ranges : l'état de la session à
-       gauche, la table au centre — elle doit être la plus grande chose de
-       l'écran —, les réponses à droite. Tout tenait dans une colonne de
-       620 px au milieu d'un écran trois fois plus large. */
-    <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[240px_minmax(0,1fr)_300px]">
-      {/* Gauche : où en est la session */}
+    /* Deux zones : l'état de la session à gauche, la table au centre avec
+       ses réponses et sa correction dessous, sur la même largeur. */
+    <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-5">
       <div className="max-lg:mb-4 lg:sticky lg:top-6">
         <Card className="p-4">
           <div className="mb-2 flex items-baseline justify-between">
@@ -397,21 +394,20 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
         </Button>
       </div>
 
-      {/* Centre : la table, et les réponses juste en dessous */}
-      <div>
-        <Card className="p-2 lg:p-3">
-          <PokerTable
-            heros={position}
-            main={question.main}
-            profondeur={profondeur}
-            scene={question.scene}
-          />
-        </Card>
+      {/* La table n'est plus enfermée dans une carte : le rail lui suffit
+          pour se détacher, un cadre de plus ne faisait que l'enserrer.
+          Sa largeur est plafonnée — étalée sur toute la colonne, elle
+          devenait si haute que les réponses passaient sous l'écran. */}
+      <div className="mx-auto w-full max-w-[720px]">
+        <PokerTable
+          heros={position}
+          main={question.main}
+          profondeur={profondeur}
+          scene={question.scene}
+        />
 
-        {/* Une rangée de boutons pleins, du plus passif au plus agressif :
-            c'est l'ordre dans lequel on les cherche, et la couleur dit la
-            force de l'action sans qu'on ait à lire. */}
-        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {/* Les réponses, pleines et sur une rangée. */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {ANSWERS.map((a) => (
             <button
               key={a.key}
@@ -433,54 +429,44 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Droite : la correction */}
-      <div className="max-lg:mt-4 xl:sticky xl:top-6">
+        {/* La correction sous les réponses, sur toute leur largeur. */}
         {verdict ? (
           <Card
-            className={`mb-2.5 p-4 ${
+            className={`mt-2 p-4 ${
               verdict.correct ? "border-positive/40" : "border-warning/40"
             }`}
           >
-            <p
-              className={`mb-2 flex items-center gap-2 font-semibold ${
-                verdict.correct ? "text-positive" : "text-warning"
-              }`}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p
+                className={`flex items-center gap-2 font-semibold ${
+                  verdict.correct ? "text-positive" : "text-warning"
+                }`}
+              >
+                {verdict.correct ? <Check size={18} /> : <X size={18} />}
+                {verdict.correct ? "Correct" : "Raté"}
+              </p>
+              <p className="text-sm text-ink-muted">
+                Attendu :{" "}
+                {Object.entries(verdict.expected)
+                  .map(([a, f]) => {
+                    const label = ANSWERS.find((x) => x.key === a)?.label ?? a;
+                    return `${label} ${f} %`;
+                  })
+                  .join(" · ")}
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              className="mt-3 w-full"
+              onClick={suivante}
             >
-              {verdict.correct ? <Check size={18} /> : <X size={18} />}
-              {verdict.correct ? "Correct" : "Raté"}
-            </p>
-            <p className="text-sm leading-[var(--lh-normal)] text-ink-muted">
-              Attendu :{" "}
-              {Object.entries(verdict.expected)
-                .map(([a, f]) => {
-                  const label = ANSWERS.find((x) => x.key === a)?.label ?? a;
-                  return `${label} ${f} %`;
-                })
-                .join(" · ")}
-            </p>
+              Main suivante
+            </Button>
           </Card>
         ) : null}
-
-        {verdict ? (
-          <Button
-            type="button"
-            variant="primary"
-            className="w-full"
-            onClick={suivante}
-          >
-            Main suivante
-          </Button>
-        ) : (
-          <Card className="p-4">
-            <p className="kicker mb-2">À toi</p>
-            <p className="text-sm leading-[var(--lh-normal)] text-ink-muted">
-              Choisis ton action sous la table. La correction s&apos;affiche
-              ici, avec les fréquences de ta range.
-            </p>
-          </Card>
-        )}
       </div>
     </div>
   );
