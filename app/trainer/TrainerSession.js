@@ -344,98 +344,132 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     );
   }
 
+  const { position, profondeur } = decouper(question.spot);
+
   return (
-    <div className="mx-auto max-w-[620px]">
-      {/* Progression */}
-      <div className="mb-3">
-        <div className="mb-2 flex items-baseline justify-between text-sm text-ink-muted">
-          <span className="num">
-            Main {index + 1} / {longueur}
-          </span>
-          <span className="num">
-            {score.right} ✓ · {score.wrong} ✕
-          </span>
-        </div>
-        <ProgressBar value={index} max={longueur} />
+    /* Trois zones, comme l'éditeur de ranges : l'état de la session à
+       gauche, la table au centre — elle doit être la plus grande chose de
+       l'écran —, les réponses à droite. Tout tenait dans une colonne de
+       620 px au milieu d'un écran trois fois plus large. */
+    <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[240px_minmax(0,1fr)_300px]">
+      {/* Gauche : où en est la session */}
+      <div className="max-lg:mb-4 lg:sticky lg:top-6">
+        <Card className="p-4">
+          <div className="mb-2 flex items-baseline justify-between">
+            <p className="kicker">Main</p>
+            <p className="num text-sm text-ink-muted">
+              {index + 1} / {longueur}
+            </p>
+          </div>
+          <ProgressBar value={index} max={longueur} />
+
+          <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-tile bg-bg-sunken py-2">
+              <p className="num text-[var(--fs-lg)] font-bold text-positive">
+                {score.right}
+              </p>
+              <p className="kicker mt-0.5">Justes</p>
+            </div>
+            <div className="rounded-tile bg-bg-sunken py-2">
+              <p className="num text-[var(--fs-lg)] font-bold text-warning">
+                {score.wrong}
+              </p>
+              <p className="kicker mt-0.5">Ratées</p>
+            </div>
+          </div>
+
+          <p className="kicker mb-1.5 mt-4">Le spot</p>
+          <p className="text-sm text-ink-section">{spotLabel(question.spot)}</p>
+          {question.scene?.consigne ? (
+            <p className="mt-2 text-sm leading-[var(--lh-normal)] text-ink-muted">
+              {question.scene.consigne}
+            </p>
+          ) : null}
+        </Card>
+
+        <Button
+          type="button"
+          className="mt-2.5 w-full"
+          onClick={() => setEnCours(null)}
+        >
+          <Settings2 size={18} />
+          Changer de spots
+        </Button>
       </div>
 
-      {/* La table */}
-      <Card className="p-3">
+      {/* Centre : la table */}
+      <Card className="p-3 lg:p-4">
         <PokerTable
-          heros={decouper(question.spot).position}
+          heros={position}
           main={question.main}
-          profondeur={decouper(question.spot).profondeur}
+          profondeur={profondeur}
           scene={question.scene}
         />
       </Card>
 
-      {/* Correction */}
-      {verdict ? (
-        <Card
-          className={`mt-3 p-4 ${
-            verdict.correct ? "border-positive/40" : "border-warning/40"
-          }`}
-        >
-          <p
-            className={`mb-2 flex items-center gap-2 font-semibold ${
-              verdict.correct ? "text-positive" : "text-warning"
+      {/* Droite : la décision, et la correction juste au-dessus */}
+      <div className="max-lg:mt-4 xl:sticky xl:top-6">
+        {verdict ? (
+          <Card
+            className={`mb-2.5 p-4 ${
+              verdict.correct ? "border-positive/40" : "border-warning/40"
             }`}
           >
-            {verdict.correct ? <Check size={18} /> : <X size={18} />}
-            {verdict.correct ? "Correct" : "Raté"}
-            <span className="ml-auto text-sm font-normal text-ink-muted">
-              {spotLabel(question.spot)}
-            </span>
-          </p>
-          <p className="text-sm text-ink-muted">
-            Attendu :{" "}
-            {Object.entries(verdict.expected)
-              .map(([a, f]) => {
-                const label = ANSWERS.find((x) => x.key === a)?.label ?? a;
-                return `${label} ${f} %`;
-              })
-              .join(" · ")}
-          </p>
-        </Card>
-      ) : null}
+            <p
+              className={`mb-2 flex items-center gap-2 font-semibold ${
+                verdict.correct ? "text-positive" : "text-warning"
+              }`}
+            >
+              {verdict.correct ? <Check size={18} /> : <X size={18} />}
+              {verdict.correct ? "Correct" : "Raté"}
+            </p>
+            <p className="text-sm leading-[var(--lh-normal)] text-ink-muted">
+              Attendu :{" "}
+              {Object.entries(verdict.expected)
+                .map(([a, f]) => {
+                  const label = ANSWERS.find((x) => x.key === a)?.label ?? a;
+                  return `${label} ${f} %`;
+                })
+                .join(" · ")}
+            </p>
+          </Card>
+        ) : null}
 
-      {/* Réponses */}
-      <SectionTitle>Ton action</SectionTitle>
-      <div className="grid grid-cols-2 gap-2.5">
-        {ANSWERS.map((a) => (
-          <button
-            key={a.key}
+        <p className="kicker mb-2">Ton action</p>
+        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-1">
+          {ANSWERS.map((a) => (
+            <button
+              key={a.key}
+              type="button"
+              onClick={() => repondre(a.key)}
+              disabled={Boolean(verdict)}
+              className={`flex min-h-[56px] items-center justify-center gap-2 rounded-tile border text-base font-medium transition-opacity disabled:opacity-40 ${
+                verdict?.given === a.key
+                  ? "border-ink/40 bg-surface-3"
+                  : "border-line bg-surface"
+              }`}
+            >
+              <span
+                className="size-3 rounded-[2px]"
+                style={{ background: a.color }}
+                aria-hidden
+              />
+              {a.label}
+            </button>
+          ))}
+        </div>
+
+        {verdict ? (
+          <Button
             type="button"
-            onClick={() => repondre(a.key)}
-            disabled={Boolean(verdict)}
-            className={`flex min-h-[56px] items-center justify-center gap-2 rounded-tile border text-base font-medium transition-opacity disabled:opacity-40 ${
-              verdict?.given === a.key
-                ? "border-ink/40 bg-surface-3"
-                : "border-line bg-surface"
-            }`}
+            variant="primary"
+            className="mt-2.5 w-full"
+            onClick={suivante}
           >
-            <span
-              className="size-3 rounded-[2px]"
-              style={{ background: a.color }}
-              aria-hidden
-            />
-            {a.label}
-          </button>
-        ))}
+            Main suivante
+          </Button>
+        ) : null}
       </div>
-
-      {verdict ? (
-        <Button
-          type="button"
-          variant="primary"
-          className="mt-4 w-full"
-          onClick={suivante}
-        >
-          Main suivante
-        </Button>
-      ) : null}
-
-      <div className="h-6" />
     </div>
   );
 }
