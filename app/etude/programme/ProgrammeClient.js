@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ChevronUp, ChevronDown, Trash2, X } from "lucide-react";
+import {
+  Plus,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  X,
+  RotateCcw,
+} from "lucide-react";
 
 import { Card, SectionTitle, Button, EmptyState } from "@/components/ui";
 
@@ -241,6 +248,7 @@ function NouveauTheme({ onAppel, onAnnuler, pending }) {
 export default function ProgrammeClient({ themes, demo }) {
   const router = useRouter();
   const [creation, setCreation] = useState(false);
+  const [remiseAZero, setRemiseAZero] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [pending, startTransition] = useTransition();
 
@@ -254,7 +262,7 @@ export default function ProgrammeClient({ themes, demo }) {
       const res = await fetch("/api/study-themes", {
         method: methode,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(corps),
+        body: corps === undefined ? undefined : JSON.stringify(corps),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -349,6 +357,35 @@ export default function ProgrammeClient({ themes, demo }) {
             celui sur lequel tu travailles — il apparaîtra sur la vue
             d&apos;ensemble et sur l&apos;accueil.
           </p>
+        </Card>
+
+        <SectionTitle>Repartir à zéro</SectionTitle>
+        <Card className="p-4">
+          <p className="mb-3 text-sm leading-[var(--lh-normal)] text-ink-muted">
+            Remplace ton programme par celui livré avec l&apos;app. Tes thèmes
+            et tes objectifs actuels sont perdus ; les sessions du journal sont
+            gardées, elles perdent seulement leur lien vers le thème.
+          </p>
+          {/* Deux temps : l'action efface des données et rien ne la défait. */}
+          <Button
+            type="button"
+            variant={remiseAZero ? "danger" : "secondary"}
+            className="w-full"
+            disabled={pending || demo}
+            onBlur={() => setRemiseAZero(false)}
+            onClick={() => {
+              if (!remiseAZero) {
+                setRemiseAZero(true);
+                return;
+              }
+              appeler("PUT", undefined, () => setRemiseAZero(false));
+            }}
+          >
+            <RotateCcw size={18} />
+            {remiseAZero
+              ? "Confirmer le remplacement"
+              : "Programme par défaut"}
+          </Button>
         </Card>
       </div>
     </div>

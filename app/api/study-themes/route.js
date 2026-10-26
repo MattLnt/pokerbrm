@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma, hasDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/user";
+import { THEMES } from "@/lib/programme";
 
 function sansBase() {
   return NextResponse.json(
@@ -75,6 +76,28 @@ export async function POST(request) {
   });
 
   return NextResponse.json({ id: theme.id });
+}
+
+/**
+ * Remplace le programme par celui livré avec l'app.
+ *
+ * La graine ne s'applique qu'à une base vide : sans ça, un programme semé
+ * une fois reste figé pour toujours, même quand la version livrée change.
+ * Les sessions du journal survivent — elles perdent seulement leur lien
+ * vers le thème, que la base met à NULL.
+ */
+export async function PUT() {
+  if (!hasDatabase()) return sansBase();
+
+  const user = await getCurrentUser();
+  await prisma.$transaction([
+    prisma.studyTheme.deleteMany({ where: { userId: user.id } }),
+    prisma.studyTheme.createMany({
+      data: THEMES.map((theme, position) => ({ ...theme, userId: user.id, position })),
+    }),
+  ]);
+
+  return NextResponse.json({ count: THEMES.length });
 }
 
 export async function PATCH(request) {
