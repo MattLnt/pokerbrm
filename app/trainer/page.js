@@ -42,7 +42,7 @@ export default async function TrainerPage({ searchParams }) {
   }
 
   return (
-    <Screen>
+    <Screen width="wide">
       <PageHeader eyebrow={DEMO ? "Données d'exemple" : null} title="Trainer" />
       <TrainerSession
         ranges={Object.fromEntries(playable)}

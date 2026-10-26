@@ -1,105 +1,324 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Check, X, RotateCcw } from "lucide-react";
+import { Check, X, RotateCcw, Play, Settings2 } from "lucide-react";
 
 import { Card, SectionTitle, Button, ProgressBar, StatTile } from "@/components/ui";
-import { RANGE_BRUSHES, RANGE_ACTIONS, STACK_DEPTHS } from "@/lib/constants";
+import PokerTable from "@/components/PokerTable";
+import {
+  RANGE_BRUSHES,
+  RANGE_ACTIONS,
+  STACK_DEPTHS,
+  POSITIONS,
+} from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
 import { pickHand, gradeAnswer, review } from "@/lib/spaced";
+import { scenario } from "@/lib/table";
 import { formatPercent } from "@/lib/format";
 
-const SESSION_LENGTH = 20;
+const LONGUEURS = [20, 50, 100];
 const ANSWERS = RANGE_BRUSHES;
 
-function spotLabel(key) {
-  const [position, action, depth] = key.split("|");
-  const actionLabel = RANGE_ACTIONS.find((a) => a.key === action)?.label ?? action;
-  const depthLabel = STACK_DEPTHS.find((d) => d.key === depth)?.label ?? depth;
-  return `${position} · ${actionLabel} · ${depthLabel}`;
+function decouper(cle) {
+  const [position, action, profondeur] = cle.split("|");
+  return { position, action, profondeur };
+}
+
+function libelleAction(cle) {
+  return RANGE_ACTIONS.find((a) => a.key === cle)?.label ?? cle;
+}
+
+function libelleProfondeur(cle) {
+  return STACK_DEPTHS.find((d) => d.key === cle)?.label ?? cle;
+}
+
+function spotLabel(cle) {
+  const { position, action, profondeur } = decouper(cle);
+  return `${position} · ${libelleAction(action)} · ${libelleProfondeur(profondeur)}`;
+}
+
+/** Pastille de sélection, reprise de l'éditeur de ranges. */
+function Chip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`min-h-[40px] shrink-0 rounded-pill border px-4 text-sm transition-colors ${
+        active
+          ? "border-negative/40 bg-negative/15 text-negative"
+          : "border-line bg-surface-2 text-ink-section"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Écran de réglage : ce qu'on drille.
+ *
+ * Le trainer imposait un spot à la fois, choisi dans un menu déroulant. On
+ * ne joue jamais un seul spot à table : ce qui est dur, c'est justement de
+ * reconnaître lequel on a sous les yeux. On sélectionne donc des positions,
+ * des actions et des profondeurs, et la session pioche dedans.
+ */
+function Reglage({ spots, choix, setChoix, longueur, setLongueur, onLancer }) {
+  // On ne propose que des valeurs qui existent vraiment dans les ranges
+  // saisies : une pastille qui ne mène à rien est une fausse piste.
+  const disponibles = useMemo(() => {
+    const positions = new Set();
+    const actions = new Set();
+    const profondeurs = new Set();
+    for (const cle of spots) {
+      const d = decouper(cle);
+      positions.add(d.position);
+      actions.add(d.action);
+      profondeurs.add(d.profondeur);
+    }
+    return { positions, actions, profondeurs };
+  }, [spots]);
+
+  function basculer(famille, valeur) {
+    setChoix((precedent) => {
+      const courant = new Set(precedent[famille]);
+      if (courant.has(valeur)) courant.delete(valeur);
+      else courant.add(valeur);
+      return { ...precedent, [famille]: courant };
+    });
+  }
+
+  const retenus = spots.filter((cle) => {
+    const d = decouper(cle);
+    return (
+      (choix.positions.size === 0 || choix.positions.has(d.position)) &&
+      (choix.actions.size === 0 || choix.actions.has(d.action)) &&
+      (choix.profondeurs.size === 0 || choix.profondeurs.has(d.profondeur))
+    );
+  });
+
+  return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+      <Card className="p-4">
+        <p className="kicker mb-2">Position</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {POSITIONS.filter((p) => disponibles.positions.has(p)).map((p) => (
+            <Chip
+              key={p}
+              active={choix.positions.has(p)}
+              onClick={() => basculer("positions", p)}
+            >
+              {p}
+            </Chip>
+          ))}
+        </div>
+
+        <p className="kicker mb-2">Action</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {RANGE_ACTIONS.filter((a) => disponibles.actions.has(a.key)).map((a) => (
+            <Chip
+              key={a.key}
+              active={choix.actions.has(a.key)}
+              onClick={() => basculer("actions", a.key)}
+            >
+              {a.label}
+            </Chip>
+          ))}
+        </div>
+
+        <p className="kicker mb-2">Profondeur</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {STACK_DEPTHS.filter((d) => disponibles.profondeurs.has(d.key)).map(
+            (d) => (
+              <Chip
+                key={d.key}
+                active={choix.profondeurs.has(d.key)}
+                onClick={() => basculer("profondeurs", d.key)}
+              >
+                {d.label}
+              </Chip>
+            )
+          )}
+        </div>
+
+        <p className="kicker mb-2">Longueur</p>
+        <div className="flex flex-wrap gap-2">
+          {LONGUEURS.map((n) => (
+            <Chip key={n} active={longueur === n} onClick={() => setLongueur(n)}>
+              <span className="num">{n} mains</span>
+            </Chip>
+          ))}
+        </div>
+      </Card>
+
+      <div className="max-lg:mt-4 lg:sticky lg:top-6">
+        <SectionTitle tight>Au programme</SectionTitle>
+        <Card className="p-4">
+          <p className="num text-[var(--fs-xl)] font-bold">
+            {retenus.length}
+            <span className="ml-2 text-base font-normal text-ink-muted">
+              {retenus.length > 1 ? "spots retenus" : "spot retenu"}
+            </span>
+          </p>
+          <p className="mt-2 text-sm leading-[var(--lh-normal)] text-ink-muted">
+            {choix.positions.size === 0 &&
+            choix.actions.size === 0 &&
+            choix.profondeurs.size === 0
+              ? "Aucun filtre : la session pioche dans toutes tes ranges."
+              : "La session pioche au hasard parmi ces spots, en resservant plus souvent les mains que tu rates."}
+          </p>
+
+          {retenus.length > 0 && retenus.length <= 8 ? (
+            <ul className="scroll-fin mt-3 max-h-40 space-y-1 overflow-auto">
+              {retenus.map((cle) => (
+                <li key={cle} className="text-sm text-ink-section">
+                  {spotLabel(cle)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <Button
+            type="button"
+            variant="primary"
+            className="mt-4 w-full"
+            disabled={retenus.length === 0}
+            onClick={() => onLancer(retenus)}
+          >
+            <Play size={18} />
+            Lancer la session
+          </Button>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 export default function TrainerSession({ ranges, demo, initialSpot }) {
   const spots = useMemo(() => Object.keys(ranges), [ranges]);
-  const [spot, setSpot] = useState(
-    initialSpot && ranges[initialSpot] ? initialSpot : spots[0]
-  );
+
+  const [choix, setChoix] = useState(() => {
+    // Un spot passé dans l'URL (depuis les faiblesses) pré-remplit le
+    // réglage plutôt que de lancer une session dans le dos de l'utilisateur.
+    if (initialSpot && ranges[initialSpot]) {
+      const d = decouper(initialSpot);
+      return {
+        positions: new Set([d.position]),
+        actions: new Set([d.action]),
+        profondeurs: new Set([d.profondeur]),
+      };
+    }
+    return { positions: new Set(), actions: new Set(), profondeurs: new Set() };
+  });
+  const [longueur, setLongueur] = useState(LONGUEURS[0]);
+
+  const [enCours, setEnCours] = useState(null); // liste des spots de la session
   const [index, setIndex] = useState(0);
-  const [hand, setHand] = useState(() => pickHand(ALL_HANDS, []));
+  const [question, setQuestion] = useState(null);
   const [verdict, setVerdict] = useState(null);
   const [score, setScore] = useState({ right: 0, wrong: 0 });
   const [finished, setFinished] = useState(false);
 
-  // État de répétition espacée, par main, en mémoire de session.
+  // Répétition espacée, en mémoire de session. La clé porte le spot : la
+  // même main n'a pas la même difficulté selon la situation.
   const memory = useRef(new Map());
 
-  const dueHands = useCallback(() => {
+  const tirer = useCallback((pool) => {
+    const spot = pool[Math.floor(Math.random() * pool.length)];
     const now = Date.now();
-    return [...memory.current.entries()]
-      .filter(([, s]) => new Date(s.dueAt).getTime() <= now && s.repetition === 0)
-      .map(([h]) => h);
+    const dues = [...memory.current.entries()]
+      .filter(
+        ([cle, etat]) =>
+          cle.startsWith(`${spot}#`) &&
+          etat.repetition === 0 &&
+          new Date(etat.dueAt).getTime() <= now
+      )
+      .map(([cle]) => cle.split("#")[1]);
+
+    return { spot, main: pickHand(ALL_HANDS, dues), scene: null };
   }, []);
 
-  const draw = useCallback(() => {
-    const next = pickHand(ALL_HANDS, dueHands());
-    setHand(next);
-    setVerdict(null);
-  }, [dueHands]);
+  const poser = useCallback(
+    (pool) => {
+      const tiree = tirer(pool);
+      const { action, position } = decouper(tiree.spot);
+      setQuestion({ ...tiree, scene: scenario(action, position) });
+      setVerdict(null);
+    },
+    [tirer]
+  );
 
-  function answer(key) {
-    if (verdict) return;
-    const result = gradeAnswer(ranges[spot], hand, key);
-    setVerdict({ ...result, given: key });
+  function lancer(pool) {
+    memory.current = new Map();
+    setEnCours(pool);
+    setIndex(0);
+    setScore({ right: 0, wrong: 0 });
+    setFinished(false);
+    poser(pool);
+  }
 
-    memory.current.set(hand, review(memory.current.get(hand), result.correct));
+  function repondre(cle) {
+    if (verdict || !question) return;
+    const resultat = gradeAnswer(ranges[question.spot], question.main, cle);
+    setVerdict({ ...resultat, given: cle });
+
+    const memoire = `${question.spot}#${question.main}`;
+    memory.current.set(
+      memoire,
+      review(memory.current.get(memoire), resultat.correct)
+    );
     setScore((s) => ({
-      right: s.right + (result.correct ? 1 : 0),
-      wrong: s.wrong + (result.correct ? 0 : 1),
+      right: s.right + (resultat.correct ? 1 : 0),
+      wrong: s.wrong + (resultat.correct ? 0 : 1),
     }));
 
     if (!demo) {
-      // Historique persistant pour alimenter les stats et l'Accueil.
+      // Historique persistant : c'est lui qui alimente les faiblesses.
       fetch("/api/drill-attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          spot,
-          hand,
-          answer: key,
-          correct: result.correct,
+          spot: question.spot,
+          hand: question.main,
+          answer: cle,
+          correct: resultat.correct,
         }),
       }).catch(() => {});
     }
   }
 
-  function next() {
-    if (index + 1 >= SESSION_LENGTH) {
+  function suivante() {
+    if (index + 1 >= longueur) {
       setFinished(true);
       return;
     }
     setIndex((i) => i + 1);
-    draw();
-  }
-
-  function restart() {
-    memory.current = new Map();
-    setIndex(0);
-    setScore({ right: 0, wrong: 0 });
-    setFinished(false);
-    setHand(pickHand(ALL_HANDS, []));
-    setVerdict(null);
+    poser(enCours);
   }
 
   const total = score.right + score.wrong;
-  const successRate = total > 0 ? (score.right / total) * 100 : 0;
+  const reussite = total > 0 ? (score.right / total) * 100 : 0;
+
+  if (!enCours) {
+    return (
+      <Reglage
+        spots={spots}
+        choix={choix}
+        setChoix={setChoix}
+        longueur={longueur}
+        setLongueur={setLongueur}
+        onLancer={lancer}
+      />
+    );
+  }
 
   if (finished) {
     return (
-      <>
+      <div className="mx-auto max-w-[560px]">
         <Card className="p-5 text-center">
           <p className="kicker mb-2">Session terminée</p>
           <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)]">
-            {formatPercent(successRate, { decimals: 0 })}
+            {formatPercent(reussite, { decimals: 0 })}
           </p>
           <p className="mt-2 text-base text-ink-muted">
             {score.right} bonnes réponses sur {total}
@@ -111,61 +330,43 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           <StatTile label="Ratées" value={score.wrong} tone="text-warning" />
         </div>
 
-        <Button
-          type="button"
-          variant="primary"
-          className="mt-4 w-full"
-          onClick={restart}
-        >
-          <RotateCcw size={18} />
-          Relancer une session
-        </Button>
-      </>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Button type="button" onClick={() => setEnCours(null)}>
+            <Settings2 size={18} />
+            Changer
+          </Button>
+          <Button type="button" variant="primary" onClick={() => lancer(enCours)}>
+            <RotateCcw size={18} />
+            Relancer
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      {/* Choix du spot */}
-      {spots.length > 1 ? (
-        <label className="mb-4 block">
-          <span className="kicker mb-2 block">Spot</span>
-          <select
-            value={spot}
-            onChange={(e) => {
-              setSpot(e.target.value);
-              restart();
-            }}
-            className="bd-select"
-          >
-            {spots.map((k) => (
-              <option key={k} value={k}>
-                {spotLabel(k)}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : (
-        <p className="mb-4 text-base text-ink-section">{spotLabel(spot)}</p>
-      )}
-
+    <div className="mx-auto max-w-[620px]">
       {/* Progression */}
-      <div className="mb-4">
+      <div className="mb-3">
         <div className="mb-2 flex items-baseline justify-between text-sm text-ink-muted">
           <span className="num">
-            Main {index + 1} / {SESSION_LENGTH}
+            Main {index + 1} / {longueur}
           </span>
           <span className="num">
             {score.right} ✓ · {score.wrong} ✕
           </span>
         </div>
-        <ProgressBar value={index} max={SESSION_LENGTH} />
+        <ProgressBar value={index} max={longueur} />
       </div>
 
-      {/* La main */}
-      <Card className="px-5 py-10 text-center">
-        <p className="kicker mb-3">Ta main</p>
-        <p className="num text-[var(--fs-3xl)] font-bold leading-[var(--lh-tight)]">{hand}</p>
+      {/* La table */}
+      <Card className="p-3">
+        <PokerTable
+          heros={decouper(question.spot).position}
+          main={question.main}
+          profondeur={decouper(question.spot).profondeur}
+          scene={question.scene}
+        />
       </Card>
 
       {/* Correction */}
@@ -182,6 +383,9 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           >
             {verdict.correct ? <Check size={18} /> : <X size={18} />}
             {verdict.correct ? "Correct" : "Raté"}
+            <span className="ml-auto text-sm font-normal text-ink-muted">
+              {spotLabel(question.spot)}
+            </span>
           </p>
           <p className="text-sm text-ink-muted">
             Attendu :{" "}
@@ -202,7 +406,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           <button
             key={a.key}
             type="button"
-            onClick={() => answer(a.key)}
+            onClick={() => repondre(a.key)}
             disabled={Boolean(verdict)}
             className={`flex min-h-[56px] items-center justify-center gap-2 rounded-tile border text-base font-medium transition-opacity disabled:opacity-40 ${
               verdict?.given === a.key
@@ -225,13 +429,13 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           type="button"
           variant="primary"
           className="mt-4 w-full"
-          onClick={next}
+          onClick={suivante}
         >
           Main suivante
         </Button>
       ) : null}
 
       <div className="h-6" />
-    </>
+    </div>
   );
 }
