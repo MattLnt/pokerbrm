@@ -7,6 +7,7 @@ import {
   combosOf,
   rangeStats,
   cellBackground,
+  couvertureCase,
   melanger,
   basculerSelection,
   basculerSelectionRapide,
@@ -73,14 +74,24 @@ test("fond de case : couleur pleine, partielle, puis bandes", () => {
   const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).color;
 
   const plein = cellBackground({ raise: 100 }, RANGE_BRUSHES);
-  assert.equal(plein, couleur("raise"));
+  assert.ok(plein.includes(`${couleur("raise")} 0% 100%`));
+  assert.ok(!plein.includes("transparent"));
 
+  // Ce qui n'est pas peint laisse voir le fond de la case.
   const partiel = cellBackground({ raise: 50 }, RANGE_BRUSHES);
-  assert.match(partiel, /linear-gradient.*50%/);
+  assert.ok(partiel.includes(`${couleur("raise")} 0% 50%`));
+  assert.ok(partiel.includes("transparent 50% 100%"));
 
   const mixte = cellBackground({ raise: 60, call: 40 }, RANGE_BRUSHES);
   assert.ok(mixte.includes(`${couleur("raise")} 0% 60%`));
   assert.ok(mixte.includes(`${couleur("call")} 60% 100%`));
+  assert.ok(!mixte.includes("transparent"));
+
+  // 50 raise + 30 call : les 20 restants ne sont pas peints.
+  const avecFold = cellBackground({ raise: 50, call: 30 }, RANGE_BRUSHES);
+  assert.ok(avecFold.includes(`${couleur("raise")} 0% 50%`));
+  assert.ok(avecFold.includes(`${couleur("call")} 50% 80%`));
+  assert.ok(avecFold.includes("transparent 80% 100%"));
 
   assert.equal(cellBackground({}, RANGE_BRUSHES), null);
   assert.equal(cellBackground({ fold: 100 }, RANGE_BRUSHES), null);
@@ -167,4 +178,12 @@ test("sélection rapide : relâcher un ensemble n'emporte pas celui d'à côté"
   // Puis les connecteurs, que plus rien ne retient.
   cells = basculerSelectionRapide(cells, "suited-connectors", "raise", 100);
   assert.deepEqual(cells, {});
+});
+
+test("couverture : somme des actions, fold exclu, plafonnée à 100", () => {
+  assert.equal(couvertureCase(undefined), 0);
+  assert.equal(couvertureCase({ fold: 100 }), 0);
+  assert.equal(couvertureCase({ raise: 50 }), 50);
+  assert.equal(couvertureCase({ raise: 50, call: 30 }), 80);
+  assert.equal(couvertureCase({ raise: 80, call: 80 }), 100);
 });

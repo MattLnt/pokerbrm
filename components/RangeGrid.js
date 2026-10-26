@@ -2,7 +2,12 @@
 
 import { useCallback, useRef } from "react";
 
-import { RANKS, handAt, cellBackground } from "@/lib/hands";
+import {
+  RANKS,
+  handAt,
+  cellBackground,
+  couvertureCase,
+} from "@/lib/hands";
 
 const TAILLE = RANKS.length; // 13
 
@@ -129,8 +134,18 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
       {RANKS.map((_, row) =>
         RANKS.map((__, col) => {
           const hand = handAt(row, col);
-          const background = cellBackground(cells[hand], brushes);
-          const painted = Boolean(background);
+          const fond = cellBackground(cells[hand], brushes);
+          const couverture = couvertureCase(cells[hand]);
+          // 65 % et non 50 : l'étiquette est centrée mais elle a une
+          // hauteur, et son haut court vers 62 % de la case. En dessous,
+          // elle déborderait sur le fond sombre, où du texte sombre ne se
+          // lit plus — elle reste donc claire.
+          const etiquette =
+            couverture >= 65
+              ? "text-bg-deep"
+              : couverture > 0
+                ? "text-ink"
+                : "text-ink-muted";
           return (
             <button
               key={hand}
@@ -138,12 +153,8 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
               data-hand={hand}
               role="gridcell"
               aria-label={hand}
-              className={`relative aspect-square rounded-[3px] text-[var(--fs-overline)] font-semibold leading-none transition-colors ${
-                painted
-                  ? "text-bg-deep"
-                  : "bg-surface-2 text-ink-muted"
-              }`}
-              style={background ? { background } : undefined}
+              className={`relative aspect-square rounded-[3px] bg-surface-2 text-[var(--fs-overline)] font-semibold leading-none transition-colors ${etiquette}`}
+              style={fond ? { backgroundImage: fond } : undefined}
             >
               <span className="pointer-events-none absolute inset-0 grid place-items-center">
                 {hand}
