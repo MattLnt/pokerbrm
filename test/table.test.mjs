@@ -8,7 +8,7 @@ import {
   ORDRE_PAROLE,
 } from "../lib/table.js";
 
-test("sièges : le héros est en bas, les suivants tournent vers la droite", () => {
+test("sièges : le héros est en bas, les suivants tournent vers la gauche", () => {
   const sieges = placerSieges("BTN");
   const heros = sieges.find((s) => s.heros);
   assert.equal(heros.position, "BTN");
@@ -16,10 +16,16 @@ test("sièges : le héros est en bas, les suivants tournent vers la droite", () 
   // Plus bas que le centre : en CSS l'axe vertical descend.
   assert.ok(heros.y > 50, `héros à y=${heros.y}`);
 
-  // Le joueur qui parle juste après le héros est du côté droit.
+  // L'action va vers la gauche de chacun : vu de dessus, le joueur qui
+  // parle juste après le héros est du côté gauche de l'écran.
   const suivant = sieges.find((s) => s.rang === 1);
   assert.equal(suivant.position, "SB");
-  assert.ok(suivant.x > 50);
+  assert.ok(suivant.x < 50, `SB à x=${suivant.x}`);
+
+  // Et celui qui parle juste avant lui est du côté droit.
+  const precedent = sieges.find((s) => s.rang === sieges.length - 1);
+  assert.equal(precedent.position, "CO");
+  assert.ok(precedent.x > 50, `CO à x=${precedent.x}`);
 
   assert.equal(sieges.length, ORDRE_PAROLE.length);
   assert.equal(new Set(sieges.map((s) => s.rang)).size, ORDRE_PAROLE.length);

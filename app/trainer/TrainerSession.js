@@ -406,8 +406,9 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           scene={question.scene}
         />
 
-        {/* Les réponses, pleines et sur une rangée. */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {/* Les réponses, pleines et sur une rangée. La marge haute laisse
+            respirer la plaque du héros, qui déborde sous la table. */}
+        <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {ANSWERS.map((a) => (
             <button
               key={a.key}
@@ -433,7 +434,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
         {/* La correction sous les réponses, sur toute leur largeur. */}
         {verdict ? (
           <Card
-            className={`mt-2 p-4 ${
+            className={`mt-3 p-4 ${
               verdict.correct ? "border-positive/40" : "border-warning/40"
             }`}
           >

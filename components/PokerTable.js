@@ -93,13 +93,13 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
           return (
             <div
               key={siege.position}
-              className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 ${
+              className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 ${
                 couche ? "opacity-40" : ""
               }`}
               style={{ left: `${siege.x}%`, top: `${siege.y}%` }}
             >
               {siege.heros ? (
-                <div className="mb-0.5 flex gap-1.5">
+                <div className="mb-2 flex gap-2">
                   {cartes.map((carte, i) => (
                     <Carte key={i} carte={carte} />
                   ))}
