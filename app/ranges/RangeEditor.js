@@ -244,7 +244,7 @@ export default function RangeEditor({ initialRanges, demo }) {
           step="5"
           value={frequency}
           onChange={(e) => setFrequency(Number(e.target.value))}
-          className="w-full accent-[#6ea8fe]"
+          className="w-full accent-accent"
         />
       </label>
 
@@ -277,7 +277,7 @@ export default function RangeEditor({ initialRanges, demo }) {
                 if (e.target.value) copyFrom(e.target.value);
                 e.target.value = "";
               }}
-              className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+              className="bd-select"
             >
               <option value="">Choisir un spot…</option>
               {filledSpots.map((k) => {
@@ -373,7 +373,7 @@ function Chip({ active, children, onClick }) {
       aria-pressed={active}
       className={`min-h-[40px] shrink-0 rounded-pill border px-4 text-sm transition-colors ${
         active
-          ? "border-rose-line bg-rose-bg text-ink"
+          ? "border-rose-line bg-rose-bg text-rose-hover"
           : "border-line bg-surface-2 text-ink-section"
       }`}
     >
@@ -398,7 +398,7 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
         className="absolute inset-0 bg-black/60"
       />
       <div
-        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5 lg:rounded-[22px] lg:border"
+        className="flottant relative w-full max-w-[480px] rounded-t-xl border-t border-line bg-surface p-5 lg:rounded-xl lg:border"
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
       >
         <h2 className="mb-1 text-xl font-bold">{hand}</h2>
@@ -426,7 +426,7 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
               onChange={(e) =>
                 setDraft((d) => ({ ...d, [b.key]: Number(e.target.value) }))
               }
-              className="w-full accent-[#6ea8fe]"
+              className="w-full accent-accent"
             />
           </label>
         ))}

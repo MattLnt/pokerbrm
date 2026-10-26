@@ -63,15 +63,19 @@ test("stats : fold ne compte pas dans la range", () => {
 });
 
 test("fond de case : couleur pleine, partielle, puis bandes", () => {
+  // Les couleurs se lisent sur les pinceaux : la charte peut changer de
+  // palette sans casser ce test.
+  const couleur = (key) => RANGE_BRUSHES.find((b) => b.key === key).color;
+
   const plein = cellBackground({ raise: 100 }, RANGE_BRUSHES);
-  assert.equal(plein, "#d03e7c");
+  assert.equal(plein, couleur("raise"));
 
   const partiel = cellBackground({ raise: 50 }, RANGE_BRUSHES);
   assert.match(partiel, /linear-gradient.*50%/);
 
   const mixte = cellBackground({ raise: 60, call: 40 }, RANGE_BRUSHES);
-  assert.match(mixte, /#d03e7c 0% 60%/);
-  assert.match(mixte, /#4cc38a 60% 100%/);
+  assert.ok(mixte.includes(`${couleur("raise")} 0% 60%`));
+  assert.ok(mixte.includes(`${couleur("call")} 60% 100%`));
 
   assert.equal(cellBackground({}, RANGE_BRUSHES), null);
   assert.equal(cellBackground({ fold: 100 }, RANGE_BRUSHES), null);

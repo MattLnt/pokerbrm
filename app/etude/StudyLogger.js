@@ -74,7 +74,7 @@ export default function StudyLogger({ themes, demo }) {
             aria-pressed={type === t.key}
             className={`min-h-[44px] rounded-tile border text-sm ${
               type === t.key
-                ? "border-rose-line bg-rose-bg text-ink"
+                ? "border-rose-line bg-rose-bg text-rose-hover"
                 : "border-line bg-surface-2 text-ink-section"
             }`}
           >
@@ -93,7 +93,7 @@ export default function StudyLogger({ themes, demo }) {
             aria-pressed={minutes === d}
             className={`num min-h-[44px] rounded-tile border text-sm ${
               minutes === d
-                ? "border-rose-line bg-rose-bg text-ink"
+                ? "border-rose-line bg-rose-bg text-rose-hover"
                 : "border-line bg-surface-2 text-ink-section"
             }`}
           >
@@ -108,7 +108,7 @@ export default function StudyLogger({ themes, demo }) {
           <select
             value={themeId}
             onChange={(e) => setThemeId(e.target.value)}
-            className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+            className="bd-select"
           >
             <option value="">Aucun</option>
             {themes.map((t) => (
@@ -127,7 +127,7 @@ export default function StudyLogger({ themes, demo }) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Facultatif"
-          className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+          className="bd-input"
         />
       </label>
 

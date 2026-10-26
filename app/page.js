@@ -43,7 +43,7 @@ export default async function HomePage() {
         <div>
           <Card as={Link} href="/bankroll" className="block p-5">
             <p className="mb-2 text-base text-ink-muted">Bankroll totale</p>
-            <p className="num text-[2.5rem] font-bold leading-none lg:text-[3rem]">
+            <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)] lg:text-[var(--fs-3xl)]">
               {formatEuro(data.bankroll)}
             </p>
             <p className={`num mt-2 font-semibold ${toneClass(data.variation)}`}>
@@ -125,7 +125,7 @@ export default async function HomePage() {
                     className="flex items-center justify-between gap-3 px-4 py-3.5"
                   >
                     <div className="flex min-w-0 items-start gap-3">
-                      <span className="num mt-0.5 text-[11px] tracking-widest text-ink-muted/60">
+                      <span className="num mt-0.5 text-[var(--fs-xs)] tracking-widest text-ink-muted/60">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0">

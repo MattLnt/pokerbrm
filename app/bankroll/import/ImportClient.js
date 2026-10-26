@@ -98,7 +98,7 @@ export default function ImportClient({ demo }) {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
-        <span className="mx-auto mb-4 grid size-14 place-items-center rounded-tile bg-surface-3 text-accent">
+        <span className="mx-auto mb-4 grid size-12 place-items-center rounded-tile bg-surface-3 text-accent">
           <FolderDown size={26} />
         </span>
         <h2 className="text-lg font-bold">Dépose ton dossier d&apos;historiques</h2>

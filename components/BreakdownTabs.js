@@ -27,7 +27,7 @@ export default function BreakdownTabs({ data }) {
               aria-pressed={active}
               className={`min-h-[44px] rounded-tile border px-2 text-sm transition-colors ${
                 active
-                  ? "border-rose-line bg-rose-bg text-ink"
+                  ? "border-rose-line bg-rose-bg text-rose-hover"
                   : "border-line bg-surface text-ink-section"
               }`}
             >

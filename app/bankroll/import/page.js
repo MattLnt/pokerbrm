@@ -17,7 +17,7 @@ export default function ImportPage() {
         >
           <ChevronLeft size={26} />
         </Link>
-        <h1 className="text-[2rem] font-bold leading-none tracking-tight">
+        <h1 className="text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] tracking-[var(--ls-heading)]">
           Importer
         </h1>
       </header>

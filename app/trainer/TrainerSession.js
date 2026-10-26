@@ -98,7 +98,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       <>
         <Card className="p-5 text-center">
           <p className="kicker mb-2">Session terminée</p>
-          <p className="num text-[2.75rem] font-bold leading-none">
+          <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)]">
             {formatPercent(successRate, { decimals: 0 })}
           </p>
           <p className="mt-2 text-base text-ink-muted">
@@ -136,7 +136,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
               setSpot(e.target.value);
               restart();
             }}
-            className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+            className="bd-select"
           >
             {spots.map((k) => (
               <option key={k} value={k}>
@@ -165,7 +165,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       {/* La main */}
       <Card className="px-5 py-10 text-center">
         <p className="kicker mb-3">Ta main</p>
-        <p className="num text-[3.5rem] font-bold leading-none">{hand}</p>
+        <p className="num text-[var(--fs-3xl)] font-bold leading-[var(--lh-tight)]">{hand}</p>
       </Card>
 
       {/* Correction */}

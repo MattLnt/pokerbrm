@@ -58,7 +58,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
 
       <form
         onSubmit={submit}
-        className="relative w-full max-w-[480px] rounded-t-[22px] border-t border-line bg-surface p-5 lg:rounded-[22px] lg:border"
+        className="flottant relative w-full max-w-[480px] rounded-t-xl border-t border-line bg-surface p-5 lg:rounded-xl lg:border"
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -84,7 +84,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
                 aria-pressed={site === s.slug}
                 className={`min-h-[44px] rounded-tile border text-sm ${
                   site === s.slug
-                    ? "border-rose-line bg-rose-bg text-ink"
+                    ? "border-rose-line bg-rose-bg text-rose-hover"
                     : "border-line bg-surface-2 text-ink-section"
                 }`}
               >
@@ -103,7 +103,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0,00"
             autoFocus
-            className="num min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-lg"
+            className="bd-input num text-[var(--fs-lg)]"
           />
         </label>
 
@@ -113,7 +113,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="num min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+            className="bd-input num"
           />
         </label>
 
@@ -125,7 +125,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-base"
+            className="bd-input"
           />
         </label>
 

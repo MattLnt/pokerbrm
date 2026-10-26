@@ -55,7 +55,7 @@ export default async function EtudePage() {
               </Pill>
             </div>
 
-            <p className="num text-[2.25rem] font-bold leading-none lg:text-[2.75rem]">
+            <p className="num text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] lg:text-[var(--fs-2xl)]">
               {formatHours(study.minutesDone)}
               <span className="ml-2 text-base font-normal text-ink-muted">
                 / {formatHours(study.minutesTarget)}
@@ -94,9 +94,9 @@ export default async function EtudePage() {
                     {theme.objectives.map((o, i) => (
                       <li key={i} className="flex items-start gap-3 text-base">
                         <span
-                          className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-[6px] border text-[11px] ${
+                          className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-[var(--fs-xs)] ${
                             o.done
-                              ? "border-positive bg-positive text-[#06251a]"
+                              ? "border-positive bg-positive text-accent-fg"
                               : "border-line-strong"
                           }`}
                           aria-hidden
@@ -162,7 +162,7 @@ export default async function EtudePage() {
           <CardList>
             {study.themes.map((t, i) => (
               <div key={t.id} className="flex items-start gap-3 px-4 py-3.5">
-                <span className="num mt-0.5 text-[11px] tracking-widest text-ink-muted/60">
+                <span className="num mt-0.5 text-[var(--fs-xs)] tracking-widest text-ink-muted/60">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">

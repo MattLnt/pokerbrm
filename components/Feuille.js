@@ -29,7 +29,7 @@ export default function Feuille({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
       <div
-        className={`surface relative flex max-h-[92dvh] w-full flex-col rounded-t-[22px] border-t border-line bg-surface lg:max-h-[88dvh] lg:rounded-[22px] lg:border ${largeur}`}
+        className={`flottant relative flex max-h-[92dvh] w-full flex-col rounded-t-xl border-t border-line bg-surface lg:max-h-[88dvh] lg:rounded-xl lg:border ${largeur}`}
       >
         <div className="flex items-center gap-2 px-5 pt-5">
           {avant}

@@ -23,7 +23,7 @@ export function PageHeader({ eyebrow, title, action }) {
     <header className="mb-6 flex items-start justify-between gap-4 lg:mb-9">
       <div className="min-w-0">
         {eyebrow ? <p className="kicker mb-2">{eyebrow}</p> : null}
-        <h1 className="text-[2.1rem] font-bold leading-[0.95] tracking-[-0.035em] lg:text-[2.75rem]">
+        <h1 className="text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] tracking-[var(--ls-heading)] lg:text-[var(--fs-2xl)]">
           {title}
         </h1>
       </div>
@@ -47,8 +47,8 @@ export function SectionTitle({ children, action, tight = false }) {
       {/* whitespace-nowrap : le titre ne se casse pas en plein milieu quand
           la pastille d'action le serre sur un écran étroit — elle passe à la
           ligne à la place. */}
-      <h2 className="flex items-center gap-2.5 whitespace-nowrap text-[0.8125rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
-        <span className="h-3.5 w-[3px] rounded-full bg-accent/70" aria-hidden />
+      <h2 className="kicker flex items-center gap-2.5 whitespace-nowrap">
+        <span className="h-3 w-[3px] rounded-full bg-accent" aria-hidden />
         {children}
       </h2>
       {action}
@@ -111,28 +111,30 @@ export function CardList({ children }) {
 }
 
 export function Pill({ tone = "neutral", children }) {
+  // Chaque ton : un fond très dilué, un texte dans la teinte claire de la
+  // même couleur. Pas d'anneau — le fond suffit à détacher la pastille.
   const tones = {
     neutral: "bg-surface-3 text-ink-section",
-    positive: "bg-positive/15 text-positive ring-1 ring-positive/30",
-    warning: "bg-warning/15 text-warning ring-1 ring-warning/30",
-    accent: "bg-accent/15 text-accent ring-1 ring-accent/30",
-    rose: "bg-rose/15 text-rose ring-1 ring-rose/30",
+    positive: "bg-positive/15 text-positive",
+    warning: "bg-warning/15 text-warning",
+    accent: "bg-accent/15 text-accent-hover",
+    rose: "bg-rose/15 text-rose",
   };
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-pill px-3 py-1.5 text-[0.8125rem] font-semibold ${tones[tone]}`}
+      className={`inline-flex items-center gap-2 rounded-pill px-3 py-1 text-[var(--fs-sm)] font-semibold ${tones[tone]}`}
     >
       {children}
     </span>
   );
 }
 
-/** Pastille de statut avec point, reprise de la créa de référence. */
+/** Point de statut. Plein, sans halo : la couleur se suffit. */
 export function StatusDot({ tone = "positive" }) {
   const colors = {
-    positive: "bg-positive shadow-[0_0_8px_var(--color-positive)]",
-    warning: "bg-warning shadow-[0_0_8px_var(--color-warning)]",
-    accent: "bg-accent shadow-[0_0_8px_var(--color-accent)]",
+    positive: "bg-positive",
+    warning: "bg-warning",
+    accent: "bg-accent",
   };
   return (
     <span className={`size-1.5 rounded-full ${colors[tone]}`} aria-hidden />
@@ -143,24 +145,26 @@ export function StatusDot({ tone = "positive" }) {
 export function StatTile({ label, value, sub, tone = "", index }) {
   return (
     <div
-      className="surface relative overflow-hidden rounded-tile border border-line bg-surface p-4"
+      className="relative overflow-hidden rounded-tile border border-line bg-surface p-4"
       style={{ containerType: "inline-size" }}
     >
       {index ? (
         <span
-          className="num absolute right-3.5 top-3.5 text-[0.625rem] font-bold tracking-[0.2em] text-ink-muted/40"
+          className="num absolute right-3.5 top-3.5 text-[var(--fs-overline)] font-bold tracking-[var(--overline-tracking)] text-ink-muted/40"
           aria-hidden
         >
           {String(index).padStart(2, "0")}
         </span>
       ) : null}
-      <p className="kicker mb-2.5 text-[0.625rem]">{label}</p>
+      <p className="kicker mb-2.5">{label}</p>
       <p
-        className={`num whitespace-nowrap text-[clamp(1.25rem,5.5cqw,1.625rem)] font-bold leading-none ${tone}`}
+        className={`num whitespace-nowrap text-[clamp(17px,5.5cqw,22px)] font-bold leading-[var(--lh-tight)] ${tone}`}
       >
         {value}
       </p>
-      {sub ? <p className="mt-2 text-[0.8125rem] text-ink-muted">{sub}</p> : null}
+      {sub ? (
+        <p className="mt-2 text-[var(--fs-sm)] text-ink-muted">{sub}</p>
+      ) : null}
     </div>
   );
 }
@@ -168,30 +172,30 @@ export function StatTile({ label, value, sub, tone = "", index }) {
 export function ProgressBar({ value, max, tone = "accent" }) {
   const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
   const couleurs = {
-    accent: "from-accent/70 to-accent",
-    positive: "from-positive/70 to-positive",
-    warning: "from-warning/70 to-warning",
+    accent: "bg-accent",
+    positive: "bg-positive",
+    warning: "bg-warning",
   };
   return (
     <div
-      className="h-2.5 w-full overflow-hidden rounded-pill bg-bg-deep ring-1 ring-inset ring-white/5"
+      className="h-2 w-full overflow-hidden rounded-pill bg-bg-sunken ring-1 ring-inset ring-line"
       role="progressbar"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
       <div
-        className={`h-full rounded-pill bg-gradient-to-r ${couleurs[tone] ?? couleurs.accent}`}
-        style={{
-          width: `${pct}%`,
-          boxShadow: "0 0 12px -2px currentColor",
-        }}
+        className={`h-full rounded-pill ${couleurs[tone] ?? couleurs.accent}`}
+        style={{ width: `${pct}%` }}
       />
     </div>
   );
 }
 
-/** Bouton d'action tactile (≥ 44 px). */
+/**
+ * Bouton d'action tactile (≥ 44 px), sur les classes `.bd-btn` de la charte.
+ * `secondary` = le bouton encadré de la charte ; `ghost` = sans fond.
+ */
 export function Button({
   children,
   variant = "secondary",
@@ -200,14 +204,14 @@ export function Button({
   ...rest
 }) {
   const variants = {
-    primary:
-      "bg-gradient-to-b from-[#8cbcff] to-accent text-[#06101f] font-semibold shadow-[0_8px_20px_-10px_var(--color-accent)]",
-    secondary: "surface bg-surface border border-line text-ink",
-    ghost: "text-accent",
+    primary: "bd-btn--primary",
+    secondary: "bd-btn--outline",
+    ghost: "bd-btn--ghost text-accent-hover",
+    danger: "bd-btn--danger",
   };
   return (
     <Tag
-      className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-tile px-4 text-base transition-all active:scale-[0.985] active:opacity-80 ${variants[variant]} ${className}`}
+      className={`bd-btn ${variants[variant] ?? variants.secondary} ${className}`}
       {...rest}
     >
       {children}
@@ -217,18 +221,17 @@ export function Button({
 
 export function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <Card
-      tone="hero"
-      className="flex flex-col items-center gap-3 px-6 py-12 text-center"
-    >
+    <Card className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       {Icon ? (
-        <span className="surface-soft mb-1 grid size-14 place-items-center rounded-[16px] bg-surface-2 text-accent ring-1 ring-accent/20">
+        <span className="mb-1 grid size-12 place-items-center rounded-tile border border-accent-line bg-accent-soft text-accent">
           <Icon size={24} />
         </span>
       ) : null}
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="text-[var(--fs-lg)] font-semibold tracking-[var(--ls-heading)]">
+        {title}
+      </h3>
       {description ? (
-        <p className="max-w-[26rem] text-[0.9375rem] leading-relaxed text-ink-muted">
+        <p className="max-w-[26rem] text-[var(--fs-base)] leading-[var(--lh-normal)] text-ink-muted">
           {description}
         </p>
       ) : null}
@@ -242,7 +245,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
  * Aire dégradée sous la ligne, ligne lissée, point sur la dernière valeur :
  * une ligne nue flottant dans le vide ne se lit pas.
  */
-export function Sparkline({ points = [], height = 132, tone = "#6ea8fe" }) {
+export function Sparkline({ points = [], height = 132, tone = "#38bdf8" }) {
   if (points.length < 2) {
     return (
       <div

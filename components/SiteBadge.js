@@ -14,7 +14,7 @@ export default function SiteBadge({ slug, taille = 40, avecLogo = true }) {
 
   return (
     <span
-      className="relative grid shrink-0 place-items-center overflow-hidden rounded-[10px] font-bold text-white"
+      className="relative grid shrink-0 place-items-center overflow-hidden rounded-sm font-bold text-white"
       style={{
         width: taille,
         height: taille,

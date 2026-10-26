@@ -65,7 +65,7 @@ export default async function BankrollPage({ searchParams }) {
           <Link
             href="/bankroll/import"
             aria-label="Importer des historiques"
-            className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-tile bg-accent font-semibold text-[#08121f] max-lg:w-12 lg:px-5"
+            className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-tile bg-accent font-semibold text-accent-fg max-lg:w-12 lg:px-5"
           >
             <Download size={22} />
             <span className="max-lg:hidden">Importer</span>
@@ -86,7 +86,7 @@ export default async function BankrollPage({ searchParams }) {
                 </Suspense>
               </div>
 
-              <p className="chiffre-hero text-[3rem] lg:text-[3.75rem]">
+              <p className="chiffre-hero text-[var(--fs-2xl)] lg:text-[var(--fs-3xl)]">
                 {formatEuro(data.bankroll)}
               </p>
 
@@ -94,7 +94,7 @@ export default async function BankrollPage({ searchParams }) {
                 <Pill tone={data.results.variation >= 0 ? "positive" : "warning"}>
                   {formatEuro(data.results.variation, { sign: true })}
                 </Pill>
-                <span className="text-[0.9375rem] text-ink-muted">
+                <span className="text-[var(--fs-base)] text-ink-muted">
                   dont{" "}
                   <span className="num text-ink-section">
                     {formatEuro(data.results.offGame, { sign: true })}
@@ -109,7 +109,7 @@ export default async function BankrollPage({ searchParams }) {
               <Sparkline
                 points={data.curve}
                 tone={
-                  data.results.variation >= 0 ? "#3ddc97" : "#ff6b6b"
+                  data.results.variation >= 0 ? "#34d399" : "#fb7185"
                 }
               />
             </div>
@@ -129,7 +129,7 @@ export default async function BankrollPage({ searchParams }) {
                   <div className="flex min-w-0 items-center gap-3.5">
                     <SiteBadge slug={site.slug} taille={38} />
                     <div className="min-w-0">
-                    <p className="text-[1.0625rem] font-semibold">{site.name}</p>
+                    <p className="text-[var(--fs-md)] font-semibold">{site.name}</p>
                     <p
                       className={`text-sm ${
                         stale ? "text-warning" : "text-ink-muted"

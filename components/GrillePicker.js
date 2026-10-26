@@ -161,7 +161,7 @@ export default function GrillePicker({ grille, onClose, onInscrire, pending }) {
             value={filtre}
             onChange={(e) => setFiltre(e.target.value)}
             placeholder="Chercher un tournoi"
-            className="min-h-[48px] w-full rounded-tile border border-line bg-surface-2 pl-11 pr-4 text-base"
+            className="bd-input pl-11"
           />
         </label>
         <span className="num shrink-0 text-sm text-ink-muted">
@@ -203,7 +203,7 @@ function Tranche({ tranche, courante, coches, onBasculer }) {
     <section ref={ref} className="scroll-mt-2">
       <header className="mb-2.5 flex items-center gap-3">
         <span
-          className={`num text-[0.9375rem] font-bold tabular-nums ${
+          className={`num text-[var(--fs-base)] font-bold tabular-nums ${
             courante ? "text-accent" : "text-ink-section"
           }`}
         >
@@ -214,7 +214,7 @@ function Tranche({ tranche, courante, coches, onBasculer }) {
           aria-hidden
         />
         {courante ? (
-          <span className="rounded-pill bg-accent/15 px-2.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider text-accent ring-1 ring-accent/30">
+          <span className="rounded-pill bg-accent/15 px-2.5 py-0.5 text-[var(--fs-overline)] font-bold uppercase tracking-wider text-accent ring-1 ring-accent/30">
             maintenant
           </span>
         ) : null}
@@ -236,9 +236,9 @@ function Tranche({ tranche, courante, coches, onBasculer }) {
                 }`}
               >
                 <span
-                  className={`grid size-[22px] shrink-0 place-items-center rounded-[6px] border transition-colors ${
+                  className={`grid size-[22px] shrink-0 place-items-center rounded-xs border transition-colors ${
                     coche
-                      ? "border-accent bg-accent text-[#08121f]"
+                      ? "border-accent bg-accent text-accent-fg"
                       : "border-line-strong"
                   }`}
                   aria-hidden
@@ -250,12 +250,12 @@ function Tranche({ tranche, courante, coches, onBasculer }) {
                   <span className="flex items-center gap-2">
                     <span className="truncate font-semibold">{m.name}</span>
                     {m.tag ? (
-                      <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
+                      <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-[var(--fs-overline)] font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
                         {m.tag}
                       </span>
                     ) : null}
                   </span>
-                  <span className="num block truncate text-[0.8125rem] text-ink-muted">
+                  <span className="num block truncate text-[var(--fs-sm)] text-ink-muted">
                     {FORMAT_LABELS[m.format]}
                     {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
                   </span>

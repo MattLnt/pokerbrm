@@ -28,7 +28,7 @@ export default async function GrillePage() {
           {DEMO ? (
             <p className="text-sm text-ink-muted">Données d&apos;exemple</p>
           ) : null}
-          <h1 className="text-[2rem] font-bold leading-none tracking-tight lg:text-[2.5rem]">
+          <h1 className="text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] tracking-[var(--ls-heading)] lg:text-[var(--fs-2xl)]">
             Grille
           </h1>
         </div>

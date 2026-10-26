@@ -207,7 +207,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
             <StatusDot tone="accent" />
             En cours · {duree(session.startedAt)}
           </Pill>
-          <span className="num text-[0.8125rem] text-ink-muted">
+          <span className="num text-[var(--fs-sm)] text-ink-muted">
             {plural(totaux.total, "tournoi")}
             {totaux.enCours > 0 ? ` · ${totaux.enCours} en jeu` : ""}
           </span>
@@ -224,7 +224,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
         </div>
 
         {totaux.termines > 0 ? (
-          <p className="num mt-4 border-t border-line/70 pt-3 text-[0.8125rem] text-ink-muted">
+          <p className="num mt-4 border-t border-line/70 pt-3 text-[var(--fs-sm)] text-ink-muted">
             ROI {formatPercent(totaux.roi, { sign: true, decimals: 0 })} · ITM{" "}
             {formatPercent(totaux.itm, { decimals: 0 })} sur{" "}
             {plural(totaux.termines, "terminé")}
@@ -260,7 +260,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
 
       {enCours.length === 0 ? (
         <Card className="px-4 py-8 text-center">
-          <p className="text-[0.9375rem] text-ink-muted">
+          <p className="text-[var(--fs-base)] text-ink-muted">
             Aucun tournoi en jeu.
           </p>
           <button
@@ -282,7 +282,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
                     <p className="truncate font-semibold leading-tight">
                       {t.name}
                     </p>
-                    <p className="num mt-1 truncate text-[0.8125rem] text-ink-muted">
+                    <p className="num mt-1 truncate text-[var(--fs-sm)] text-ink-muted">
                       {FORMAT_LABELS[t.format]}
                       {libelleVitesse(t) ? ` · ${libelleVitesse(t)}` : ""}
                     </p>
@@ -383,12 +383,12 @@ export default function SessionClient({ demo, session, grille, recentes }) {
 function Chiffre({ label, valeur, tone = "", fort = false }) {
   return (
     <div className="min-w-0">
-      <p className="kicker mb-1.5 text-[0.5625rem]">{label}</p>
+      <p className="kicker mb-1.5 text-[var(--fs-overline)]">{label}</p>
       <p
         className={`num truncate font-bold leading-none ${
           fort
-            ? "text-[1.75rem] lg:text-[2.125rem]"
-            : "text-[1.25rem] lg:text-[1.5rem]"
+            ? "text-[var(--fs-xl)] lg:text-[var(--fs-2xl)]"
+            : "text-[var(--fs-lg)] lg:text-[var(--fs-xl)]"
         } ${tone}`}
       >
         {valeur}
@@ -401,7 +401,7 @@ function LienGrille() {
   return (
     <Link
       href="/session/grille"
-      className="inline-flex min-h-[44px] items-center gap-2 text-[0.9375rem] font-medium text-ink-muted transition-colors hover:text-accent"
+      className="inline-flex min-h-[44px] items-center gap-2 text-[var(--fs-base)] font-medium text-ink-muted transition-colors hover:text-accent"
     >
       <SlidersHorizontal size={17} />
       Gérer la grille
@@ -492,7 +492,7 @@ function SaisieResultat({ tournoi, onClose, onValider, pending }) {
               aria-pressed={reEntries === n}
               className={`num flex min-h-[48px] items-center justify-center gap-1.5 rounded-tile border text-base transition-colors ${
                 reEntries === n
-                  ? "border-rose-line bg-rose-bg text-ink"
+                  ? "border-rose-line bg-rose-bg text-rose-hover"
                   : "border-line bg-surface-2 text-ink-section"
               }`}
             >
@@ -526,7 +526,7 @@ function Champ({ label, value, onChange, ...rest }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="num min-h-[48px] w-full rounded-tile border border-line bg-surface-2 px-4 text-lg"
+        className="bd-input num text-[var(--fs-lg)]"
         {...rest}
       />
     </label>

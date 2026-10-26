@@ -82,7 +82,7 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
               data-hand={hand}
               role="gridcell"
               aria-label={hand}
-              className={`relative aspect-square rounded-[3px] text-[9px] font-semibold leading-none transition-colors ${
+              className={`relative aspect-square rounded-[3px] text-[var(--fs-overline)] font-semibold leading-none transition-colors ${
                 painted ? "text-white" : "bg-surface-2 text-ink-muted"
               }`}
               style={background ? { background } : undefined}

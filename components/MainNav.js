@@ -40,7 +40,7 @@ export default function MainNav() {
     <>
       {/* Mobile : barre basse */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg-deep/85 backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg-deep/90 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Navigation principale"
       >
@@ -52,14 +52,14 @@ export default function MainNav() {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`relative flex h-full flex-col items-center justify-center gap-1.5 text-[10px] font-medium transition-colors ${
-                    active ? "text-accent" : "text-ink-muted"
+                  className={`relative flex h-full flex-col items-center justify-center gap-1.5 text-[var(--fs-overline)] font-semibold transition-colors ${
+                    active ? "text-accent-hover" : "text-ink-muted"
                   }`}
                 >
-                  {/* Trait lumineux au-dessus de l'onglet actif */}
+                  {/* Trait d'accent au-dessus de l'onglet actif */}
                   {active ? (
                     <span
-                      className="absolute inset-x-[22%] top-0 h-[2px] rounded-full bg-accent shadow-[0_0_10px_var(--color-accent)]"
+                      className="absolute inset-x-[22%] top-0 h-[2px] rounded-full bg-accent"
                       aria-hidden
                     />
                   ) : null}
@@ -74,19 +74,21 @@ export default function MainNav() {
 
       {/* Desktop : rail latéral */}
       <nav
-        className="fixed inset-y-0 left-0 z-40 hidden w-[244px] flex-col border-r border-line bg-bg-deep/70 px-4 py-7 backdrop-blur-xl lg:flex"
+        className="fixed inset-y-0 left-0 z-40 hidden w-[244px] flex-col border-r border-line bg-bg-deep px-4 py-7 lg:flex"
         aria-label="Navigation principale"
       >
         <Link href="/" className="mb-9 flex items-center gap-3 px-2">
           <span
-            className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-gradient-to-br from-accent to-[#3f6fd8] text-[15px] font-black text-[#06101f] shadow-[0_8px_20px_-8px_var(--color-accent)]"
+            className="grid size-10 shrink-0 place-items-center rounded-sm border border-accent-line bg-accent-soft text-[var(--fs-md)] font-black text-accent"
             aria-hidden
           >
             ♠
           </span>
           <span className="leading-none">
-            <span className="kicker block text-[0.5625rem]">Poker</span>
-            <span className="text-[1.3rem] font-bold tracking-tight">BRM</span>
+            <span className="kicker block">Poker</span>
+            <span className="text-[var(--fs-xl)] font-bold tracking-[var(--ls-heading)]">
+              BRM
+            </span>
           </span>
         </Link>
 
@@ -98,16 +100,16 @@ export default function MainNav() {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex min-h-[46px] items-center gap-3 rounded-tile px-3 text-[0.9375rem] transition-all ${
+                  className={`group relative flex min-h-[var(--control-lg)] items-center gap-3 rounded-sm px-3 text-[var(--fs-md)] transition-colors ${
                     active
-                      ? "surface-soft bg-surface-2 font-semibold text-ink"
-                      : "text-ink-muted hover:bg-surface/60 hover:text-ink-section"
+                      ? "bg-accent-soft font-semibold text-accent-hover"
+                      : "text-ink-section hover:bg-surface hover:text-ink"
                   }`}
                 >
                   {/* Barre d'accent collée au bord gauche de l'onglet actif */}
                   {active ? (
                     <span
-                      className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent shadow-[0_0_10px_var(--color-accent)]"
+                      className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent"
                       aria-hidden
                     />
                   ) : null}
