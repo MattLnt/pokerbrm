@@ -8,6 +8,8 @@ import {
   rangeStats,
   cellBackground,
   melanger,
+  basculerSelection,
+  selectionPosee,
   TOTAL_COMBOS,
 } from "../lib/hands.js";
 import { RANGE_BRUSHES } from "../lib/constants.js";
@@ -111,5 +113,30 @@ test("mélange : repasser le même pinceau remplace sa propre fréquence", () =>
 test("mélange : un pinceau à 100 % chasse tout le reste", () => {
   assert.deepEqual(melanger({ raise: 50, call: 50 }, "shove", 100), {
     shove: 100,
+  });
+});
+
+test("sélection rapide : le second appui relâche les mains", () => {
+  const vide = {};
+  const posee = basculerSelection(vide, ["AA", "KK"], "raise", 100);
+  assert.deepEqual(posee, { AA: { raise: 100 }, KK: { raise: 100 } });
+
+  assert.equal(selectionPosee(posee, ["AA", "KK"], "raise", 100), true);
+  assert.deepEqual(basculerSelection(posee, ["AA", "KK"], "raise", 100), {});
+});
+
+test("sélection rapide : relâcher ne retire que la part du pinceau", () => {
+  const depart = { AA: { raise: 50, call: 30 }, KK: { raise: 50 } };
+  assert.deepEqual(basculerSelection(depart, ["AA", "KK"], "raise", 50), {
+    AA: { call: 30 },
+  });
+});
+
+test("sélection rapide : une seule main en trop et le bouton repose", () => {
+  const partiel = { AA: { raise: 100 } };
+  assert.equal(selectionPosee(partiel, ["AA", "KK"], "raise", 100), false);
+  assert.deepEqual(basculerSelection(partiel, ["AA", "KK"], "raise", 100), {
+    AA: { raise: 100 },
+    KK: { raise: 100 },
   });
 });

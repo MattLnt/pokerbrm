@@ -11,7 +11,13 @@ import {
   RANGE_ACTIONS,
   RANGE_BRUSHES,
 } from "@/lib/constants";
-import { QUICK_SELECTS, rangeStats, melanger } from "@/lib/hands";
+import {
+  QUICK_SELECTS,
+  rangeStats,
+  melanger,
+  basculerSelection,
+  selectionPosee,
+} from "@/lib/hands";
 
 function spotKey({ position, action, stackDepth }) {
   return `${position}|${action}|${stackDepth}`;
@@ -70,11 +76,9 @@ export default function RangeEditor({ initialRanges, demo }) {
   }
 
   function applyQuickSelect(hands) {
-    updateCells((current) => {
-      const next = { ...current };
-      for (const h of hands) next[h] = { [brush]: frequency };
-      return next;
-    });
+    updateCells((current) =>
+      basculerSelection(current, hands, brush, frequency)
+    );
   }
 
   function setHandFrequencies(hand, actions) {
@@ -273,16 +277,25 @@ export default function RangeEditor({ initialRanges, demo }) {
       {/* Sélections rapides */}
       <SectionTitle>Sélection rapide</SectionTitle>
       <div className="flex flex-wrap gap-2">
-        {QUICK_SELECTS.map((q) => (
-          <button
-            key={q.key}
-            type="button"
-            onClick={() => applyQuickSelect(q.hands())}
-            className="min-h-[44px] rounded-pill border border-line bg-surface px-4 text-sm text-ink-section"
-          >
-            {q.label}
-          </button>
-        ))}
+        {QUICK_SELECTS.map((q) => {
+          const hands = q.hands();
+          const posee = selectionPosee(cells, hands, brush, frequency);
+          return (
+            <button
+              key={q.key}
+              type="button"
+              aria-pressed={posee}
+              onClick={() => applyQuickSelect(hands)}
+              className={`min-h-[44px] rounded-pill border px-4 text-sm transition-colors ${
+                posee
+                  ? "border-rose-line bg-rose-bg text-rose-hover"
+                  : "border-line bg-surface text-ink-section"
+              }`}
+            >
+              {q.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Outils */}
