@@ -17,6 +17,9 @@ import { scenario } from "@/lib/table";
 import { formatPercent } from "@/lib/format";
 
 const LONGUEURS = [20, 50, 100];
+
+/** Mains à jouer avant qu'une main ratée ne puisse revenir. */
+const RETOUR_MINIMAL = 3;
 const ANSWERS = RANGE_BRUSHES;
 
 function decouper(cle) {
@@ -223,15 +226,20 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   // même main n'a pas la même difficulté selon la situation.
   const memory = useRef(new Map());
 
-  const tirer = useCallback((pool) => {
+  const tirer = useCallback((pool, rang) => {
     const spot = pool[Math.floor(Math.random() * pool.length)];
-    const now = Date.now();
+
+    // Une main ratée redevient « due » sur-le-champ : `review` la date de
+    // maintenant, ce qui a du sens d'une session à l'autre mais pas à
+    // l'intérieur d'une même. Comme `pickHand` ressert une main due trois
+    // fois sur cinq, on retombait aussitôt sur celle qu'on venait de
+    // manquer. Elle attend donc quelques mains avant de revenir.
     const dues = [...memory.current.entries()]
       .filter(
         ([cle, etat]) =>
           cle.startsWith(`${spot}#`) &&
           etat.repetition === 0 &&
-          new Date(etat.dueAt).getTime() <= now
+          rang - etat.rang >= RETOUR_MINIMAL
       )
       .map(([cle]) => cle.split("#")[1]);
 
@@ -239,8 +247,8 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   }, []);
 
   const poser = useCallback(
-    (pool) => {
-      const tiree = tirer(pool);
+    (pool, rang) => {
+      const tiree = tirer(pool, rang);
       const { action, position } = decouper(tiree.spot);
       setQuestion({ ...tiree, scene: scenario(action, position) });
       setVerdict(null);
@@ -254,7 +262,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     setIndex(0);
     setScore({ right: 0, wrong: 0 });
     setFinished(false);
-    poser(pool);
+    poser(pool, 0);
   }
 
   function repondre(cle) {
@@ -263,10 +271,10 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     setVerdict({ ...resultat, given: cle });
 
     const memoire = `${question.spot}#${question.main}`;
-    memory.current.set(
-      memoire,
-      review(memory.current.get(memoire), resultat.correct)
-    );
+    memory.current.set(memoire, {
+      ...review(memory.current.get(memoire), resultat.correct),
+      rang: index,
+    });
     setScore((s) => ({
       right: s.right + (resultat.correct ? 1 : 0),
       wrong: s.wrong + (resultat.correct ? 0 : 1),
@@ -293,7 +301,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       return;
     }
     setIndex((i) => i + 1);
-    poser(enCours);
+    poser(enCours, index + 1);
   }
 
   const total = score.right + score.wrong;
