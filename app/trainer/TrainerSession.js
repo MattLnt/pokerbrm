@@ -20,14 +20,11 @@ import {
   POSITIONS,
 } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
-import { pickHand, gradeAnswer, review } from "@/lib/spaced";
+import { gradeAnswer } from "@/lib/spaced";
 import { scenario } from "@/lib/table";
 import { formatPercent, formatDuree } from "@/lib/format";
 
 const LONGUEURS = [20, 50, 100];
-
-/** Mains à jouer avant qu'une main ratée ne puisse revenir. */
-const RETOUR_MINIMAL = 3;
 const ANSWERS = RANGE_BRUSHES;
 
 function decouper(cle) {
@@ -277,33 +274,33 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   // la session suit exactement la liste des erreurs.
   const [rejeu, setRejeu] = useState(null);
 
-  // Répétition espacée, en mémoire de session. La clé porte le spot : la
-  // même main n'a pas la même difficulté selon la situation.
-  const memory = useRef(new Map());
+  // Mains déjà posées pendant la session : on tire sans remise.
+  const servies = useRef(new Set());
 
-  const tirer = useCallback((pool, rang) => {
+  /**
+   * Tire un spot au hasard parmi ceux retenus, et une main jamais vue.
+   *
+   * Le tirage privilégiait les mains ratées, qui revenaient donc en boucle :
+   * sur vingt coups, on retombait sans cesse sur les trois mêmes. Une main
+   * ne passe maintenant qu'une fois par session. Revoir ses erreurs reste
+   * possible, mais à la demande — c'est ce que fait « Rejouer les ratées »
+   * à la fin, et c'est plus clair qu'un hasard pondéré.
+   */
+  const tirer = useCallback((pool) => {
     const spot = pool[Math.floor(Math.random() * pool.length)];
+    const restantes = ALL_HANDS.filter((m) => !servies.current.has(m));
+    // Garde-fou : une session plus longue que le jeu de mains repartirait
+    // de zéro plutôt que de ne rien pouvoir poser.
+    const choix = restantes.length > 0 ? restantes : ALL_HANDS;
+    const main = choix[Math.floor(Math.random() * choix.length)];
+    servies.current.add(main);
 
-    // Une main ratée redevient « due » sur-le-champ : `review` la date de
-    // maintenant, ce qui a du sens d'une session à l'autre mais pas à
-    // l'intérieur d'une même. Comme `pickHand` ressert une main due trois
-    // fois sur cinq, on retombait aussitôt sur celle qu'on venait de
-    // manquer. Elle attend donc quelques mains avant de revenir.
-    const dues = [...memory.current.entries()]
-      .filter(
-        ([cle, etat]) =>
-          cle.startsWith(`${spot}#`) &&
-          etat.repetition === 0 &&
-          rang - etat.rang >= RETOUR_MINIMAL
-      )
-      .map(([cle]) => cle.split("#")[1]);
-
-    return { spot, main: pickHand(ALL_HANDS, dues), scene: null };
+    return { spot, main, scene: null };
   }, []);
 
   const poser = useCallback(
     (pool, rang, impose = null) => {
-      const tiree = impose ? impose[rang] : tirer(pool, rang);
+      const tiree = impose ? impose[rang] : tirer(pool);
       const { action, position } = decouper(tiree.spot);
       setQuestion({ ...tiree, scene: scenario(action, position) });
       setVerdict(null);
@@ -312,7 +309,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   );
 
   function reinitialiser(pool) {
-    memory.current = new Map();
+    servies.current = new Set();
     setEnCours(pool);
     setIndex(0);
     setScore({ right: 0, wrong: 0 });
@@ -345,11 +342,6 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     const resultat = gradeAnswer(ranges[question.spot], question.main, cle);
     setVerdict({ ...resultat, given: cle });
 
-    const memoire = `${question.spot}#${question.main}`;
-    memory.current.set(memoire, {
-      ...review(memory.current.get(memoire), resultat.correct),
-      rang: index,
-    });
     setScore((s) => ({
       right: s.right + (resultat.correct ? 1 : 0),
       wrong: s.wrong + (resultat.correct ? 0 : 1),
