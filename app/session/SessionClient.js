@@ -46,7 +46,13 @@ function duree(depuis) {
  * la plus grande surface, le résumé d'argent se réduit à une bande de
  * référence en haut, et l'inscription reste atteignable sans défiler.
  */
-export default function SessionClient({ demo, session, grille, recentes }) {
+export default function SessionClient({
+  demo,
+  session,
+  grille,
+  recentes,
+  aSolder = [],
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erreur, setErreur] = useState(null);
@@ -122,12 +128,23 @@ export default function SessionClient({ demo, session, grille, recentes }) {
     });
   }
 
+  const blocASolder = (
+    <ASolder
+      tournois={aSolder}
+      onSaisir={setSaisie}
+      onRetirer={retirer}
+      pending={pending}
+    />
+  );
+
   /* ================= aucune session ouverte ================= */
 
   if (!session) {
     return (
       <>
         {erreur ? <Erreur>{erreur}</Erreur> : null}
+
+        {blocASolder}
 
         <EmptyState
           icon={Play}
@@ -189,6 +206,21 @@ export default function SessionClient({ demo, session, grille, recentes }) {
         ) : null}
 
         <div className="h-10" />
+
+        {saisie ? (
+          <SaisieResultat
+            tournoi={saisie}
+            onClose={() => setSaisie(null)}
+            onValider={(valeurs) =>
+              appeler(
+                "/api/sessions/resultat",
+                { tournamentId: saisie.id, ...valeurs },
+                () => setSaisie(null)
+              )
+            }
+            pending={pending}
+          />
+        ) : null}
       </>
     );
   }
@@ -198,6 +230,8 @@ export default function SessionClient({ demo, session, grille, recentes }) {
   return (
     <>
       {erreur ? <Erreur>{erreur}</Erreur> : null}
+
+      {blocASolder}
 
       {/* Bande de référence : les trois chiffres d'un coup d'œil, sans
           occuper un demi-écran comme avant. */}
@@ -376,6 +410,75 @@ export default function SessionClient({ demo, session, grille, recentes }) {
           pending={pending}
         />
       ) : null}
+    </>
+  );
+}
+
+/**
+ * Les tournois inscrits dont le résultat n'a jamais été saisi, hors session
+ * en cours. Leur coût est déjà parti de la bankroll : tant qu'ils restent
+ * là, le solde de la room les compte en perte sèche. C'est exact, mais ça
+ * n'a pas de raison de rester comme ça — d'où les deux sorties, saisir le
+ * résultat ou retirer le tournoi.
+ */
+function ASolder({ tournois, onSaisir, onRetirer, pending }) {
+  if (tournois.length === 0) return null;
+
+  const engage = tournois.reduce((s, t) => s + t.totalCost, 0);
+
+  return (
+    <>
+      <SectionTitle
+        tight
+        action={
+          <Pill tone="warning">
+            <StatusDot tone="warning" />
+            {formatEuro(-engage, { sign: true })} sur la bankroll
+          </Pill>
+        }
+      >
+        À solder · {tournois.length}
+      </SectionTitle>
+
+      <Card className="mb-7 border-warning/40 bg-warning/5 p-4">
+        <p className="text-sm text-ink-muted">
+          Inscrits pendant une session déjà terminée, sans résultat saisi. Le
+          buy-in est bien sorti du compte, donc il compte en perte — saisis le
+          résultat, ou retire le tournoi s&apos;il n&apos;a jamais été joué.
+        </p>
+
+        <ul className="mt-4 grid gap-2.5">
+          {tournois.map((t) => (
+            <li
+              key={t.id}
+              className="flex flex-wrap items-center gap-3 rounded-tile border border-line bg-surface p-3"
+            >
+              <SiteBadge slug={t.siteSlug} taille={32} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium leading-tight">{t.name}</p>
+                <p className="num mt-0.5 truncate text-sm text-ink-muted">
+                  {formatDate(t.playedAt)} · {formatEuro(t.totalCost)} engagé
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button type="button" onClick={() => onSaisir(t)}>
+                  Saisir
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => onRetirer(t)}
+                  disabled={pending}
+                  aria-label={`Retirer ${t.name}`}
+                  title="Jamais joué ?"
+                  className="grid size-11 place-items-center rounded-lg text-ink-muted/60 transition-colors hover:bg-surface-3 hover:text-warning disabled:opacity-40"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </>
   );
 }

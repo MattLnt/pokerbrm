@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Download, Lock } from "lucide-react";
+import { Download, Lock, ChevronRight } from "lucide-react";
 
 import {
   Screen,
@@ -225,6 +225,23 @@ export default async function BankrollPage({ searchParams }) {
               );
             })}
           </CardList>
+
+          {/* Un solde qui paraît faux a presque toujours cette explication :
+              un tournoi inscrit dont le résultat n'a jamais été saisi. */}
+          {data.aSolder.count > 0 ? (
+            <Link
+              href="/session"
+              className="mt-2.5 flex items-center justify-between gap-3 rounded-tile border border-warning/40 bg-warning/5 px-4 py-3.5 transition-colors hover:bg-warning/10"
+            >
+              <p className="text-sm text-warning">
+                {plural(data.aSolder.count, "tournoi")} sans résultat saisi,
+                compté{data.aSolder.count > 1 ? "s" : ""} en perte pour{" "}
+                <span className="num">{formatEuro(data.aSolder.engage)}</span>{" "}
+                — à solder
+              </p>
+              <ChevronRight size={18} className="shrink-0 text-warning" />
+            </Link>
+          ) : null}
           </div>
 
           {/* Remonté après les résultats sur mobile, comme sur la maquette. */}

@@ -5,6 +5,7 @@ import {
   getSessionOuverte,
   getGrille,
   getSessionsRecentes,
+  getTournoisASolder,
 } from "@/lib/data";
 
 export const metadata = { title: "Session · Poker BRM" };
@@ -13,10 +14,11 @@ export const metadata = { title: "Session · Poker BRM" };
 export const dynamic = "force-dynamic";
 
 export default async function SessionPage() {
-  const [session, grille, recentes] = await Promise.all([
+  const [session, grille, recentes, aSolder] = await Promise.all([
     getSessionOuverte(),
     getGrille(),
     getSessionsRecentes(8),
+    getTournoisASolder(),
   ]);
 
   return (
@@ -30,6 +32,7 @@ export default async function SessionPage() {
         session={session}
         grille={grille}
         recentes={recentes}
+        aSolder={aSolder}
       />
     </Screen>
   );

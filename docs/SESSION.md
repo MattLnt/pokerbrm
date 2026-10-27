@@ -35,6 +35,18 @@ donc 23 h est proche de 1 h. Sans ça, il faudrait chercher dans 53 lignes.
 4. **Terminer** la session. Les tournois encore en jeu le restent : on peut
    clore la session et saisir un résultat plus tard.
 
+## À solder
+
+Un tournoi inscrit dont le résultat n'est jamais saisi reste `inProgress`
+après la clôture de sa session. Son coût est bien sorti du compte, donc la
+bankroll le compte en perte sèche — c'est exact, mais ça fait un solde qui
+paraît faux sans raison visible.
+
+Le bloc **À solder**, en tête de l'écran de session, les remonte tous, quelle
+que soit la session d'origine (`getTournoisASolder`). Deux sorties : saisir le
+résultat, ou retirer le tournoi s'il n'a jamais été joué. L'écran bankroll
+porte un rappel cliquable quand il en reste.
+
 ## Les re-entries
 
 C'est la seule donnée que les résumés Winamax ne donnent pas, et elle fausse
@@ -43,7 +55,8 @@ récupère : c'est le seul moment où on la connaît avec certitude.
 
 ## MTT seulement
 
-`FORMATS_COMPTES` dans `lib/constants.js` vaut `["CLASSIC", "KO"]`.
+`FORMATS_COMPTES` dans `lib/constants.js` vaut
+`["CLASSIC", "KO", "MYSTERY", "SPACE_KO"]`.
 
 Les Spins restent importés, stockés et comptés **dans le solde** — l'argent
 sort et rentre vraiment. Mais ils n'entrent ni dans le profit, ni dans le ROI,
