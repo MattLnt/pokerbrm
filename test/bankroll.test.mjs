@@ -5,9 +5,7 @@ import {
   filtrerFormatsComptes,
   computeSiteBalance,
   computePeriodResults,
-  computeBuyInLimits,
-  checkBuyInCompliance,
-  computeLevelProgress,
+  computePalier,
   buildBankrollCurve,
 } from "../lib/bankroll.js";
 
@@ -42,7 +40,6 @@ test("résultats : le hors-jeu est séparé du profit de jeu", () => {
   assert.equal(r.offGame, 185, "le dépôt n'est pas un revenu hors jeu");
   assert.equal(r.variation, 499);
   assert.equal(r.itm, 50);
-  assert.equal(r.abi, 36);
   assert.equal(r.roi, round(314 / 72 * 100));
 });
 
@@ -52,72 +49,156 @@ test("résultats : période vide ne divise pas par zéro", () => {
   const r = computePeriodResults({ tournaments: [], transactions: [], days: 7 });
   assert.equal(r.roi, 0);
   assert.equal(r.itm, 0);
-  assert.equal(r.abi, 0);
 });
 
-test("buy-in max : bankroll / nombre de caves, arrondi au plancher", () => {
-  const limits = computeBuyInLimits(8420);
+// Un dépôt daté, de quoi amener la bankroll à un montant donné sans jouer.
+const depot = (montant, jours) => ({
+  date: daysAgo(jours),
+  type: "DEPOSIT",
+  amount: montant,
+});
+
+const tournoi = (cout, jours, format = "CLASSIC") => ({
+  playedAt: daysAgo(jours),
+  format,
+  buyIn: cout - 1,
+  fee: 1,
+  bounty: 0,
+  netResult: -cout,
+  totalCost: cout,
+  prize: 0,
+});
+
+test("palier : la bankroll de départ ouvre le plafond correspondant", () => {
+  const p = computePalier({ transactions: [depot(6000, 100)] });
+  assert.equal(p.buyInMax, 20);
+  assert.equal(p.next.buyInMax, 50);
+  assert.equal(p.required, 13000);
+  assert.equal(p.stopLoss, 4000);
+  assert.equal(p.fallbackBuyIn, 10);
   assert.deepEqual(
-    limits.map((l) => [l.format, l.maxBuyIn]),
-    [
-      ["CLASSIC", 42],
-      ["KO", 56],
-      ["MYSTERY", 56],
-      ["SPACE_KO", 56],
-    ]
+    p.echelle.map((e) => [e.buyInMax, e.autorise]),
+    [[5, true], [10, true], [20, true], [50, false]]
   );
 });
 
-test("buy-in max : les règles personnalisées priment", () => {
-  const limits = computeBuyInLimits(10000, [
-    { format: "CLASSIC", buyInsRequired: 100 },
-  ]);
-  assert.equal(limits.find((l) => l.format === "CLASSIC").maxBuyIn, 100);
-  assert.equal(limits.find((l) => l.format === "KO").maxBuyIn, 66);
+test("palier : sans historique, on démarre au plancher", () => {
+  const p = computePalier();
+  assert.equal(p.buyInMax, 5);
+  assert.equal(p.required, 2500);
+  assert.equal(p.stopLoss, null, "pas de descente possible sous le premier palier");
+  assert.equal(p.fallbackBuyIn, null);
 });
 
-test("conformité : un tournoi récent au-dessus de la limite déclenche l'alerte", () => {
-  const limits = computeBuyInLimits(8420);
-  const ok = checkBuyInCompliance(
-    [{ playedAt: daysAgo(1), format: "CLASSIC", buyIn: 20, fee: 2, bounty: 0 }],
-    limits
-  );
-  assert.equal(ok.compliant, true);
-
-  const ko = checkBuyInCompliance(
-    [{ playedAt: daysAgo(1), format: "CLASSIC", buyIn: 100, fee: 10, bounty: 0 }],
-    limits
-  );
-  assert.equal(ko.compliant, false);
-  assert.equal(ko.offenders.length, 1);
-
-  const vieux = checkBuyInCompliance(
-    [{ playedAt: daysAgo(90), format: "CLASSIC", buyIn: 100, fee: 10, bounty: 0 }],
-    limits
-  );
-  assert.equal(vieux.compliant, true, "hors fenêtre de 30 jours");
-});
-
-test("paliers : palier courant, suivant et seuil de descente", () => {
-  const levels = [
-    { targetAbi: 25, bankrollRequired: 5000, stopLoss: 3500 },
-    { targetAbi: 50, bankrollRequired: 10000, stopLoss: 6500 },
-    { targetAbi: 100, bankrollRequired: 20000, stopLoss: 13000 },
-  ];
-  const p = computeLevelProgress(8420, levels);
-  assert.equal(Number(p.current.targetAbi), 25);
-  assert.equal(Number(p.next.targetAbi), 50);
-  assert.equal(p.required, 10000);
-  // Le seuil de descente est celui du palier joué actuellement, pas du suivant.
-  assert.equal(p.stopLoss, 3500);
-});
-
-test("paliers : au-dessus du dernier palier, il n'y a plus de suivant", () => {
-  const p = computeLevelProgress(50000, [
-    { targetAbi: 50, bankrollRequired: 10000, stopLoss: 6500 },
-  ]);
+test("palier : un gros gain peut faire sauter plusieurs paliers d'un coup", () => {
+  const p = computePalier({
+    transactions: [depot(500, 100)],
+    tournaments: [
+      { playedAt: daysAgo(50), format: "CLASSIC", buyIn: 4, fee: 1, bounty: 0, netResult: 12600 },
+    ],
+  });
+  assert.equal(p.buyInMax, 50, "500 € puis 13 100 € : 5 → 50 € en une main");
   assert.equal(p.next, null);
-  assert.equal(p.required, null);
+});
+
+test("palier : entre les deux seuils, le palier dépend du chemin parcouru", () => {
+  // 2 200 € en montant depuis 1 000 € : le seuil de 2 500 n'a jamais été
+  // franchi, on est encore au plafond de 5 €.
+  const enMontant = computePalier({
+    transactions: [depot(1000, 100), depot(1200, 50)],
+  });
+  assert.equal(enMontant.buyInMax, 5);
+
+  // 2 200 € en descendant depuis 3 000 € : le seuil de repli (2 000) n'est
+  // pas atteint, le plafond de 10 € reste ouvert.
+  const enDescendant = computePalier({
+    transactions: [
+      depot(3000, 100),
+      { date: daysAgo(50), type: "WITHDRAWAL", amount: 800 },
+    ],
+  });
+  assert.equal(enDescendant.buyInMax, 10);
+});
+
+test("palier : sous le seuil de repli, on redescend", () => {
+  const p = computePalier({
+    transactions: [
+      depot(14000, 100),
+      { date: daysAgo(50), type: "WITHDRAWAL", amount: 4100 },
+    ],
+  });
+  assert.equal(p.buyInMax, 20, "9 900 € : les 50 € sautent, les 20 € restent");
+  assert.equal(p.required, 13000, "il faut repasser 13 000 € pour y revenir");
+});
+
+test("palier : une chute brutale fait perdre plusieurs paliers", () => {
+  const p = computePalier({
+    transactions: [
+      depot(14000, 100),
+      { date: daysAgo(50), type: "WITHDRAWAL", amount: 12500 },
+    ],
+  });
+  assert.equal(p.buyInMax, 5, "1 500 € : retour au plancher");
+});
+
+test("conformité : un tournoi est jugé sur le palier du jour où il est joué", () => {
+  const p = computePalier({
+    transactions: [depot(2000, 100)],
+    // Joué à 2 000 € de bankroll, quand le plafond était à 5 €.
+    tournaments: [tournoi(20, 10)],
+  });
+  assert.equal(p.compliant, false);
+  assert.equal(p.offenders.length, 1);
+});
+
+test("conformité : un tournoi dans les clous le reste même après une chute", () => {
+  const p = computePalier({
+    transactions: [
+      depot(6000, 100),
+      // La bankroll s'effondre après coup : le palier du jour était bien
+      // celui des 20 €.
+      { date: daysAgo(2), type: "WITHDRAWAL", amount: 5000 },
+    ],
+    tournaments: [tournoi(20, 10)],
+  });
+  assert.equal(p.buyInMax, 5);
+  assert.equal(p.compliant, true);
+});
+
+test("conformité : les écarts hors fenêtre ne remontent plus", () => {
+  const p = computePalier({
+    transactions: [depot(2000, 200)],
+    tournaments: [tournoi(20, 90)],
+  });
+  assert.equal(p.compliant, true, "hors fenêtre de 30 jours");
+});
+
+test("conformité : les Spins ne sont pas jugés, ils ne sont pas suivis", () => {
+  const p = computePalier({
+    transactions: [depot(2000, 100)],
+    tournaments: [tournoi(20, 10, "SPIN")],
+  });
+  assert.equal(p.compliant, true);
+});
+
+test("conformité : la prime compte dans le prix du ticket", () => {
+  const p = computePalier({
+    transactions: [depot(3000, 100)],
+    // Un KO à 10 € : 4 € de buy-in, 1 € de rake, 5 € de prime. Pile dans
+    // les clous du palier à 10 €.
+    tournaments: [
+      { playedAt: daysAgo(5), format: "KO", buyIn: 4, fee: 1, bounty: 5, netResult: -10 },
+    ],
+  });
+  assert.equal(p.compliant, true);
+
+  const trop = computePalier({
+    transactions: [depot(3000, 100)],
+    tournaments: [
+      { playedAt: daysAgo(5), format: "KO", buyIn: 4, fee: 1, bounty: 10, netResult: -15 },
+    ],
+  });
+  assert.equal(trop.compliant, false, "15 € le ticket, plafond à 10 €");
 });
 
 test("courbe : elle se termine sur la bankroll actuelle", () => {
@@ -183,12 +264,4 @@ test("le solde d'un site compte TOUS les tournois, Spins inclus", () => {
     transactions: [],
   });
   assert.equal(balance, 958);
-});
-
-test("buy-in max : une bankroll négative donne zéro, pas moins un", () => {
-  const limits = computeBuyInLimits(-5);
-  assert.deepEqual(
-    limits.map((l) => l.maxBuyIn),
-    [0, 0, 0, 0]
-  );
 });

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Download } from "lucide-react";
+import { Download, Lock } from "lucide-react";
 
 import {
   Screen,
@@ -195,7 +195,7 @@ export default async function BankrollPage({ searchParams }) {
           <SectionTitle
             tight
             action={
-              data.compliance.compliant ? (
+              data.palier.compliant ? (
                 <Pill tone="positive">
                   <StatusDot tone="positive" />
                   Dans les clous
@@ -211,37 +211,57 @@ export default async function BankrollPage({ searchParams }) {
             Règles de buy-in
           </SectionTitle>
 
-          <div className="grid grid-cols-3 gap-2.5">
-            {data.limits.map((limit, i) => (
-              <StatTile
-                key={limit.format}
-                index={i + 1}
-                label={limit.label}
-                value={formatEuro(limit.maxBuyIn)}
-                sub={`max · ${limit.buyIns} caves`}
-              />
-            ))}
-          </div>
-
-          {data.level.next ? (
-            <Card className="mt-2.5 p-4">
-              <div className="mb-3 flex items-baseline justify-between gap-3">
-                <p className="font-medium">
-                  Prochain palier : ABI {formatEuro(data.level.next.targetAbi)}
-                </p>
-                <p className="num shrink-0 text-sm text-ink-muted">
-                  {formatEuro(data.bankroll)} / {formatEuro(data.level.required)}
-                </p>
+          <Card className="p-4">
+            <p className="kicker mb-2.5">Buy-in max</p>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+              <p className="chiffre-hero text-2xl">
+                {formatEuro(data.palier.buyInMax)}
+              </p>
+              {/* Toute l'échelle, pas seulement le palier courant : on voit
+                  d'un coup ce qui est ouvert et ce qui attend. */}
+              <div className="flex flex-wrap gap-2">
+                {data.palier.echelle.map((p) => (
+                  <Pill
+                    key={p.buyInMax}
+                    tone={p.autorise ? "accent" : "neutral"}
+                  >
+                    {p.autorise ? null : <Lock size={13} aria-hidden />}
+                    {formatEuro(p.buyInMax)}
+                  </Pill>
+                ))}
               </div>
-              <ProgressBar value={data.bankroll} max={data.level.required} />
-              {data.level.stopLoss !== null ? (
-                <p className="mt-3 text-sm text-ink-muted">
-                  Descente si la bankroll passe sous{" "}
-                  <span className="num">{formatEuro(data.level.stopLoss)}</span>
-                </p>
-              ) : null}
-            </Card>
-          ) : null}
+            </div>
+          </Card>
+
+          <Card className="mt-2.5 p-4">
+            {data.palier.next ? (
+              <>
+                <div className="mb-3 flex items-baseline justify-between gap-3">
+                  <p className="font-medium">
+                    Prochain palier : buy-in{" "}
+                    {formatEuro(data.palier.next.buyInMax)}
+                  </p>
+                  <p className="num shrink-0 text-sm text-ink-muted">
+                    {formatEuro(data.bankroll)} /{" "}
+                    {formatEuro(data.palier.required)}
+                  </p>
+                </div>
+                <ProgressBar value={data.bankroll} max={data.palier.required} />
+              </>
+            ) : (
+              <p className="font-medium">Dernier palier atteint.</p>
+            )}
+            {data.palier.stopLoss !== null ? (
+              <p className="mt-3 text-sm text-ink-muted">
+                Retour au buy-in{" "}
+                <span className="num">
+                  {formatEuro(data.palier.fallbackBuyIn)}
+                </span>{" "}
+                si la bankroll passe sous{" "}
+                <span className="num">{formatEuro(data.palier.stopLoss)}</span>
+              </p>
+            ) : null}
+          </Card>
           </div>
 
           <div className="order-4">

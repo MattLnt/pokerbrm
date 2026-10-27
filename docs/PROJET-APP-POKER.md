@@ -43,8 +43,8 @@ La saisie manuelle était trop longue. **Principe de la refonte : zéro saisie p
 - **Par site** : une ligne par site (Winamax, PokerStars, PMU) avec solde, variation sur la période, date du dernier import et nombre de tournois. Alerte orange si le dernier import date de plus de 7 jours (« à mettre à jour »)
 - **Règles de buy-in** :
   - Badge de statut : « Dans les clous » (vert) / « Au-dessus de la limite » (orange) si des tournois récents dépassent le buy-in max
-  - 3 cartes par format : MTT classique, KO, Spin — buy-in max calculé = bankroll / nombre de caves du format
-  - Barre de progression vers le palier suivant (« Prochain palier : ABI 50 € — 8 420 / 10 000 € ») + seuil de descente (« Descente si la bankroll passe sous 6 500 € »)
+  - Carte « Buy-in max » : le plafond du palier joué, et l'échelle complète (5 / 10 / 20 / 50 €) avec un cadenas sur ce qui n'est pas encore ouvert
+  - Barre de progression vers le palier suivant (« Prochain palier : buy-in 50 € — 9 204 / 13 000 € ») + seuil de repli (« Retour au buy-in 10 € si la bankroll passe sous 4 000 € »)
 - **Résultats sur la période** : profit de jeu, rakeback et bonus (séparés), ROI, ITM ; boutons de ventilation **Par format / Par buy-in / Par site**
 - **Derniers mouvements** : dépôts, retraits, rakeback, tickets
 
@@ -66,8 +66,19 @@ La saisie manuelle était trop longue. **Principe de la refonte : zéro saisie p
 - Calcul : coût total = (buyIn + fee + bounty) × (1 + reEntries) ; gain net = prize + bountiesWon − coût total
 
 ### Règles de buy-in
-- Paramétrables dans les réglages : nombre de caves par format (valeurs par défaut : classique 200, KO 150, Spin 100)
-- Paliers de montée/descente définis par l'utilisateur (ABI cible + bankroll requise + seuil de descente)
+- **Pas d'ABI** : un nombre de caves à tenir par format, recalculé à chaque euro gagné, se gère mal en jouant. On raisonne en **buy-in maximum** — à chaque palier un plafond, et tout ce qui est moins cher reste autorisé.
+- Échelle fixe, dans `PALIERS_BUYIN` (`lib/constants.js`) :
+
+  | Buy-in max | On y monte à | On en redescend sous |
+  | --- | --- | --- |
+  | 5 € | — | — |
+  | 10 € | 2 500 € | 2 000 € |
+  | 20 € | 5 000 € | 4 000 € |
+  | 50 € | 13 000 € | 10 000 € |
+
+- Les deux seuils d'un palier sont volontairement différents : sans cet écart, on changerait de palier à chaque session autour d'un seuil unique. Conséquence : entre 2 000 et 2 500 €, le palier joué dépend du chemin parcouru, pas du seul solde. `computePalier` rejoue donc l'historique depuis zéro (`lib/bankroll.js`).
+- Même passe pour la conformité : chaque tournoi est jugé sur le palier en vigueur **le jour où il a été joué**. Un 20 € joué quand le plafond était à 10 € reste une sortie de route même si la bankroll a doublé depuis — et inversement.
+- Prix du ticket = buy-in + rake + prime. Les re-entries n'y entrent pas : elles coûtent cher, mais ne font pas monter de palier.
 - Le solde par site est calculé : dépôts − retraits + gains nets importés + rakeback/bonus. Un ajustement manuel du solde reste possible (mouvement de type « correction »).
 
 ---
@@ -142,7 +153,7 @@ Maquettes mobiles 390 px de large (captures jointes : `bankroll-vue-ensemble.png
 - `Tournament` — `siteId`, `externalId` (unique avec `siteId`), `name`, `playedAt`, `buyIn`, `fee`, `bounty`, `reEntries`, `entrants`, `finishPosition`, `prize`, `bountiesWon`, `netResult`, `format` (CLASSIC/KO/SPIN), `speed`, `importBatchId`
 - `ImportBatch` — `createdAt`, `fileCount`, `newCount`, `duplicateCount`
 - `Transaction` — `siteId`, `type` (DEPOSIT/WITHDRAWAL/RAKEBACK/BONUS/TICKET/ADJUSTMENT), `amount`, `date`, `note`
-- `BankrollRule` — `format`, `buyInsRequired` ; `BankrollLevel` — `targetAbi`, `bankrollRequired`, `stopLoss`
+- Pas de table pour les paliers de buy-in : l'échelle est une constante de l'app (`PALIERS_BUYIN`), pas une donnée éditable
 - `Range` — `position`, `action`, `stackDepth`, `vsPosition`, `cells` (JSON : main → `{ action: fréquence }`)
 - `StudyTheme`, `StudySession` (`date`, `minutes`, `type`, `themeId`, `notes`), `TaggedHand`
 - `DrillAttempt` — `rangeId`, `hand`, `answer`, `correct`, `createdAt` (+ champs de répétition espacée)
@@ -152,5 +163,4 @@ Maquettes mobiles 390 px de large (captures jointes : `bankroll-vue-ensemble.png
 ## 10. Points ouverts
 
 - Exemple de fichier résumé **PMU** à fournir avant de coder son parser (et exemples Winamax / PokerStars pour valider les parsers)
-- Paliers de buy-in réels à renseigner (les valeurs des maquettes sont des exemples)
 - Maquettes à faire avant de coder les autres modules : Ranges, Étude, Trainer, Accueil

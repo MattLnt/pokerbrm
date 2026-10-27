@@ -1,6 +1,6 @@
 /**
- * Amorce la base : utilisateur unique, sites, règles de buy-in, paliers et
- * programme d'étude. Idempotent — on peut le relancer sans créer de doublons.
+ * Amorce la base : utilisateur unique, sites et programme d'étude.
+ * Idempotent — on peut le relancer sans créer de doublons.
  *
  *   npm run db:seed
  */
@@ -26,19 +26,6 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 const SITES = [
   { slug: "winamax", name: "Winamax" },
   { slug: "betclic", name: "Betclic" },
-];
-
-const RULES = [
-  { format: "CLASSIC", buyInsRequired: 200 },
-  { format: "KO", buyInsRequired: 150 },
-  { format: "SPIN", buyInsRequired: 100 },
-];
-
-// Paliers d'exemple : à remplacer par les vrais (cf. PROJET-APP-POKER.md §10).
-const LEVELS = [
-  { targetAbi: 25, bankrollRequired: 5000, stopLoss: 3500, position: 0 },
-  { targetAbi: 50, bankrollRequired: 10000, stopLoss: 6500, position: 1 },
-  { targetAbi: 100, bankrollRequired: 20000, stopLoss: 13000, position: 2 },
 ];
 
 const THEMES = [
@@ -125,22 +112,6 @@ async function main() {
     });
   }
   console.log(`${SITES.length} sites`);
-
-  for (const r of RULES) {
-    await prisma.bankrollRule.upsert({
-      where: { userId_format: { userId: user.id, format: r.format } },
-      update: { buyInsRequired: r.buyInsRequired },
-      create: { userId: user.id, ...r },
-    });
-  }
-  console.log(`${RULES.length} règles de buy-in`);
-
-  // Pas de clé unique naturelle sur les paliers : on repart de zéro.
-  await prisma.bankrollLevel.deleteMany({ where: { userId: user.id } });
-  await prisma.bankrollLevel.createMany({
-    data: LEVELS.map((l) => ({ ...l, userId: user.id })),
-  });
-  console.log(`${LEVELS.length} paliers`);
 
   const existingThemes = await prisma.studyTheme.count({
     where: { userId: user.id },

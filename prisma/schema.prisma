@@ -65,8 +65,6 @@ model User {
   importBatches  ImportBatch[]
   templates      TournamentTemplate[]
   sessions       Session[]
-  bankrollRules  BankrollRule[]
-  bankrollLevels BankrollLevel[]
   ranges         Range[]
   studyThemes    StudyTheme[]
   studySessions  StudySession[]
@@ -207,27 +205,10 @@ model Transaction {
   @@index([userId, date])
 }
 
-model BankrollRule {
-  id              String           @id @default(cuid())
-  userId          String
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  format          TournamentFormat
-  buyInsRequired  Int
-
-  @@unique([userId, format])
-}
-
-model BankrollLevel {
-  id                String  @id @default(cuid())
-  userId            String
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  targetAbi         Decimal @db.Decimal(12, 2)
-  bankrollRequired  Decimal @db.Decimal(12, 2)
-  stopLoss          Decimal @db.Decimal(12, 2)
-  position          Int     @default(0)
-
-  @@index([userId, position])
-}
+// Les paliers de buy-in ne sont pas en base : ils vivent dans
+// `PALIERS_BUYIN` (lib/constants.js). La stratégie de bankroll est une règle
+// du joueur, la même pour toute l'app — pas une donnée à éditer écran par
+// écran, et rien ne la modifie à l'exécution.
 
 model Range {
   id          String   @id @default(cuid())
