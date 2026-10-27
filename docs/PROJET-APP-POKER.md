@@ -41,10 +41,11 @@ La saisie manuelle était trop longue. **Principe de la refonte : zéro saisie p
 - En-tête « Bankroll » + bouton d'import (icône téléchargement) → `/bankroll/import`
 - **Carte bankroll totale** : montant total, variation sur la période (sélecteur 7 j / 30 j / 90 j / tout), mention « dont X € rakeback et bonus », courbe d'évolution
 - **Par site** : une ligne par site (Winamax, PokerStars, PMU) avec solde, variation sur la période, date du dernier import et nombre de tournois. Alerte orange si le dernier import date de plus de 7 jours (« à mettre à jour »)
-- **Règles de buy-in** :
-  - Badge de statut : « Dans les clous » (vert) / « Au-dessus de la limite » (orange) si des tournois récents dépassent le buy-in max
-  - Carte « Buy-in max » : le plafond du palier joué, et l'échelle complète (5 / 10 / 20 / 50 €) avec un cadenas sur ce qui n'est pas encore ouvert
-  - Barre de progression vers le palier suivant (« Prochain palier : buy-in 50 € — 9 204 / 13 000 € ») + seuil de repli (« Retour au buy-in 10 € si la bankroll passe sous 4 000 € »)
+- **Règles de buy-in**, une carte **par room** :
+  - Badge de statut global : « Dans les clous » (vert) / « Au-dessus de la limite » (orange) — une seule room au-dessus de son plafond fait basculer le badge
+  - Par room : le buy-in max du palier joué, l'échelle complète (5 / 10 / 20 / 50 €) avec un cadenas sur ce qui n'est pas encore ouvert, la barre de progression vers le palier suivant et le seuil de repli
+- **Mouvements** (écran d'import) : dépôt, retrait, rakeback, bonus/ticket, **transfert entre rooms**, correction de solde
+- **Repartir de zéro** (écran d'import) : vide l'historique de jeu en deux temps, en annonçant le décompte exact avant d'effacer
 - **Résultats sur la période** : profit de jeu, rakeback et bonus (séparés), ROI, ITM ; boutons de ventilation **Par format / Par buy-in / Par site**
 - **Derniers mouvements** : dépôts, retraits, rakeback, tickets
 
@@ -67,19 +68,33 @@ La saisie manuelle était trop longue. **Principe de la refonte : zéro saisie p
 
 ### Règles de buy-in
 - **Pas d'ABI** : un nombre de caves à tenir par format, recalculé à chaque euro gagné, se gère mal en jouant. On raisonne en **buy-in maximum** — à chaque palier un plafond, et tout ce qui est moins cher reste autorisé.
-- Échelle fixe, dans `PALIERS_BUYIN` (`lib/constants.js`) :
+- **Par room, pas sur la bankroll totale** : 2 000 € sur Winamax et 3 000 € sur Betclic, ce sont les 10 € sur Winamax et les 20 € sur Betclic — pas les 20 € partout. C'est ce qui fait du **transfert entre rooms** la manœuvre pour monter de palier quelque part.
+- Barème : **200 caves pour monter, 150 pour redescendre**. Échelle fixe, dans `PALIERS_BUYIN` (`lib/constants.js`) :
 
   | Buy-in max | On y monte à | On en redescend sous |
   | --- | --- | --- |
-  | 5 € | — | — |
-  | 10 € | 2 500 € | 2 000 € |
-  | 20 € | 5 000 € | 4 000 € |
-  | 50 € | 13 000 € | 10 000 € |
+  | 5 € | — (plancher) | — |
+  | 10 € | 2 000 € | 1 500 € |
+  | 20 € | 4 000 € | 3 000 € |
+  | 50 € | 10 000 € | 7 500 € |
 
-- Les deux seuils d'un palier sont volontairement différents : sans cet écart, on changerait de palier à chaque session autour d'un seuil unique. Conséquence : entre 2 000 et 2 500 €, le palier joué dépend du chemin parcouru, pas du seul solde. `computePalier` rejoue donc l'historique depuis zéro (`lib/bankroll.js`).
-- Même passe pour la conformité : chaque tournoi est jugé sur le palier en vigueur **le jour où il a été joué**. Un 20 € joué quand le plafond était à 10 € reste une sortie de route même si la bankroll a doublé depuis — et inversement.
+- Les deux seuils d'un palier sont volontairement différents : sans cet écart, on changerait de palier à chaque session autour d'un seuil unique. Conséquence : entre 1 500 et 2 000 €, le palier joué dépend du chemin parcouru, pas du seul solde. `computePalier` rejoue donc l'historique de la room depuis zéro (`lib/bankroll.js`).
+- Les **5 € sont le plancher** : pas de seuil de descente, et pas de palier en dessous même si la bankroll fond. Choix assumé — les 2 € de la grille restent hors barème.
+- Même passe pour la conformité : chaque tournoi est jugé sur le palier en vigueur **le jour où il a été joué**. Un 20 € joué quand le plafond était à 10 € reste une sortie de route même si la room a doublé depuis — et inversement.
 - Prix du ticket = buy-in + rake + prime. Les re-entries n'y entrent pas : elles coûtent cher, mais ne font pas monter de palier.
-- Le solde par site est calculé : dépôts − retraits + gains nets importés + rakeback/bonus. Un ajustement manuel du solde reste possible (mouvement de type « correction »).
+- Pas de table pour tout ça : l'échelle est une constante de l'app, pas une donnée éditable. Changer un seuil est un commit, pas une migration.
+- Le solde d'une room = dépôts − retraits ± transferts + rakeback/bonus/tickets + corrections + gains nets des tournois.
+
+### Transferts entre rooms
+- Un transfert n'est **ni un dépôt ni un retrait** : la bankroll totale ne bouge pas, seuls les deux soldes changent — et donc les deux paliers.
+- Écrit en **deux mouvements jumeaux** (`TRANSFER_OUT` / `TRANSFER_IN`) reliés par un même `transferId`, créés dans une seule transaction : une sortie sans son entrée ferait disparaître de l'argent de la bankroll totale.
+- Affiché comme un seul geste dans les derniers mouvements (« Transfert · Winamax → Betclic »), sans signe ni couleur.
+
+### Repartir de zéro
+- `POST /api/reset` efface **tournois, sessions, lots d'import et mouvements d'argent**, en une transaction, et remet `lastImportAt` à vide.
+- Épargne tout le reste : ranges, programme d'étude, mains mises de côté, révisions du trainer, grille de tournois. Des mois de saisie qui n'ont rien à voir avec un solde.
+- `GET /api/reset` renvoie le décompte, pour que l'écran annonce ce qui va disparaître avant de le faire.
+- Après le reset la bankroll vaut zéro : le point de départ se repose avec un mouvement **Correction** par room.
 
 ---
 
@@ -152,7 +167,7 @@ Maquettes mobiles 390 px de large (captures jointes : `bankroll-vue-ensemble.png
 - `Site` (Winamax, PokerStars, PMU) — `name`, `lastImportAt`
 - `Tournament` — `siteId`, `externalId` (unique avec `siteId`), `name`, `playedAt`, `buyIn`, `fee`, `bounty`, `reEntries`, `entrants`, `finishPosition`, `prize`, `bountiesWon`, `netResult`, `format` (CLASSIC/KO/SPIN), `speed`, `importBatchId`
 - `ImportBatch` — `createdAt`, `fileCount`, `newCount`, `duplicateCount`
-- `Transaction` — `siteId`, `type` (DEPOSIT/WITHDRAWAL/RAKEBACK/BONUS/TICKET/ADJUSTMENT), `amount`, `date`, `note`
+- `Transaction` — `siteId`, `type` (DEPOSIT/WITHDRAWAL/RAKEBACK/BONUS/TICKET/ADJUSTMENT/TRANSFER_IN/TRANSFER_OUT), `amount`, `date`, `note`, `transferId` (relie les deux moitiés d'un transfert)
 - Pas de table pour les paliers de buy-in : l'échelle est une constante de l'app (`PALIERS_BUYIN`), pas une donnée éditable
 - `Range` — `position`, `action`, `stackDepth`, `vsPosition`, `cells` (JSON : main → `{ action: fréquence }`)
 - `StudyTheme`, `StudySession` (`date`, `minutes`, `type`, `themeId`, `notes`), `TaggedHand`

@@ -2,7 +2,16 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FolderDown, Plus, Minus, RefreshCw, Gift } from "lucide-react";
+import {
+  FolderDown,
+  Plus,
+  Minus,
+  RefreshCw,
+  Gift,
+  ArrowLeftRight,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 import { Card, CardList, SectionTitle, Button } from "@/components/ui";
 import MovementSheet from "@/components/MovementSheet";
@@ -17,9 +26,98 @@ const MOVEMENTS = [
   { type: "WITHDRAWAL", label: "Retrait", icon: Minus },
   { type: "RAKEBACK", label: "Rakeback", icon: RefreshCw },
   { type: "BONUS", label: "Bonus / ticket", icon: Gift },
+  { type: "TRANSFER", label: "Transfert", icon: ArrowLeftRight },
+  { type: "ADJUSTMENT", label: "Corriger un solde", icon: Pencil },
 ];
 
 const MAX_FILE_SIZE = 5_000_000;
+
+/**
+ * Vider l'historique de jeu. En deux temps, et en annonçant le décompte
+ * exact avant d'effacer : c'est la seule action de l'app qu'on ne peut pas
+ * défaire autrement qu'en réimportant ses fichiers.
+ */
+function ResetCard({ demo }) {
+  const router = useRouter();
+  const [armed, setArmed] = useState(false);
+  const [counts, setCounts] = useState(null);
+  const [error, setError] = useState(null);
+  const [pending, startTransition] = useTransition();
+
+  async function arm() {
+    setError(null);
+    const res = await fetch("/api/reset");
+    setCounts(res.ok ? await res.json() : null);
+    setArmed(true);
+  }
+
+  function wipe() {
+    if (demo) {
+      setError("Branche la base Railway pour vider l'historique.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await fetch("/api/reset", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Le reset a échoué.");
+        return;
+      }
+      router.push("/bankroll");
+      router.refresh();
+    });
+  }
+
+  return (
+    <>
+      <SectionTitle>Repartir de zéro</SectionTitle>
+      <Card className="p-4">
+        <p className="text-sm text-ink-muted">
+          Efface les tournois, les sessions et tous les mouvements d&apos;argent.
+          Les ranges, le programme d&apos;étude, les mains mises de côté et la
+          grille ne sont pas touchés. Ensuite, un mouvement{" "}
+          <span className="text-ink-section">Corriger un solde</span> par room
+          pose le nouveau point de départ.
+        </p>
+
+        {armed ? (
+          <>
+            <p className="mt-3 rounded-tile border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+              {counts
+                ? [
+                    plural(counts.tournaments, "tournoi"),
+                    plural(counts.transactions, "mouvement"),
+                    plural(counts.sessions, "session"),
+                  ].join(", ") + " vont être supprimés. Sans retour en arrière."
+                : "Tout l'historique de jeu va être supprimé. Sans retour en arrière."}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <Button type="button" onClick={() => setArmed(false)}>
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={wipe}
+                disabled={pending}
+              >
+                {pending ? "Suppression…" : "Confirmer"}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <Button type="button" className="mt-4 w-full" onClick={arm}>
+            <Trash2 size={18} />
+            Vider l&apos;historique de jeu
+          </Button>
+        )}
+
+        {error ? <p className="mt-3 text-sm text-warning">{error}</p> : null}
+      </Card>
+    </>
+  );
+}
 
 export default function ImportClient({ demo }) {
   const router = useRouter();
@@ -225,9 +323,11 @@ export default function ImportClient({ demo }) {
       ) : null}
 
       {/* Mouvements hors jeu */}
-      <SectionTitle>Mouvements hors jeu</SectionTitle>
+      <SectionTitle>Mouvements</SectionTitle>
       <p className="-mt-2 mb-3 text-sm text-ink-muted">
-        Comptés à part du profit de jeu
+        Comptés à part du profit de jeu. Un transfert ne change pas la
+        bankroll totale, seulement le solde des deux rooms — et donc leurs
+        paliers.
       </p>
       <div className="grid grid-cols-2 gap-2.5">
         {MOVEMENTS.map(({ type, label, icon: Icon }) => (
@@ -237,6 +337,8 @@ export default function ImportClient({ demo }) {
           </Button>
         ))}
       </div>
+
+      <ResetCard demo={demo} />
 
       <div className="h-32" />
 

@@ -41,6 +41,77 @@ function isStale(lastImportAt) {
   return Date.now() - new Date(lastImportAt).getTime() > STALE_DAYS * 86400000;
 }
 
+/**
+ * Le palier d'une room : son plafond, l'échelle complète, et ce qu'il reste
+ * à faire pour monter ou ce qu'on perd en descendant.
+ */
+function PalierRoom({ site }) {
+  const { palier } = site;
+  return (
+    <Card className="p-4">
+      <div className="mb-3.5 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <SiteBadge slug={site.slug} taille={30} />
+          <p className="truncate font-semibold">{site.name}</p>
+        </div>
+        {palier.compliant ? null : (
+          <Pill tone="warning">
+            <StatusDot tone="warning" />
+            {plural(palier.offenders.length, "écart")}
+          </Pill>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div>
+          <p className="kicker mb-1.5">Buy-in max</p>
+          <p className="chiffre-hero text-2xl">
+            {formatEuro(palier.buyInMax)}
+          </p>
+        </div>
+        {/* Toute l'échelle, pas seulement le palier courant : on voit d'un
+            coup ce qui est ouvert et ce qui attend. */}
+        <div className="flex flex-wrap gap-2">
+          {palier.echelle.map((p) => (
+            <Pill key={p.buyInMax} tone={p.autorise ? "accent" : "neutral"}>
+              {p.autorise ? null : <Lock size={13} aria-hidden />}
+              {formatEuro(p.buyInMax)}
+            </Pill>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        {palier.next ? (
+          <>
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <p className="text-sm text-ink-muted">
+                Palier suivant : buy-in{" "}
+                <span className="num text-ink-section">
+                  {formatEuro(palier.next.buyInMax)}
+                </span>
+              </p>
+              <p className="num shrink-0 text-sm text-ink-muted">
+                {formatEuro(site.balance)} / {formatEuro(palier.required)}
+              </p>
+            </div>
+            <ProgressBar value={site.balance} max={palier.required} />
+          </>
+        ) : (
+          <p className="text-sm text-ink-muted">Dernier palier atteint.</p>
+        )}
+        {palier.stopLoss !== null ? (
+          <p className="mt-3 text-sm text-ink-muted">
+            Retour au buy-in{" "}
+            <span className="num">{formatEuro(palier.fallbackBuyIn)}</span> sous{" "}
+            <span className="num">{formatEuro(palier.stopLoss)}</span>
+          </p>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
+
 export default async function BankrollPage({ searchParams }) {
   const params = await searchParams;
   const periodKey = PERIODS.some((p) => p.key === params?.periode)
@@ -171,16 +242,23 @@ export default async function BankrollPage({ searchParams }) {
                   className="flex items-center justify-between gap-3 px-4 py-3.5"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium">{TRANSACTION_LABELS[m.type]}</p>
+                    <p className="font-medium">
+                      {m.versSite ? "Transfert" : TRANSACTION_LABELS[m.type]}
+                    </p>
                     <p className="text-sm text-ink-muted">
-                      {m.site} · {formatDate(m.date)}
+                      {m.versSite ? `${m.site} → ${m.versSite}` : m.site} ·{" "}
+                      {formatDate(m.date)}
                       {m.note ? ` · ${m.note}` : ""}
                     </p>
                   </div>
+                  {/* Un transfert ne gagne ni ne perd rien : ni vert, ni
+                      rouge, ni signe — la bankroll totale n'a pas bougé. */}
                   <p
-                    className={`num shrink-0 font-semibold ${toneClass(m.amount)}`}
+                    className={`num shrink-0 font-semibold ${
+                      m.versSite ? "text-ink-section" : toneClass(m.amount)
+                    }`}
                   >
-                    {formatEuro(m.amount, { sign: true })}
+                    {formatEuro(m.amount, { sign: !m.versSite })}
                   </p>
                 </div>
               ))}
@@ -195,7 +273,7 @@ export default async function BankrollPage({ searchParams }) {
           <SectionTitle
             tight
             action={
-              data.palier.compliant ? (
+              data.compliance.compliant ? (
                 <Pill tone="positive">
                   <StatusDot tone="positive" />
                   Dans les clous
@@ -211,57 +289,13 @@ export default async function BankrollPage({ searchParams }) {
             Règles de buy-in
           </SectionTitle>
 
-          <Card className="p-4">
-            <p className="kicker mb-2.5">Buy-in max</p>
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-              <p className="chiffre-hero text-2xl">
-                {formatEuro(data.palier.buyInMax)}
-              </p>
-              {/* Toute l'échelle, pas seulement le palier courant : on voit
-                  d'un coup ce qui est ouvert et ce qui attend. */}
-              <div className="flex flex-wrap gap-2">
-                {data.palier.echelle.map((p) => (
-                  <Pill
-                    key={p.buyInMax}
-                    tone={p.autorise ? "accent" : "neutral"}
-                  >
-                    {p.autorise ? null : <Lock size={13} aria-hidden />}
-                    {formatEuro(p.buyInMax)}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-          </Card>
-
-          <Card className="mt-2.5 p-4">
-            {data.palier.next ? (
-              <>
-                <div className="mb-3 flex items-baseline justify-between gap-3">
-                  <p className="font-medium">
-                    Prochain palier : buy-in{" "}
-                    {formatEuro(data.palier.next.buyInMax)}
-                  </p>
-                  <p className="num shrink-0 text-sm text-ink-muted">
-                    {formatEuro(data.bankroll)} /{" "}
-                    {formatEuro(data.palier.required)}
-                  </p>
-                </div>
-                <ProgressBar value={data.bankroll} max={data.palier.required} />
-              </>
-            ) : (
-              <p className="font-medium">Dernier palier atteint.</p>
-            )}
-            {data.palier.stopLoss !== null ? (
-              <p className="mt-3 text-sm text-ink-muted">
-                Retour au buy-in{" "}
-                <span className="num">
-                  {formatEuro(data.palier.fallbackBuyIn)}
-                </span>{" "}
-                si la bankroll passe sous{" "}
-                <span className="num">{formatEuro(data.palier.stopLoss)}</span>
-              </p>
-            ) : null}
-          </Card>
+          {/* Un bloc par room : la gestion de bankroll est par room, c'est
+              son solde qui ouvre ses paliers. */}
+          <div className="grid gap-2.5">
+            {data.bySite.map((site) => (
+              <PalierRoom key={site.slug} site={site} />
+            ))}
+          </div>
           </div>
 
           <div className="order-4">
