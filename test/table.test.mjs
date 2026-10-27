@@ -37,7 +37,7 @@ test("sièges : une position inconnue ne place rien", () => {
 
 test("scène : en RFI tout le monde s'est couché devant", () => {
   const { actes } = scenario("RFI", "CO");
-  assert.deepEqual(Object.values(actes), ["fold", "fold", "fold", "fold"]);
+  assert.deepEqual(Object.values(actes), ["fold", "fold"]);
   assert.equal(actes.BTN, undefined, "les joueurs après le héros n'ont pas parlé");
 });
 
@@ -53,8 +53,8 @@ test("scène : l'ouvreur est toujours avant le héros", () => {
   }
 });
 
-test("scène : depuis UTG personne ne peut avoir ouvert avant", () => {
-  const { actes, consigne } = scenario("DEF_VS_OPEN", "UTG");
+test("scène : depuis le lojack personne ne peut avoir ouvert avant", () => {
+  const { actes, consigne } = scenario("DEF_VS_OPEN", "LJ");
   assert.ok(!Object.values(actes).includes("open"));
   assert.match(consigne, /Personne ne peut ouvrir/);
 });
