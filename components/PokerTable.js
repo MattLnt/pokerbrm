@@ -6,7 +6,6 @@ import {
   cartesDe,
   tapisDe,
   miseDe,
-  potDe,
   formatBb,
 } from "@/lib/table";
 
@@ -53,7 +52,6 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
   const sieges = placerSieges(heros);
   const cartes = cartesDe(main);
   const tapis = tapisDe(profondeur);
-  const pot = potDe(scene, tapis, heros);
   const bouton = positionBouton(heros);
 
   return (
@@ -65,13 +63,16 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
           <div className="h-full w-full rounded-full bg-[#0c1e38] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),inset_0_14px_40px_rgba(0,0,0,0.45)]" />
         </div>
 
-        {/* Pot */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-          <p className="kicker mb-0.5">Pot</p>
-          <p className="num text-2xl font-bold text-ink">
-            {formatBb(pot)}
-          </p>
-        </div>
+        {/* Filigrane. Le pot n'y était pas utile — en préflop il vaut
+            toujours la même chose pour un spot donné. À la place, la marque
+            de l'app : pas le logo d'une room, la table n'est rattachée à
+            aucun site et une marque déposée n'a pas sa place ici. */}
+        <span
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none text-[7rem] leading-none text-white/[0.05]"
+          aria-hidden
+        >
+          ♠
+        </span>
 
         {/* Bouton de donne */}
         {bouton ? (
