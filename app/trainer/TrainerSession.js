@@ -154,7 +154,7 @@ function Reglage({ spots, choix, setChoix, longueur, setLongueur, onLancer }) {
       <div className="max-lg:mt-4 lg:sticky lg:top-6">
         <SectionTitle tight>Au programme</SectionTitle>
         <Card className="p-4">
-          <p className="num text-[var(--fs-xl)] font-bold">
+          <p className="num text-2xl font-bold">
             {retenus.length}
             <span className="ml-2 text-base font-normal text-ink-muted">
               {retenus.length > 1 ? "spots retenus" : "spot retenu"}
@@ -317,7 +317,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       <div className="mx-auto max-w-[560px]">
         <Card className="p-5 text-center">
           <p className="kicker mb-2">Session terminée</p>
-          <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)]">
+          <p className="num text-3xl font-bold leading-[var(--lh-tight)]">
             {formatPercent(reussite, { decimals: 0 })}
           </p>
           <p className="mt-2 text-base text-ink-muted">
@@ -362,13 +362,13 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
 
           <div className="mt-4 grid grid-cols-2 gap-2 text-center">
             <div className="rounded-tile bg-bg-sunken py-2">
-              <p className="num text-[var(--fs-lg)] font-bold text-positive">
+              <p className="num text-xl font-bold text-positive">
                 {score.right}
               </p>
               <p className="kicker mt-0.5">Justes</p>
             </div>
             <div className="rounded-tile bg-bg-sunken py-2">
-              <p className="num text-[var(--fs-lg)] font-bold text-warning">
+              <p className="num text-xl font-bold text-negative">
                 {score.wrong}
               </p>
               <p className="kicker mt-0.5">Ratées</p>
@@ -431,42 +431,68 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           ))}
         </div>
 
-        {/* La correction sous les réponses, sur toute leur largeur. */}
+        {/* La correction, sur une seule ligne avec le bouton qui suit.
+            Un filet de couleur sur fond sombre ne se voyait pas : le verdict
+            est ce qu'on vient lire, il prend donc une bande teintée, une
+            pastille pleine et un mot en grand. Les fréquences attendues
+            reprennent les couleurs des boutons de réponse — on relie ce
+            qu'on a cliqué à ce qu'il fallait cliquer sans lire. */}
         {verdict ? (
-          <Card
-            className={`mt-3 p-4 ${
-              verdict.correct ? "border-positive/40" : "border-warning/40"
+          <div
+            className={`mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-card border-2 p-4 ${
+              verdict.correct
+                ? "border-positive/60 bg-positive/10"
+                : "border-negative/60 bg-negative/10"
             }`}
           >
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <p
-                className={`flex items-center gap-2 font-semibold ${
-                  verdict.correct ? "text-positive" : "text-warning"
-                }`}
-              >
-                {verdict.correct ? <Check size={18} /> : <X size={18} />}
-                {verdict.correct ? "Correct" : "Raté"}
-              </p>
-              <p className="text-sm text-ink-muted">
-                Attendu :{" "}
-                {Object.entries(verdict.expected)
-                  .map(([a, f]) => {
-                    const label = ANSWERS.find((x) => x.key === a)?.label ?? a;
-                    return `${label} ${f} %`;
-                  })
-                  .join(" · ")}
-              </p>
-            </div>
+            <span
+              className={`grid size-11 shrink-0 place-items-center rounded-full ${
+                verdict.correct
+                  ? "bg-positive text-[#06251a]"
+                  : "bg-negative text-[#2a0810]"
+              }`}
+              aria-hidden
+            >
+              {verdict.correct ? (
+                <Check size={24} strokeWidth={3} />
+              ) : (
+                <X size={24} strokeWidth={3} />
+              )}
+            </span>
+
+            <span
+              className={`text-3xl font-bold leading-none tracking-[var(--ls-heading)] ${
+                verdict.correct ? "text-positive" : "text-negative"
+              }`}
+            >
+              {verdict.correct ? "Correct" : "Raté"}
+            </span>
+
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="kicker">Attendu</span>
+              {Object.entries(verdict.expected).map(([cle, frequence]) => {
+                const brosse = ANSWERS.find((x) => x.key === cle);
+                return (
+                  <span
+                    key={cle}
+                    className="num rounded-pill px-3 py-1 text-base font-bold text-[#0a0f1c]"
+                    style={{ background: brosse?.color ?? "#93a0ba" }}
+                  >
+                    {brosse?.label ?? cle} {frequence} %
+                  </span>
+                );
+              })}
+            </span>
 
             <Button
               type="button"
               variant="primary"
-              className="mt-3 w-full"
+              className="ml-auto max-sm:w-full"
               onClick={suivante}
             >
               Main suivante
             </Button>
-          </Card>
+          </div>
         ) : null}
       </div>
     </div>

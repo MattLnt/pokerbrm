@@ -86,7 +86,7 @@ export default async function BankrollPage({ searchParams }) {
                 </Suspense>
               </div>
 
-              <p className="chiffre-hero text-[var(--fs-2xl)] lg:text-[var(--fs-3xl)]">
+              <p className="chiffre-hero text-3xl lg:text-4xl">
                 {formatEuro(data.bankroll)}
               </p>
 
@@ -94,7 +94,7 @@ export default async function BankrollPage({ searchParams }) {
                 <Pill tone={data.results.variation >= 0 ? "positive" : "warning"}>
                   {formatEuro(data.results.variation, { sign: true })}
                 </Pill>
-                <span className="text-[var(--fs-base)] text-ink-muted">
+                <span className="text-base text-ink-muted">
                   dont{" "}
                   <span className="num text-ink-section">
                     {formatEuro(data.results.offGame, { sign: true })}
@@ -129,7 +129,7 @@ export default async function BankrollPage({ searchParams }) {
                   <div className="flex min-w-0 items-center gap-3.5">
                     <SiteBadge slug={site.slug} taille={38} />
                     <div className="min-w-0">
-                    <p className="text-[var(--fs-md)] font-semibold">{site.name}</p>
+                    <p className="text-lg font-semibold">{site.name}</p>
                     <p
                       className={`text-sm ${
                         stale ? "text-warning" : "text-ink-muted"

@@ -54,7 +54,7 @@ export default function EtudeNav({ aRevoir = 0 }) {
             {/* Le compteur ne s'affiche que sur Revue, et que s'il reste
                 quelque chose à faire : un « 0 » permanent ne dit rien. */}
             {onglet.href === "/etude/revue" && aRevoir > 0 ? (
-              <span className="num rounded-pill bg-negative/15 px-1.5 text-[var(--fs-overline)] font-bold text-negative">
+              <span className="num rounded-pill bg-negative/15 px-1.5 text-2xs font-bold text-negative">
                 {aRevoir}
               </span>
             ) : null}

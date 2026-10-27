@@ -52,7 +52,7 @@ export default function MainNav() {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`relative flex h-full flex-col items-center justify-center gap-1.5 text-[var(--fs-overline)] font-semibold transition-colors ${
+                  className={`relative flex h-full flex-col items-center justify-center gap-1.5 text-2xs font-semibold transition-colors ${
                     active ? "text-accent-hover" : "text-ink-muted"
                   }`}
                 >
@@ -79,14 +79,14 @@ export default function MainNav() {
       >
         <Link href="/" className="mb-9 flex items-center gap-3 px-2">
           <span
-            className="grid size-10 shrink-0 place-items-center rounded-sm border border-accent-line bg-accent-soft text-[var(--fs-md)] font-black text-accent"
+            className="grid size-10 shrink-0 place-items-center rounded-sm border border-accent-line bg-accent-soft text-lg font-black text-accent"
             aria-hidden
           >
             ♠
           </span>
           <span className="leading-none">
             <span className="kicker block">Poker</span>
-            <span className="text-[var(--fs-xl)] font-bold tracking-[var(--ls-heading)]">
+            <span className="text-2xl font-bold tracking-[var(--ls-heading)]">
               BRM
             </span>
           </span>
@@ -100,7 +100,7 @@ export default function MainNav() {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex min-h-[var(--control-lg)] items-center gap-3 rounded-sm px-3 text-[var(--fs-md)] transition-colors ${
+                  className={`group relative flex min-h-[var(--control-lg)] items-center gap-3 rounded-sm px-3 text-lg transition-colors ${
                     active
                       ? "bg-accent-soft font-semibold text-accent-hover"
                       : "text-ink-section hover:bg-surface hover:text-ink"

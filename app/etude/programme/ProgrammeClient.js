@@ -37,7 +37,7 @@ function Theme({ theme, index, premier, dernier, onAppel, pending, demo }) {
   return (
     <Card className="p-4">
       <div className="flex items-start gap-3">
-        <span className="num mt-1 text-[var(--fs-overline)] font-bold tracking-[var(--overline-tracking)] text-ink-muted/60">
+        <span className="num mt-1 text-2xs font-bold tracking-[var(--overline-tracking)] text-ink-muted/60">
           {String(index + 1).padStart(2, "0")}
         </span>
 
@@ -117,7 +117,7 @@ function Theme({ theme, index, premier, dernier, onAppel, pending, demo }) {
                 )
               }
               aria-pressed={o.done}
-              className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-[var(--fs-xs)] transition-colors disabled:opacity-40 ${
+              className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-xs transition-colors disabled:opacity-40 ${
                 o.done
                   ? "border-positive bg-positive text-accent-fg"
                   : "border-line-strong hover:border-ink-muted"

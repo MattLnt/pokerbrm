@@ -153,7 +153,7 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
               data-hand={hand}
               role="gridcell"
               aria-label={hand}
-              className={`relative aspect-square rounded-[3px] bg-surface-2 text-[var(--fs-overline)] font-semibold leading-none transition-colors ${etiquette}`}
+              className={`relative aspect-square rounded-[3px] bg-surface-2 text-2xs font-semibold leading-none transition-colors ${etiquette}`}
               style={fond ? { backgroundImage: fond } : undefined}
             >
               <span className="pointer-events-none absolute inset-0 grid place-items-center">

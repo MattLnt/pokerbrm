@@ -72,7 +72,7 @@ export default async function FaiblessesPage() {
               <Card key={spot.spot} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <span className="num text-[var(--fs-overline)] font-bold tracking-[var(--overline-tracking)] text-ink-muted/60">
+                    <span className="num text-2xs font-bold tracking-[var(--overline-tracking)] text-ink-muted/60">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <p className="mt-0.5 font-medium">{spot.spot}</p>
@@ -81,7 +81,7 @@ export default async function FaiblessesPage() {
                     </p>
                   </div>
                   <p
-                    className={`num shrink-0 text-[var(--fs-xl)] font-bold ${
+                    className={`num shrink-0 text-2xl font-bold ${
                       COULEUR_TEXTE[tonalite(spot.success)]
                     }`}
                   >

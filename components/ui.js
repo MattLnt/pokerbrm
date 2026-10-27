@@ -23,7 +23,7 @@ export function PageHeader({ eyebrow, title, action }) {
     <header className="mb-6 flex items-start justify-between gap-4 lg:mb-9">
       <div className="min-w-0">
         {eyebrow ? <p className="kicker mb-2">{eyebrow}</p> : null}
-        <h1 className="text-[var(--fs-xl)] font-bold leading-[var(--lh-tight)] tracking-[var(--ls-heading)] lg:text-[var(--fs-2xl)]">
+        <h1 className="text-2xl font-bold leading-[var(--lh-tight)] tracking-[var(--ls-heading)] lg:text-3xl">
           {title}
         </h1>
       </div>
@@ -122,7 +122,7 @@ export function Pill({ tone = "neutral", children }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-pill px-3 py-1 text-[var(--fs-sm)] font-semibold ${tones[tone]}`}
+      className={`inline-flex items-center gap-2 rounded-pill px-3 py-1 text-sm font-semibold ${tones[tone]}`}
     >
       {children}
     </span>
@@ -150,7 +150,7 @@ export function StatTile({ label, value, sub, tone = "", index }) {
     >
       {index ? (
         <span
-          className="num absolute right-3.5 top-3.5 text-[var(--fs-overline)] font-bold tracking-[var(--overline-tracking)] text-ink-muted/40"
+          className="num absolute right-3.5 top-3.5 text-2xs font-bold tracking-[var(--overline-tracking)] text-ink-muted/40"
           aria-hidden
         >
           {String(index).padStart(2, "0")}
@@ -163,7 +163,7 @@ export function StatTile({ label, value, sub, tone = "", index }) {
         {value}
       </p>
       {sub ? (
-        <p className="mt-2 text-[var(--fs-sm)] text-ink-muted">{sub}</p>
+        <p className="mt-2 text-sm text-ink-muted">{sub}</p>
       ) : null}
     </div>
   );
@@ -227,11 +227,11 @@ export function EmptyState({ icon: Icon, title, description, action }) {
           <Icon size={24} />
         </span>
       ) : null}
-      <h3 className="text-[var(--fs-lg)] font-semibold tracking-[var(--ls-heading)]">
+      <h3 className="text-xl font-semibold tracking-[var(--ls-heading)]">
         {title}
       </h3>
       {description ? (
-        <p className="max-w-[26rem] text-[var(--fs-base)] leading-[var(--lh-normal)] text-ink-muted">
+        <p className="max-w-[26rem] text-base leading-[var(--lh-normal)] text-ink-muted">
           {description}
         </p>
       ) : null}

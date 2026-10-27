@@ -122,7 +122,7 @@ export default function GrilleManager({ grille, sites, demo }) {
           {tranches.map((tranche) => (
             <section key={String(tranche.heure)}>
               <header className="mb-2.5 flex items-center gap-3">
-                <span className="num text-[var(--fs-base)] font-bold text-ink-section">
+                <span className="num text-base font-bold text-ink-section">
                   {libelleTranche(tranche.heure)}
                 </span>
                 <span className="h-px flex-1 bg-line" aria-hidden />
@@ -206,7 +206,7 @@ function Ligne({ modele: m, pending, onEditer, onBasculer, onSupprimer }) {
         <p className="flex items-center gap-2 truncate font-semibold">
           <span className="truncate">{m.name}</span>
           {m.tag ? (
-            <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-[var(--fs-overline)] font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
+            <span className="shrink-0 rounded-pill bg-rose/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-rose ring-1 ring-rose/30">
               {m.tag}
             </span>
           ) : null}

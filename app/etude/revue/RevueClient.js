@@ -129,7 +129,7 @@ function FormulaireMain({ main, onAnnuler, onEnregistrer, pending, erreur }) {
           value={handHistory}
           onChange={(e) => setHandHistory(e.target.value)}
           placeholder="Colle le texte de la main (facultatif)"
-          className="bd-textarea font-mono text-[var(--fs-sm)]"
+          className="bd-textarea font-mono text-sm"
         />
       </label>
 
@@ -190,7 +190,7 @@ function DetailMain({ main, onModifier, onBasculerStatut, onSupprimer, pending }
           <p className="kicker mb-2 mt-5">Historique</p>
           {/* Hauteur bornée : une main collée fait parfois cent lignes et
               repousserait les actions hors de l'écran. */}
-          <pre className="scroll-fin max-h-64 overflow-auto rounded-tile bg-bg-sunken p-3 font-mono text-[var(--fs-sm)] leading-[var(--lh-snug)] text-ink-section">
+          <pre className="scroll-fin max-h-64 overflow-auto rounded-tile bg-bg-sunken p-3 font-mono text-sm leading-[var(--lh-snug)] text-ink-section">
             {main.handHistory}
           </pre>
         </>
@@ -397,7 +397,7 @@ export default function RevueClient({ mains, demo }) {
                       {main.description}
                     </p>
                   ) : null}
-                  <div className="mt-2 flex items-center gap-2 text-[var(--fs-xs)] text-ink-muted">
+                  <div className="mt-2 flex items-center gap-2 text-xs text-ink-muted">
                     <span
                       className={`size-1.5 rounded-full ${
                         main.status === "A_REVOIR" ? "bg-negative" : "bg-positive"

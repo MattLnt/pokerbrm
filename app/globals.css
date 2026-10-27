@@ -73,8 +73,15 @@
   /* L'échelle de texte de la charte prend la place de celle de Tailwind :
      `text-sm` vaut donc 12,5 px et non 14. C'est le seul moyen d'aligner
      l'app entière sans réécrire chaque classe — et le pas de l'échelle
-     (11,5 / 12,5 / 13,5 / 15 / 17 / 22 / 30 / 34 / 60) est volontairement
-     court en bas : l'interface est dense, les écarts doivent rester fins. */
+     (10,5 / 11,5 / 12,5 / 13,5 / 15 / 17 / 22 / 30 / 34 / 60) est
+     volontairement court en bas : l'interface est dense, les écarts doivent
+     rester fins.
+
+     On passe par ces jetons et jamais par `text-[var(--fs-…)]` : un var()
+     nu entre crochets est ambigu pour Tailwind, qui ne génère alors aucune
+     règle — la classe est muette et le texte reste à sa taille héritée. */
+  --text-2xs: 10.5px;
+  --text-2xs--line-height: var(--lh-normal);
   --text-xs: 11.5px;
   --text-xs--line-height: var(--lh-normal);
   --text-sm: 12.5px;

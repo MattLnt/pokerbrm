@@ -207,7 +207,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
             <StatusDot tone="accent" />
             En cours · {duree(session.startedAt)}
           </Pill>
-          <span className="num text-[var(--fs-sm)] text-ink-muted">
+          <span className="num text-sm text-ink-muted">
             {plural(totaux.total, "tournoi")}
             {totaux.enCours > 0 ? ` · ${totaux.enCours} en jeu` : ""}
           </span>
@@ -224,7 +224,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
         </div>
 
         {totaux.termines > 0 ? (
-          <p className="num mt-4 border-t border-line/70 pt-3 text-[var(--fs-sm)] text-ink-muted">
+          <p className="num mt-4 border-t border-line/70 pt-3 text-sm text-ink-muted">
             ROI {formatPercent(totaux.roi, { sign: true, decimals: 0 })} · ITM{" "}
             {formatPercent(totaux.itm, { decimals: 0 })} sur{" "}
             {plural(totaux.termines, "terminé")}
@@ -260,7 +260,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
 
       {enCours.length === 0 ? (
         <Card className="px-4 py-8 text-center">
-          <p className="text-[var(--fs-base)] text-ink-muted">
+          <p className="text-base text-ink-muted">
             Aucun tournoi en jeu.
           </p>
           <button
@@ -282,7 +282,7 @@ export default function SessionClient({ demo, session, grille, recentes }) {
                     <p className="truncate font-semibold leading-tight">
                       {t.name}
                     </p>
-                    <p className="num mt-1 truncate text-[var(--fs-sm)] text-ink-muted">
+                    <p className="num mt-1 truncate text-sm text-ink-muted">
                       {FORMAT_LABELS[t.format]}
                       {libelleVitesse(t) ? ` · ${libelleVitesse(t)}` : ""}
                     </p>
@@ -383,12 +383,12 @@ export default function SessionClient({ demo, session, grille, recentes }) {
 function Chiffre({ label, valeur, tone = "", fort = false }) {
   return (
     <div className="min-w-0">
-      <p className="kicker mb-1.5 text-[var(--fs-overline)]">{label}</p>
+      <p className="kicker mb-1.5 text-2xs">{label}</p>
       <p
         className={`num truncate font-bold leading-none ${
           fort
-            ? "text-[var(--fs-xl)] lg:text-[var(--fs-2xl)]"
-            : "text-[var(--fs-lg)] lg:text-[var(--fs-xl)]"
+            ? "text-2xl lg:text-3xl"
+            : "text-xl lg:text-2xl"
         } ${tone}`}
       >
         {valeur}
@@ -401,7 +401,7 @@ function LienGrille() {
   return (
     <Link
       href="/session/grille"
-      className="inline-flex min-h-[44px] items-center gap-2 text-[var(--fs-base)] font-medium text-ink-muted transition-colors hover:text-accent"
+      className="inline-flex min-h-[44px] items-center gap-2 text-base font-medium text-ink-muted transition-colors hover:text-accent"
     >
       <SlidersHorizontal size={17} />
       Gérer la grille
@@ -526,7 +526,7 @@ function Champ({ label, value, onChange, ...rest }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bd-input num text-[var(--fs-lg)]"
+        className="bd-input num text-xl"
         {...rest}
       />
     </label>

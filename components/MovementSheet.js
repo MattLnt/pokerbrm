@@ -103,7 +103,7 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0,00"
             autoFocus
-            className="bd-input num text-[var(--fs-lg)]"
+            className="bd-input num text-xl"
           />
         </label>
 

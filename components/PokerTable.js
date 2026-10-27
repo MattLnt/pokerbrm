@@ -68,7 +68,7 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
         {/* Pot */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
           <p className="kicker mb-0.5">Pot</p>
-          <p className="num text-[var(--fs-xl)] font-bold text-ink">
+          <p className="num text-2xl font-bold text-ink">
             {formatBb(pot)}
           </p>
         </div>
@@ -126,7 +126,7 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
                   ♠
                 </span>
                 <span
-                  className={`text-[var(--fs-xs)] font-bold tracking-[0.06em] ${
+                  className={`text-xs font-bold tracking-[0.06em] ${
                     siege.heros ? "text-accent-hover" : "text-ink-section"
                   }`}
                 >
@@ -136,7 +136,7 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
 
               {badge ? (
                 <span
-                  className={`rounded-pill px-2 py-px text-[var(--fs-overline)] font-bold ${badge.classe}`}
+                  className={`rounded-pill px-2 py-px text-2xs font-bold ${badge.classe}`}
                 >
                   {badge.label}
                 </span>
@@ -157,7 +157,7 @@ export default function PokerTable({ heros, main, profondeur, scene }) {
           return (
             <span
               key={`mise-${siege.position}`}
-              className={`num absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pill px-2 py-px text-[var(--fs-overline)] font-bold ring-1 ${
+              className={`num absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pill px-2 py-px text-2xs font-bold ring-1 ${
                 acte === "shove"
                   ? "bg-negative text-[#2a0810] ring-negative/50"
                   : "bg-warning text-[#241a00] ring-warning/50"

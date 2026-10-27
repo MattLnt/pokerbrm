@@ -46,7 +46,7 @@ function Regularite({ jours, cibleParJour }) {
                 style={{ height: `${hauteur}%` }}
               />
             </div>
-            <span className="num text-[var(--fs-overline)] text-ink-muted">
+            <span className="num text-2xs text-ink-muted">
               {JOURS[jour.date.getDay()]}
             </span>
           </div>
@@ -79,7 +79,7 @@ export default async function EtudePage() {
             </Pill>
           </div>
 
-          <p className="num text-[var(--fs-2xl)] font-bold leading-[var(--lh-tight)]">
+          <p className="num text-3xl font-bold leading-[var(--lh-tight)]">
             {formatDuree(study.minutesDone)}
             <span className="ml-2 text-base font-normal text-ink-muted">
               / {formatDuree(study.minutesTarget)}
@@ -155,7 +155,7 @@ export default async function EtudePage() {
                   {objectifs.map((o, i) => (
                     <li key={i} className="flex items-start gap-3 text-base">
                       <span
-                        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-[var(--fs-xs)] ${
+                        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-xs border text-xs ${
                           o.done
                             ? "border-positive bg-positive text-accent-fg"
                             : "border-line-strong"
@@ -195,7 +195,7 @@ export default async function EtudePage() {
               </p>
             </div>
             <span
-              className={`num text-[var(--fs-xl)] font-bold ${
+              className={`num text-2xl font-bold ${
                 study.aRevoir > 0 ? "text-negative" : "text-ink-muted"
               }`}
             >
@@ -214,7 +214,7 @@ export default async function EtudePage() {
                 <p className="truncate font-medium">{spotLePlusFaible.spot}</p>
                 <p className="text-sm text-ink-muted">Ton spot le plus faible</p>
               </div>
-              <span className="num shrink-0 text-[var(--fs-xl)] font-bold text-warning">
+              <span className="num shrink-0 text-2xl font-bold text-warning">
                 {spotLePlusFaible.success} %
               </span>
             </Card>
