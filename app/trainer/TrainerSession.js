@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Check, X, RotateCcw, Play, Settings2 } from "lucide-react";
+import Link from "next/link";
+import {
+  Check,
+  X,
+  RotateCcw,
+  Play,
+  Settings2,
+  TrendingDown,
+} from "lucide-react";
 
 import { Card, SectionTitle, Button, ProgressBar, StatTile } from "@/components/ui";
 import PokerTable from "@/components/PokerTable";
@@ -14,7 +22,7 @@ import {
 import { ALL_HANDS } from "@/lib/hands";
 import { pickHand, gradeAnswer, review } from "@/lib/spaced";
 import { scenario } from "@/lib/table";
-import { formatPercent } from "@/lib/format";
+import { formatPercent, formatDuree } from "@/lib/format";
 
 const LONGUEURS = [20, 50, 100];
 
@@ -38,6 +46,45 @@ function libelleProfondeur(cle) {
 function spotLabel(cle) {
   const { position, action, profondeur } = decouper(cle);
   return `${position} · ${libelleAction(action)} · ${libelleProfondeur(profondeur)}`;
+}
+
+/**
+ * Trois paliers de réussite, une seule fois : 85 % et plus c'est acquis,
+ * 70 % ça tient, en dessous il faut y retourner. Les classes sont écrites
+ * en toutes lettres — Tailwind lit le source, pas les chaînes construites.
+ */
+function texteSelon(reussite) {
+  if (reussite >= 85) return "text-positive";
+  if (reussite >= 70) return "text-warning";
+  return "text-negative";
+}
+
+function bordureSelon(reussite) {
+  if (reussite >= 85) return "border-positive/50";
+  if (reussite >= 70) return "border-warning/50";
+  return "border-negative/50";
+}
+
+function tonSelon(reussite) {
+  if (reussite >= 85) return "positive";
+  if (reussite >= 70) return "warning";
+  return "negative";
+}
+
+/** Pastille d'action, dans la couleur de son pinceau. */
+function Pastille({ cle, frequence, efface = false }) {
+  const brosse = ANSWERS.find((x) => x.key === cle);
+  return (
+    <span
+      className={`num whitespace-nowrap rounded-pill px-2.5 py-0.5 text-sm font-bold text-[#0a0f1c] ${
+        efface ? "opacity-55" : ""
+      }`}
+      style={{ background: brosse?.color ?? "#93a0ba" }}
+    >
+      {brosse?.label ?? cle}
+      {frequence === undefined ? "" : ` ${frequence} %`}
+    </span>
+  );
 }
 
 /** Pastille de sélection, reprise de l'éditeur de ranges. */
@@ -221,6 +268,14 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   const [verdict, setVerdict] = useState(null);
   const [score, setScore] = useState({ right: 0, wrong: 0 });
   const [finished, setFinished] = useState(false);
+  // Le détail de chaque réponse : c'est lui qui nourrit le bilan. Un
+  // pourcentage ne dit pas quelle main on a ratée ni dans quel spot.
+  const [journal, setJournal] = useState([]);
+  const [debut, setDebut] = useState(null);
+  const [duree, setDuree] = useState(0);
+  // Quand on rejoue ses ratées, les mains ne sont plus tirées au sort :
+  // la session suit exactement la liste des erreurs.
+  const [rejeu, setRejeu] = useState(null);
 
   // Répétition espacée, en mémoire de session. La clé porte le spot : la
   // même main n'a pas la même difficulté selon la situation.
@@ -247,8 +302,8 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   }, []);
 
   const poser = useCallback(
-    (pool, rang) => {
-      const tiree = tirer(pool, rang);
+    (pool, rang, impose = null) => {
+      const tiree = impose ? impose[rang] : tirer(pool, rang);
       const { action, position } = decouper(tiree.spot);
       setQuestion({ ...tiree, scene: scenario(action, position) });
       setVerdict(null);
@@ -256,13 +311,33 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     [tirer]
   );
 
-  function lancer(pool) {
+  function reinitialiser(pool) {
     memory.current = new Map();
     setEnCours(pool);
     setIndex(0);
     setScore({ right: 0, wrong: 0 });
+    setJournal([]);
     setFinished(false);
+    setDebut(Date.now());
+    setDuree(0);
+  }
+
+  function lancer(pool) {
+    reinitialiser(pool);
+    setRejeu(null);
     poser(pool, 0);
+  }
+
+  /** Rejoue exactement les mains ratées, dans l'ordre où on les a ratées. */
+  function rejouerRatees() {
+    const ratees = journal
+      .filter((ligne) => !ligne.correct)
+      .map(({ spot, main }) => ({ spot, main }));
+    if (ratees.length === 0) return;
+
+    reinitialiser(enCours);
+    setRejeu(ratees);
+    poser(enCours, 0, ratees);
   }
 
   function repondre(cle) {
@@ -279,6 +354,16 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       right: s.right + (resultat.correct ? 1 : 0),
       wrong: s.wrong + (resultat.correct ? 0 : 1),
     }));
+    setJournal((lignes) => [
+      ...lignes,
+      {
+        spot: question.spot,
+        main: question.main,
+        donnee: cle,
+        attendu: resultat.expected,
+        correct: resultat.correct,
+      },
+    ]);
 
     if (!demo) {
       // Historique persistant : c'est lui qui alimente les faiblesses.
@@ -295,13 +380,18 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     }
   }
 
+  // Une session de rejeu dure le nombre de mains à rejouer, pas la
+  // longueur choisie au réglage.
+  const longueurEffective = rejeu ? rejeu.length : longueur;
+
   function suivante() {
-    if (index + 1 >= longueur) {
+    if (index + 1 >= longueurEffective) {
+      setDuree(debut ? (Date.now() - debut) / 60000 : 0);
       setFinished(true);
       return;
     }
     setIndex((i) => i + 1);
-    poser(enCours, index + 1);
+    poser(enCours, index + 1, rejeu);
   }
 
   const total = score.right + score.wrong;
@@ -321,32 +411,164 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   }
 
   if (finished) {
-    return (
-      <div className="mx-auto max-w-[560px]">
-        <Card className="p-5 text-center">
-          <p className="kicker mb-2">Session terminée</p>
-          <p className="num text-3xl font-bold leading-[var(--lh-tight)]">
-            {formatPercent(reussite, { decimals: 0 })}
-          </p>
-          <p className="mt-2 text-base text-ink-muted">
-            {score.right} bonnes réponses sur {total}
-          </p>
-        </Card>
+    // Réussite par spot : c'est la seule lecture qui dit quoi retravailler.
+    // Un pourcentage global mélange un spot acquis et un spot qu'on découvre.
+    const parSpot = new Map();
+    for (const ligne of journal) {
+      const compte = parSpot.get(ligne.spot) ?? { joue: 0, juste: 0 };
+      compte.joue += 1;
+      if (ligne.correct) compte.juste += 1;
+      parSpot.set(ligne.spot, compte);
+    }
+    const spotsClasses = [...parSpot.entries()]
+      .map(([cle, c]) => ({
+        cle,
+        ...c,
+        reussite: Math.round((c.juste / c.joue) * 100),
+      }))
+      .sort((a, b) => a.reussite - b.reussite);
 
-        <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-          <StatTile label="Justes" value={score.right} tone="text-positive" />
-          <StatTile label="Ratées" value={score.wrong} tone="text-warning" />
+    const ratees = journal.filter((ligne) => !ligne.correct);
+    return (
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-5">
+        <div>
+          {/* Le chiffre d'abord, dans le ton qui va avec. */}
+          <Card className={`p-5 ${bordureSelon(reussite)}`}>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="kicker mb-1">Session terminée</p>
+                <p
+                  className={`num text-5xl font-bold leading-none ${texteSelon(
+                    reussite
+                  )}`}
+                >
+                  {formatPercent(reussite, { decimals: 0 })}
+                </p>
+                <p className="mt-2 text-base text-ink-muted">
+                  {score.right} bonnes réponses sur {total}
+                  {rejeu ? " · rejeu des ratées" : ""}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-tile bg-bg-sunken px-4 py-2">
+                  <p className="num text-xl font-bold text-positive">
+                    {score.right}
+                  </p>
+                  <p className="kicker mt-0.5">Justes</p>
+                </div>
+                <div className="rounded-tile bg-bg-sunken px-4 py-2">
+                  <p className="num text-xl font-bold text-negative">
+                    {score.wrong}
+                  </p>
+                  <p className="kicker mt-0.5">Ratées</p>
+                </div>
+                <div className="rounded-tile bg-bg-sunken px-4 py-2">
+                  <p className="num text-xl font-bold text-ink">
+                    {formatDuree(duree)}
+                  </p>
+                  <p className="kicker mt-0.5">Durée</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {spotsClasses.length > 0 ? (
+            <>
+              <SectionTitle>Par spot, du plus faible au plus solide</SectionTitle>
+              <div className="grid gap-2">
+                {spotsClasses.map((spot) => (
+                  <Card key={spot.cle} className="p-4">
+                    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
+                      <p className="font-medium">{spotLabel(spot.cle)}</p>
+                      <p className="num text-sm text-ink-muted">
+                        {spot.juste} / {spot.joue}
+                        <span
+                          className={`ml-3 text-base font-bold ${texteSelon(
+                            spot.reussite
+                          )}`}
+                        >
+                          {spot.reussite} %
+                        </span>
+                      </p>
+                    </div>
+                    <ProgressBar
+                      value={spot.reussite}
+                      max={100}
+                      tone={tonSelon(spot.reussite)}
+                    />
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {ratees.length > 0 ? (
+            <>
+              <SectionTitle>Ce que tu as raté</SectionTitle>
+              <Card className="divide-y divide-line/70 overflow-hidden">
+                {ratees.map((ligne, i) => (
+                  <div
+                    key={`${ligne.spot}-${ligne.main}-${i}`}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3"
+                  >
+                    <span className="num w-14 shrink-0 text-lg font-bold">
+                      {ligne.main}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">
+                      {spotLabel(ligne.spot)}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Pastille cle={ligne.donnee} efface />
+                      <span className="text-ink-muted" aria-hidden>
+                        →
+                      </span>
+                      {Object.entries(ligne.attendu).map(([cle, frequence]) => (
+                        <Pastille key={cle} cle={cle} frequence={frequence} />
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </Card>
+            </>
+          ) : null}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button type="button" onClick={() => setEnCours(null)}>
-            <Settings2 size={18} />
-            Changer
-          </Button>
-          <Button type="button" variant="primary" onClick={() => lancer(enCours)}>
-            <RotateCcw size={18} />
-            Relancer
-          </Button>
+        <div className="max-lg:mt-4 lg:sticky lg:top-6">
+          <SectionTitle tight>Et maintenant</SectionTitle>
+          <div className="grid gap-2">
+            {ratees.length > 0 ? (
+              <Button type="button" variant="primary" onClick={rejouerRatees}>
+                <RotateCcw size={18} />
+                Rejouer les {ratees.length} ratées
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant={ratees.length > 0 ? "secondary" : "primary"}
+              onClick={() => lancer(enCours)}
+            >
+              <Play size={18} />
+              Relancer la même session
+            </Button>
+            <Button type="button" onClick={() => setEnCours(null)}>
+              <Settings2 size={18} />
+              Changer de spots
+            </Button>
+            <Button as={Link} href="/etude/faiblesses">
+              <TrendingDown size={18} />
+              Voir mes faiblesses
+            </Button>
+          </div>
+
+          <Card className="mt-3 p-4">
+            <p className="kicker mb-2">Ce qui est enregistré</p>
+            <p className="text-sm leading-[var(--lh-normal)] text-ink-muted">
+              Chaque réponse part dans ton historique de drills. C&apos;est lui
+              qui alimente l&apos;onglet Faiblesses de l&apos;étude, à partir
+              d&apos;une dizaine de mains sur un même spot.
+            </p>
+          </Card>
         </div>
       </div>
     );
@@ -363,10 +585,10 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
           <div className="mb-2 flex items-baseline justify-between">
             <p className="kicker">Main</p>
             <p className="num text-sm text-ink-muted">
-              {index + 1} / {longueur}
+              {index + 1} / {longueurEffective}
             </p>
           </div>
-          <ProgressBar value={index} max={longueur} />
+          <ProgressBar value={index} max={longueurEffective} />
 
           <div className="mt-4 grid grid-cols-2 gap-2 text-center">
             <div className="rounded-tile bg-bg-sunken py-2">

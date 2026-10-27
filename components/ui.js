@@ -175,6 +175,7 @@ export function ProgressBar({ value, max, tone = "accent" }) {
     accent: "bg-accent",
     positive: "bg-positive",
     warning: "bg-warning",
+    negative: "bg-negative",
   };
   return (
     <div
