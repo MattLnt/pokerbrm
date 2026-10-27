@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import TrainerSession from "./TrainerSession";
 import { getRanges } from "@/lib/ranges";
-import { DEMO } from "@/lib/data";
+import { DEMO, getDrillsDus } from "@/lib/data";
 
 export const metadata = { title: "Trainer · Poker BRM" };
 
@@ -14,6 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function TrainerPage({ searchParams }) {
   const params = await searchParams;
   const ranges = await getRanges();
+  // Les mains dont la révision est due : c'est ce qui fait revenir une
+  // erreur d'une session à l'autre.
+  const dues = await getDrillsDus();
 
   // Un spot n'est jouable que si sa range contient au moins une main.
   const playable = Object.entries(ranges).filter(
@@ -46,6 +49,7 @@ export default async function TrainerPage({ searchParams }) {
       <PageHeader eyebrow={DEMO ? "Données d'exemple" : null} title="Trainer" />
       <TrainerSession
         ranges={Object.fromEntries(playable)}
+        dues={dues.filter((due) => ranges[due.spot])}
         demo={DEMO}
         initialSpot={params?.spot ?? null}
       />

@@ -20,7 +20,7 @@ import {
   POSITIONS,
 } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
-import { gradeAnswer } from "@/lib/spaced";
+import { gradeAnswer, construireSession } from "@/lib/spaced";
 import { scenario } from "@/lib/table";
 import { formatPercent, formatDuree } from "@/lib/format";
 
@@ -110,7 +110,15 @@ function Chip({ active, onClick, children }) {
  * reconnaître lequel on a sous les yeux. On sélectionne donc des positions,
  * des actions et des profondeurs, et la session pioche dedans.
  */
-function Reglage({ spots, choix, setChoix, longueur, setLongueur, onLancer }) {
+function Reglage({
+  spots,
+  dues,
+  choix,
+  setChoix,
+  longueur,
+  setLongueur,
+  onLancer,
+}) {
   // On ne propose que des valeurs qui existent vraiment dans les ranges
   // saisies : une pastille qui ne mène à rien est une fausse piste.
   const disponibles = useMemo(() => {
@@ -143,6 +151,10 @@ function Reglage({ spots, choix, setChoix, longueur, setLongueur, onLancer }) {
       (choix.profondeurs.size === 0 || choix.profondeurs.has(d.profondeur))
     );
   });
+
+  // Les mains dues qui tombent dans les spots retenus : c'est ce qu'on
+  // reverra au prochain lancer.
+  const aRevoir = dues.filter((due) => retenus.includes(due.spot)).length;
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
@@ -225,23 +237,41 @@ function Reglage({ spots, choix, setChoix, longueur, setLongueur, onLancer }) {
             </ul>
           ) : null}
 
+          {aRevoir > 0 ? (
+            <p className="mt-3 rounded-tile border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+              {aRevoir} {aRevoir > 1 ? "mains" : "main"} à revoir — elles
+              reviendront dans la session.
+            </p>
+          ) : null}
+
           <Button
             type="button"
             variant="primary"
             className="mt-4 w-full"
             disabled={retenus.length === 0}
-            onClick={() => onLancer(retenus)}
+            onClick={() => onLancer(retenus, false)}
           >
             <Play size={18} />
             Lancer la session
           </Button>
+
+          {aRevoir > 0 ? (
+            <Button
+              type="button"
+              className="mt-2 w-full"
+              onClick={() => onLancer(retenus, true)}
+            >
+              <RotateCcw size={18} />
+              Revoir mes {aRevoir} erreurs
+            </Button>
+          ) : null}
         </Card>
       </div>
     </div>
   );
 }
 
-export default function TrainerSession({ ranges, demo, initialSpot }) {
+export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
   const spots = useMemo(() => Object.keys(ranges), [ranges]);
 
   const [choix, setChoix] = useState(() => {
@@ -259,7 +289,9 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   });
   const [longueur, setLongueur] = useState(LONGUEURS[0]);
 
-  const [enCours, setEnCours] = useState(null); // liste des spots de la session
+  const [pool, setPool] = useState(null); // spots retenus pour la session
+  const [session, setSession] = useState([]); // les questions, dans l'ordre
+  const [revision, setRevision] = useState(false);
   const [index, setIndex] = useState(0);
   const [question, setQuestion] = useState(null);
   const [verdict, setVerdict] = useState(null);
@@ -270,71 +302,48 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
   const [journal, setJournal] = useState([]);
   const [debut, setDebut] = useState(null);
   const [duree, setDuree] = useState(0);
-  // Quand on rejoue ses ratées, les mains ne sont plus tirées au sort :
-  // la session suit exactement la liste des erreurs.
-  const [rejeu, setRejeu] = useState(null);
 
-  // Mains déjà posées pendant la session : on tire sans remise.
-  const servies = useRef(new Set());
-
-  /**
-   * Tire un spot au hasard parmi ceux retenus, et une main jamais vue.
-   *
-   * Le tirage privilégiait les mains ratées, qui revenaient donc en boucle :
-   * sur vingt coups, on retombait sans cesse sur les trois mêmes. Une main
-   * ne passe maintenant qu'une fois par session. Revoir ses erreurs reste
-   * possible, mais à la demande — c'est ce que fait « Rejouer les ratées »
-   * à la fin, et c'est plus clair qu'un hasard pondéré.
-   */
-  const tirer = useCallback((pool) => {
-    const spot = pool[Math.floor(Math.random() * pool.length)];
-    const restantes = ALL_HANDS.filter((m) => !servies.current.has(m));
-    // Garde-fou : une session plus longue que le jeu de mains repartirait
-    // de zéro plutôt que de ne rien pouvoir poser.
-    const choix = restantes.length > 0 ? restantes : ALL_HANDS;
-    const main = choix[Math.floor(Math.random() * choix.length)];
-    servies.current.add(main);
-
-    return { spot, main, scene: null };
+  const poser = useCallback((questions, rang) => {
+    const question = questions[rang];
+    const { action, position } = decouper(question.spot);
+    setQuestion({ ...question, scene: scenario(action, position) });
+    setVerdict(null);
   }, []);
 
-  const poser = useCallback(
-    (pool, rang, impose = null) => {
-      const tiree = impose ? impose[rang] : tirer(pool);
-      const { action, position } = decouper(tiree.spot);
-      setQuestion({ ...tiree, scene: scenario(action, position) });
-      setVerdict(null);
-    },
-    [tirer]
-  );
-
-  function reinitialiser(pool) {
-    servies.current = new Set();
-    setEnCours(pool);
+  function demarrer(spotsRetenus, questions) {
+    if (questions.length === 0) return;
+    setPool(spotsRetenus);
+    setSession(questions);
     setIndex(0);
     setScore({ right: 0, wrong: 0 });
     setJournal([]);
     setFinished(false);
     setDebut(Date.now());
     setDuree(0);
+    poser(questions, 0);
   }
 
-  function lancer(pool) {
-    reinitialiser(pool);
-    setRejeu(null);
-    poser(pool, 0);
+  function lancer(spotsRetenus, seulementDues = false) {
+    setRevision(seulementDues);
+    demarrer(
+      spotsRetenus,
+      construireSession({
+        spots: spotsRetenus,
+        dues,
+        mains: ALL_HANDS,
+        longueur,
+        seulementDues,
+      })
+    );
   }
 
-  /** Rejoue exactement les mains ratées, dans l'ordre où on les a ratées. */
+  /** Rejoue exactement les mains ratées de la session qui vient de finir. */
   function rejouerRatees() {
     const ratees = journal
       .filter((ligne) => !ligne.correct)
-      .map(({ spot, main }) => ({ spot, main }));
-    if (ratees.length === 0) return;
-
-    reinitialiser(enCours);
-    setRejeu(ratees);
-    poser(enCours, 0, ratees);
+      .map(({ spot, main }) => ({ spot, main, due: true }));
+    setRevision(true);
+    demarrer(pool, ratees);
   }
 
   function repondre(cle) {
@@ -372,9 +381,9 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
     }
   }
 
-  // Une session de rejeu dure le nombre de mains à rejouer, pas la
-  // longueur choisie au réglage.
-  const longueurEffective = rejeu ? rejeu.length : longueur;
+  // La session fait la taille de sa liste : une révision pure peut être
+  // plus courte que la longueur choisie s'il y a moins d'erreurs à revoir.
+  const longueurEffective = session.length;
 
   function suivante() {
     if (index + 1 >= longueurEffective) {
@@ -383,16 +392,17 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
       return;
     }
     setIndex((i) => i + 1);
-    poser(enCours, index + 1, rejeu);
+    poser(session, index + 1);
   }
 
   const total = score.right + score.wrong;
   const reussite = total > 0 ? (score.right / total) * 100 : 0;
 
-  if (!enCours) {
+  if (!pool) {
     return (
       <Reglage
         spots={spots}
+        dues={dues}
         choix={choix}
         setChoix={setChoix}
         longueur={longueur}
@@ -438,7 +448,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
                 </p>
                 <p className="mt-2 text-base text-ink-muted">
                   {score.right} bonnes réponses sur {total}
-                  {rejeu ? " · rejeu des ratées" : ""}
+                  {revision ? " · révision" : ""}
                 </p>
               </div>
 
@@ -538,12 +548,12 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
             <Button
               type="button"
               variant={ratees.length > 0 ? "secondary" : "primary"}
-              onClick={() => lancer(enCours)}
+              onClick={() => lancer(pool)}
             >
               <Play size={18} />
               Relancer la même session
             </Button>
-            <Button type="button" onClick={() => setEnCours(null)}>
+            <Button type="button" onClick={() => setPool(null)}>
               <Settings2 size={18} />
               Changer de spots
             </Button>
@@ -609,7 +619,7 @@ export default function TrainerSession({ ranges, demo, initialSpot }) {
         <Button
           type="button"
           className="mt-2.5 w-full"
-          onClick={() => setEnCours(null)}
+          onClick={() => setPool(null)}
         >
           <Settings2 size={18} />
           Changer de spots
