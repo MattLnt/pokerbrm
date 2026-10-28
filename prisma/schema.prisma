@@ -56,6 +56,33 @@ enum TaggedHandStatus {
   REVUE
 }
 
+/// Sens d'un mouvement du compte bancaire. Le montant est toujours saisi en
+/// positif : c'est le sens qui dit s'il s'ajoute ou se retranche.
+enum BankFlow {
+  INCOME
+  EXPENSE
+}
+
+/// Où en est un projet web. Les trois premiers états sont le vivier — un
+/// projet qui n'est pas encore du travail —, `EN_COURS` et `TERMINE` sont le
+/// travail réel.
+enum ProjectStage {
+  /// Piste identifiée, aucun devis envoyé.
+  IDEE
+  DEVIS_ENVOYE
+  DEVIS_REFUSE
+  EN_COURS
+  TERMINE
+}
+
+/// Où en est l'argent d'un projet. Indépendant de l'avancement : un projet
+/// terminé peut rester à facturer, un projet en cours peut être payé d'avance.
+enum ProjectBilling {
+  A_FACTURER
+  FACTURE
+  PAYE
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -75,6 +102,10 @@ model User {
   taggedHands    TaggedHand[]
   drillAttempts  DrillAttempt[]
   settings       Settings?
+  bankEntries      BankEntry[]
+  recurringCharges RecurringCharge[]
+  projects         Project[]
+  projectAccesses  ProjectAccess[]
 }
 
 model Site {
@@ -318,4 +349,128 @@ model Settings {
   weeklyStudyDays  Int     @default(5)
   dailyStudyMinutes Int    @default(75)
   importStaleDays  Int     @default(7)
+
+  /// Solde du compte bancaire au jour `bankOpeningAt`. Les mouvements ne
+  /// remontent pas jusqu'à l'ouverture du compte : sans point de départ, le
+  /// solde affiché ne serait que la somme de ce qui a été saisi ici.
+  bankOpeningBalance Decimal   @default(0) @db.Decimal(12, 2)
+  bankOpeningAt      DateTime?
+}
+
+/* ------------------------------------------------------------------ */
+/* Compte bancaire                                                     */
+/* ------------------------------------------------------------------ */
+
+/// Un mouvement saisi à la main sur le compte bancaire.
+///
+/// Les retraits et dépôts poker n'ont **pas** de ligne ici : ils vivent dans
+/// `Transaction` et le compte les reflète à la lecture (lib/compte.js). Un
+/// retrait recopié en base serait une seconde vérité à tenir à jour, et la
+/// moindre correction côté bankroll ferait divergence.
+model BankEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  label     String
+  /// Toujours positif : `flow` porte le sens.
+  amount    Decimal  @db.Decimal(12, 2)
+  flow      BankFlow
+  /// Clé d'une catégorie de `CATEGORIES_COMPTE` (lib/constants.js). Les
+  /// catégories sont une nomenclature, pas une donnée à éditer écran par
+  /// écran — même parti pris que les paliers de buy-in.
+  category  String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+/// Une charge qui retombe chaque mois : loyer, abonnements, assurance.
+///
+/// Elle n'engendre aucun mouvement automatiquement — l'app ne sait pas si le
+/// prélèvement est passé. Elle sert à connaître le montant des charges fixes,
+/// donc ce qui reste réellement disponible une fois le mois payé.
+model RecurringCharge {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String
+  amount     Decimal  @db.Decimal(12, 2)
+  category   String
+  /// Jour du mois du prélèvement (1–31), s'il est connu.
+  dayOfMonth Int?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, active])
+}
+
+/* ------------------------------------------------------------------ */
+/* Projets web                                                         */
+/* ------------------------------------------------------------------ */
+
+/// Un projet web, du vivier à l'encaissement.
+///
+/// Un seul montant par projet, et non des jalons : la facturation se fait en
+/// une fois. `stage` suit l'avancement, `billing` suit l'argent — les deux ne
+/// marchent pas au même rythme.
+model Project {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  client    String?
+  /// Montant à facturer, en euros. `0` pour une piste dont le prix n'est pas
+  /// encore fixé.
+  amount    Decimal        @default(0) @db.Decimal(12, 2)
+  stage     ProjectStage   @default(IDEE)
+  billing   ProjectBilling @default(A_FACTURER)
+  /// Date d'envoi du devis. C'est elle qui distingue « devis envoyé, sans
+  /// réponse depuis trois semaines » de « devis parti hier ».
+  devisAt   DateTime?
+  invoicedAt DateTime?
+  /// Date d'encaissement. Avec `billing = PAYE`, elle fait naître l'entrée
+  /// correspondante sur le compte bancaire.
+  paidAt    DateTime?
+  /// Échéance de livraison, si elle est engagée.
+  deadline  DateTime?
+  url       String?
+  note      String?
+  position  Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  accesses ProjectAccess[]
+
+  @@index([userId, stage, position])
+}
+
+/// Quel compte, chez quel service, pour quel projet.
+///
+/// Références seulement : service, compte utilisé, nom de la ressource, lien
+/// vers le tableau de bord. **Aucun secret** — ni mot de passe, ni clé d'API,
+/// ni chaîne de connexion. La base de l'app n'est pas un coffre-fort : elle
+/// n'est pas chiffrée au repos côté application, et ses sauvegardes se
+/// promènent. Les secrets restent dans un gestionnaire dédié.
+model ProjectAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// NULL pour un accès qui ne dépend d'aucun projet : le compte GitHub
+  /// personnel, le registrar où dorment tous les domaines.
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Slug d'un service de `SERVICES_WEB` (lib/constants.js).
+  service   String
+  /// Le compte utilisé : une adresse e-mail, un identifiant d'organisation.
+  account   String?
+  /// Le nom de la ressource chez ce service : projet Vercel, base Railway,
+  /// compte Stripe, domaine.
+  resource  String?
+  url       String?
+  note      String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, projectId, position])
 }

@@ -9,11 +9,19 @@ import {
   Target,
   CreditCard,
   Play,
+  Landmark,
+  Briefcase,
 } from "lucide-react";
 
 /**
- * Six onglets au lieu des cinq prévus : la session est l'écran le plus
- * sollicité pendant qu'on joue, il doit être à un tap depuis n'importe où.
+ * Huit onglets. Les six premiers sont le poker, les deux derniers la vie
+ * autour : le compte bancaire où arrivent les retraits, et les projets web
+ * qui le remplissent. Ils sont au même rang parce qu'on y va aussi souvent,
+ * et qu'un onglet « divers » qui en cacherait deux ne ferait qu'ajouter un
+ * tap à chaque visite.
+ *
+ * À huit, la barre basse ne tient plus dans la largeur d'un téléphone : elle
+ * défile à l'horizontale, chaque onglet gardant sa cible tactile.
  */
 const TABS = [
   { href: "/", label: "Accueil", icon: Home },
@@ -22,6 +30,8 @@ const TABS = [
   { href: "/etude", label: "Étude", icon: BookOpen },
   { href: "/trainer", label: "Trainer", icon: Target },
   { href: "/bankroll", label: "Bankroll", icon: CreditCard },
+  { href: "/compte", label: "Compte", icon: Landmark },
+  { href: "/projets", label: "Projets", icon: Briefcase },
 ];
 
 function isActive(pathname, href) {
@@ -44,11 +54,16 @@ export default function MainNav() {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Navigation principale"
       >
-        <ul className="mx-auto flex h-[76px] w-full max-w-[560px] items-stretch">
+        {/* Deux conteneurs : celui du dessus défile, celui du dessous prend la
+            largeur de son contenu pour que `mx-auto` le centre tant qu'il
+            tient à l'écran. Un `justify-center` sur le conteneur défilant
+            rendrait les premiers onglets inatteignables dès qu'il déborde. */}
+        <div className="no-scrollbar h-[76px] overflow-x-auto overscroll-x-contain">
+        <ul className="mx-auto flex h-full w-max items-stretch">
           {TABS.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
-              <li key={href} className="flex-1">
+              <li key={href} className="w-[74px] shrink-0">
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
@@ -70,6 +85,7 @@ export default function MainNav() {
             );
           })}
         </ul>
+        </div>
       </nav>
 
       {/* Desktop : rail latéral */}
