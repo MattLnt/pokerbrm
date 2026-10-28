@@ -6,6 +6,7 @@ import {
   coutInscription,
   grouperParHeure,
   libelleTranche,
+  libelleHeure,
 } from "../lib/session.js";
 
 test("engagé compte aussi les tournois encore en cours", () => {
@@ -75,6 +76,38 @@ test("la grille est classée par heure de début, dans l'ordre", () => {
     tranches.map((t) => t.tournois[0].name),
     ["matin", "aprem", "soir"]
   );
+});
+
+test("dans une tranche, la minute passe devant l'ordre de la grille", () => {
+  const [tranche] = grouperParHeure([
+    { name: "et quart", usualHour: 19, usualMinute: 15, position: 0 },
+    { name: "pile", usualHour: 19, usualMinute: 0, position: 2 },
+    { name: "et demie", usualHour: 19, usualMinute: 30, position: 1 },
+  ]);
+  assert.deepEqual(
+    tranche.tournois.map((t) => t.name),
+    ["pile", "et quart", "et demie"]
+  );
+});
+
+test("une minute absente vaut l'heure pile", () => {
+  const [tranche] = grouperParHeure([
+    { name: "et demie", usualHour: 19, usualMinute: 30, position: 0 },
+    { name: "sans minute", usualHour: 19, position: 1 },
+  ]);
+  assert.deepEqual(
+    tranche.tournois.map((t) => t.name),
+    ["sans minute", "et demie"]
+  );
+});
+
+test("l'heure de lancement ne s'écrit avec sa minute que s'il y en a une", () => {
+  assert.equal(libelleHeure(19, 0), "19 h");
+  assert.equal(libelleHeure(19, null), "19 h", "pas de minute : heure pile");
+  assert.equal(libelleHeure(19, 30), "19 h 30");
+  assert.equal(libelleHeure(9, 5), "9 h 05", "la minute est sur deux chiffres");
+  assert.equal(libelleHeure(0, 15), "0 h 15");
+  assert.equal(libelleHeure(null, 30), null, "sans heure, rien à écrire");
 });
 
 test("les tournois d'une même heure forment une seule tranche", () => {

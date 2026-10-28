@@ -7,7 +7,7 @@ import SiteBadge from "@/components/SiteBadge";
 import Feuille from "@/components/Feuille";
 import { Button } from "@/components/ui";
 import { FORMAT_LABELS, libelleVitesse } from "@/lib/constants";
-import { grouperParHeure, libelleTranche } from "@/lib/session";
+import { grouperParHeure, libelleTranche, libelleHeure } from "@/lib/session";
 import { formatEuro, plural } from "@/lib/format";
 
 /**
@@ -256,6 +256,9 @@ function Tranche({ tranche, courante, coches, onBasculer }) {
                     ) : null}
                   </span>
                   <span className="num block truncate text-sm text-ink-muted">
+                    {libelleHeure(m.usualHour, m.usualMinute)
+                      ? `${libelleHeure(m.usualHour, m.usualMinute)} · `
+                      : ""}
                     {FORMAT_LABELS[m.format]}
                     {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
                   </span>

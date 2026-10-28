@@ -47,6 +47,22 @@ que soit la session d'origine (`getTournoisASolder`). Deux sorties : saisir le
 résultat, ou retirer le tournoi s'il n'a jamais été joué. L'écran bankroll
 porte un rappel cliquable quand il en reste.
 
+## Durée de niveau et heure de lancement
+
+Les deux se saisissent à la valeur exacte, pas dans une liste de valeurs
+rondes : la grille réelle contient des niveaux de 4, 7, 9 et 11 minutes qu'une
+liste figée ne savait pas écrire.
+
+- **Durée d'un niveau** : champ libre, en minutes (1 à 120). On affiche la
+  durée réelle plutôt qu'une étiquette « turbo » — 6 min dit ce que turbo ne
+  dit pas.
+- **Heure habituelle** : l'heure (0–23) et la minute, au quart d'heure
+  (`QUARTS_HEURE` : 00, 15, 30, 45). La minute ne vit pas sans son heure.
+
+La grille reste groupée par tranche d'une heure — 96 tranches seraient
+illisibles — mais dans une tranche, la minute passe devant l'ordre de la
+grille : à 19 h, celui de 19 h 00 se joue avant celui de 19 h 45.
+
 ## Les re-entries
 
 C'est la seule donnée que les résumés Winamax ne donnent pas, et elle fausse

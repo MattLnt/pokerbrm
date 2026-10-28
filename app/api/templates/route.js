@@ -50,6 +50,14 @@ function valider(body) {
     return { erreur: "L'heure doit être comprise entre 0 et 23." };
   }
 
+  const QUARTS = [0, 15, 30, 45];
+  // La minute ne vit pas sans son heure : « et quart » tout seul ne veut
+  // rien dire, et laisserait un modèle impossible à classer dans la grille.
+  const minuteHeure = heure === null ? null : Math.trunc(Number(body?.usualMinute ?? 0));
+  if (minuteHeure !== null && !QUARTS.includes(minuteHeure)) {
+    return { erreur: "La minute doit être 00, 15, 30 ou 45." };
+  }
+
   const minutes =
     body?.levelMinutes === "" || body?.levelMinutes == null
       ? null
@@ -71,6 +79,7 @@ function valider(body) {
       levelMinutes: minutes,
       tag: tag ? tag.slice(0, 24) : null,
       usualHour: heure,
+      usualMinute: minuteHeure,
       active: body?.active === undefined ? true : Boolean(body.active),
     },
   };

@@ -6,14 +6,15 @@ import { Plus, Pencil, Trash2, EyeOff, Eye } from "lucide-react";
 
 import SiteBadge from "@/components/SiteBadge";
 import Feuille from "@/components/Feuille";
+import Select from "@/components/Select";
 import { Card, CardList, SectionTitle, Button, Pill } from "@/components/ui";
 import {
   FORMATS,
   FORMAT_LABELS,
-  DUREES_NIVEAU,
+  QUARTS_HEURE,
   libelleVitesse,
 } from "@/lib/constants";
-import { grouperParHeure, libelleTranche } from "@/lib/session";
+import { grouperParHeure, libelleTranche, libelleHeure } from "@/lib/session";
 import { formatEuro, plural } from "@/lib/format";
 
 export default function GrilleManager({ grille, sites, demo }) {
@@ -214,6 +215,11 @@ function Ligne({ modele: m, pending, onEditer, onBasculer, onSupprimer }) {
         <p className="num truncate text-sm text-ink-muted">
           {formatEuro(m.cout)} · {FORMAT_LABELS[m.format]}
           {libelleVitesse(m) ? ` · ${libelleVitesse(m)}` : ""}
+          {/* L'heure exacte : la tranche ne donne que l'heure ronde, et
+              deux tournois de 19 h ne partent pas au même moment. */}
+          {libelleHeure(m.usualHour, m.usualMinute)
+            ? ` · ${libelleHeure(m.usualHour, m.usualMinute)}`
+            : ""}
         </p>
       </div>
 
@@ -260,6 +266,7 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
     levelMinutes: modele.levelMinutes ?? "",
     tag: modele.tag ?? "",
     usualHour: modele.usualHour ?? "",
+    usualMinute: modele.usualMinute ?? 0,
   });
 
   const set = (k) => (val) => setV((p) => ({ ...p, [k]: val }));
@@ -324,18 +331,18 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
           ))}
         </div>
 
-        {/* La durée réelle d'un niveau dit ce que « turbo » ne dit pas. */}
-        <p className="kicker mb-2">Durée d&apos;un niveau</p>
-        <div className="mb-4 grid grid-cols-4 gap-2">
-          {DUREES_NIVEAU.map((d) => (
-            <Option
-              key={d}
-              actif={Number(v.levelMinutes) === d}
-              onClick={() => set("levelMinutes")(d)}
-            >
-              <span className="num">{d} min</span>
-            </Option>
-          ))}
+        {/* La durée réelle d'un niveau dit ce que « turbo » ne dit pas.
+            En saisie libre : une liste de valeurs rondes ne sait pas écrire
+            les 4, 7, 9 et 11 minutes qu'on croise vraiment. */}
+        <div className="mt-4">
+          <ChampUnite
+            label="Durée d'un niveau"
+            unite="min"
+            value={v.levelMinutes}
+            onChange={set("levelMinutes")}
+            inputMode="numeric"
+            placeholder="6"
+          />
         </div>
 
         <Champ
@@ -348,13 +355,36 @@ function FormulaireModele({ modele, sites, pending, onClose, onEnregistrer }) {
           Sert à repérer les rendez-vous ponctuels sans les sortir de la grille.
         </p>
 
-        <Champ
-          label="Heure habituelle (0–23, facultatif)"
-          value={v.usualHour}
-          onChange={set("usualHour")}
-          inputMode="numeric"
-          placeholder="ex. 19"
-        />
+        <p className="kicker mb-2">Heure habituelle (facultatif)</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            label="Heure de lancement"
+            className="w-28 shrink-0"
+            value={String(v.usualHour)}
+            placeholder="—"
+            onChange={(h) => set("usualHour")(h)}
+            options={[
+              { value: "", label: "—" },
+              ...Array.from({ length: 24 }, (_, h) => ({
+                value: String(h),
+                label: `${h} h`,
+              })),
+            ]}
+          />
+          {/* Les quarts d'heure restent affichés même sans heure choisie :
+              les griser ferait clignoter la rangée à chaque ouverture. */}
+          <div className="grid flex-1 grid-cols-4 gap-2">
+            {QUARTS_HEURE.map((m) => (
+              <Option
+                key={m}
+                actif={Number(v.usualMinute) === m}
+                onClick={() => set("usualMinute")(m)}
+              >
+                <span className="num">{String(m).padStart(2, "0")}</span>
+              </Option>
+            ))}
+          </div>
+        </div>
         <p className="mb-5 mt-1.5 text-sm text-ink-muted">
           Sert à remonter ce tournoi en tête de liste au moment où tu le joues.
         </p>
@@ -381,6 +411,30 @@ function Option({ actif, children, onClick }) {
     >
       {children}
     </button>
+  );
+}
+
+/** Champ numérique suivi de son unité, posée dans le champ lui-même. */
+function ChampUnite({ label, unite, value, onChange, ...rest }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm text-ink-muted">{label}</span>
+      <span className="relative block">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="bd-input num pr-12"
+          {...rest}
+        />
+        <span
+          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-ink-muted"
+          aria-hidden
+        >
+          {unite}
+        </span>
+      </span>
+    </label>
   );
 }
 

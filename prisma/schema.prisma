@@ -156,9 +156,13 @@ model TournamentTemplate {
   /// Étiquette libre : « Event », « Série », … Sert à distinguer les
   /// rendez-vous ponctuels des tournois réguliers sans les supprimer.
   tag       String?
-  /// Heure habituelle de lancement (UTC), pour remonter les bons tournois
-  /// en tête de grille au moment où on joue.
+  /// Heure habituelle de lancement, pour remonter les bons tournois en tête
+  /// de grille au moment où on joue.
   usualHour Int?
+  /// Minute de lancement, au quart d'heure (0, 15, 30, 45). L'heure seule ne
+  /// suffisait pas : beaucoup de tournois partent à la demie, et deux
+  /// tournois d'une même tranche ne se jouent pas au même moment.
+  usualMinute Int?
   position  Int              @default(0)
   active    Boolean          @default(true)
   createdAt DateTime         @default(now())
