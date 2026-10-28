@@ -169,7 +169,9 @@ model TournamentTemplate {
 
   entries Tournament[]
 
-  @@unique([userId, siteId, name, buyIn, bounty])
+  // Pas de clé d'unicité : une room fait tourner le même tournoi plusieurs
+  // fois par jour, au même buy-in. Deux « MYSTERY KO 10 € », l'un à 11 h et
+  // l'autre à 14 h, sont deux lignes de grille légitimes.
   @@index([userId, active, position])
 }
 

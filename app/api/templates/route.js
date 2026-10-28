@@ -106,23 +106,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Room inconnue." }, { status: 400 });
   }
 
-  const existe = await prisma.tournamentTemplate.findFirst({
-    where: {
-      userId: user.id,
-      siteId: site.id,
-      name: valeurs.name,
-      buyIn: valeurs.buyIn,
-      bounty: valeurs.bounty,
-    },
-    select: { id: true },
-  });
-  if (existe) {
-    return NextResponse.json(
-      { error: "Ce tournoi est déjà dans la grille." },
-      { status: 409 }
-    );
-  }
-
+  // Aucun contrôle d'homonyme : une room fait tourner le même tournoi
+  // plusieurs fois par jour, au même buy-in. Ce qui les distingue est
+  // l'heure de lancement, pas le nom.
   const dernier = await prisma.tournamentTemplate.findFirst({
     where: { userId: user.id },
     orderBy: { position: "desc" },
@@ -175,27 +161,6 @@ export async function PATCH(request) {
   const sites = await getSiteMap(user.id);
   const site = body?.site ? sites.get(body.site) : null;
   const siteId = site ? site.id : modele.siteId;
-
-  // La clé d'unicité porte sur (room, nom, buy-in, prime) : modifier le coût
-  // ou le nom peut heurter un autre modèle. Mieux vaut un message qu'une
-  // erreur de contrainte.
-  const collision = await prisma.tournamentTemplate.findFirst({
-    where: {
-      userId: user.id,
-      siteId,
-      name: valeurs.name,
-      buyIn: valeurs.buyIn,
-      bounty: valeurs.bounty,
-      NOT: { id: modele.id },
-    },
-    select: { id: true },
-  });
-  if (collision) {
-    return NextResponse.json(
-      { error: "Un tournoi identique existe déjà dans la grille." },
-      { status: 409 }
-    );
-  }
 
   await prisma.tournamentTemplate.update({
     where: { id: modele.id },

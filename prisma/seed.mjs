@@ -138,30 +138,45 @@ async function main() {
   for (const [i, m] of grille.entries()) {
     const site = parSlug.get(m.site);
     if (!site) continue;
-    await prisma.tournamentTemplate.upsert({
+    // Plus de clé d'unicité sur la grille : on retrouve la ligne à la main
+    // pour ne pas en créer une deuxième à chaque passage du seed.
+    const existant = await prisma.tournamentTemplate.findFirst({
       where: {
-        userId_siteId_name_buyIn_bounty: {
+        userId: user.id,
+        siteId: site.id,
+        name: m.name,
+        buyIn: m.buyIn,
+        bounty: m.bounty,
+      },
+      select: { id: true },
+    });
+
+    const valeurs = {
+      fee: m.fee,
+      format: m.format,
+      speed: m.speed,
+      usualHour: m.heureUsuelle,
+      position: i,
+    };
+
+    if (existant) {
+      await prisma.tournamentTemplate.update({
+        where: { id: existant.id },
+        data: valeurs,
+      });
+    } else {
+      await prisma.tournamentTemplate.create({
+        data: {
+          ...valeurs,
           userId: user.id,
           siteId: site.id,
           name: m.name,
           buyIn: m.buyIn,
           bounty: m.bounty,
         },
-      },
-      update: { fee: m.fee, format: m.format, speed: m.speed, usualHour: m.heureUsuelle, position: i },
-      create: {
-        userId: user.id,
-        siteId: site.id,
-        name: m.name,
-        buyIn: m.buyIn,
-        fee: m.fee,
-        bounty: m.bounty,
-        format: m.format,
-        speed: m.speed,
-        usualHour: m.heureUsuelle,
-        position: i,
-      },
-    });
+      });
+    }
+
     ajoutes += 1;
   }
   console.log(`${ajoutes} tournois dans la grille`);

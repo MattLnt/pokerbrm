@@ -47,6 +47,20 @@ que soit la session d'origine (`getTournoisASolder`). Deux sorties : saisir le
 résultat, ou retirer le tournoi s'il n'a jamais été joué. L'écran bankroll
 porte un rappel cliquable quand il en reste.
 
+## Pas d'unicité sur la grille
+
+Une room fait tourner le même tournoi plusieurs fois par jour, au même
+buy-in : deux « MYSTERY KO 10 € », l'un à 11 h et l'autre à 14 h, sont deux
+lignes légitimes. Ce qui les distingue est l'heure de lancement, pas le nom.
+
+`TournamentTemplate` n'a donc plus de clé d'unicité, et l'API ne refuse plus
+un homonyme. C'est au joueur de tenir sa grille — chaque ligne se supprime
+d'un bouton, et chacune affiche son coût, son format, sa durée de niveau et
+son heure, de quoi distinguer deux tournois de même nom.
+
+La déduplication des **imports** n'a rien à voir et ne bouge pas : elle porte
+sur `(siteId, externalId)`, l'identifiant du tournoi joué.
+
 ## Durée de niveau et heure de lancement
 
 Les deux se saisissent à la valeur exacte, pas dans une liste de valeurs
