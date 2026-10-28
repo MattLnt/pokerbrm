@@ -4,10 +4,20 @@ import { useState, useTransition } from "react";
 import { X, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui";
+import DatePicker from "@/components/DatePicker";
 import { SITES, TRANSACTION_LABELS } from "@/lib/constants";
 
+/**
+ * La date du jour, en heure locale. `toISOString()` donnerait la date UTC :
+ * un mouvement saisi à 00 h 30 à Paris se retrouverait daté de la veille.
+ */
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 /** Sélecteur de room : une rangée de boutons, un seul retenu. */
@@ -160,15 +170,10 @@ export default function MovementSheet({ type, demo, onClose, onSaved }) {
           />
         </label>
 
-        <label className="mb-3 block">
-          <span className="mb-1.5 block text-sm text-ink-muted">Date</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="bd-input num"
-          />
-        </label>
+        <div className="mb-3">
+          <p className="mb-1.5 text-sm text-ink-muted">Date</p>
+          <DatePicker label="Date" value={date} onChange={setDate} />
+        </div>
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-sm text-ink-muted">

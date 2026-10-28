@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { Check, Copy, Eraser } from "lucide-react";
 
 import RangeGrid from "@/components/RangeGrid";
+import Select from "@/components/Select";
 import { Card, SectionTitle, Button } from "@/components/ui";
 import {
   POSITIONS,
@@ -314,33 +315,32 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
       <SectionTitle>Outils</SectionTitle>
       <div className="grid gap-2">
         {filledSpots.length > 0 ? (
-          <label className="block">
-            <span className="mb-1.5 block text-sm text-ink-muted">
+          <div>
+            <p className="mb-1.5 text-sm text-ink-muted">
               Copier une range existante
-            </span>
-            <select
-              defaultValue=""
-              onChange={(e) => {
-                if (e.target.value) copyFrom(e.target.value);
-                e.target.value = "";
+            </p>
+            {/* Une action, pas un état : la valeur retombe à vide aussitôt
+                pour qu'on puisse recopier deux fois le même spot. */}
+            <Select
+              label="Copier une range existante"
+              value=""
+              placeholder="Choisir un spot…"
+              onChange={(k) => {
+                if (k) copyFrom(k);
               }}
-              className="bd-select"
-            >
-              <option value="">Choisir un spot…</option>
-              {filledSpots.map((k) => {
-                const [p, a, d] = k.split("|");
-                const actionLabel =
-                  RANGE_ACTIONS.find((x) => x.key === a)?.label ?? a;
-                const depthLabel =
-                  STACK_DEPTHS.find((x) => x.key === d)?.label ?? d;
-                return (
-                  <option key={k} value={k}>
-                    {p} · {actionLabel} · {depthLabel}
-                  </option>
-                );
+              options={filledSpots.map((k) => {
+                const [pos, action, depth] = k.split("|");
+                return {
+                  value: k,
+                  label: pos,
+                  sub: [
+                    RANGE_ACTIONS.find((x) => x.key === action)?.label ?? action,
+                    STACK_DEPTHS.find((x) => x.key === depth)?.label ?? depth,
+                  ].join(" · "),
+                };
               })}
-            </select>
-          </label>
+            />
+          </div>
         ) : null}
 
         <div className="grid grid-cols-2 gap-2">

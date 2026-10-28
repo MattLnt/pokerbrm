@@ -86,6 +86,23 @@ sortie de terminal.
 `components/ui.js` s'appuie dessus — `Button` n'est qu'un habillage de
 `.bd-btn`.
 
+**Aucun widget natif.** `<select>` et `<input type="date">` sont dessinés par
+le système : fond blanc sur mobile, police de l'OS, libellés dans la langue du
+navigateur — rien de tout ça ne se met à la charte. Ils sont remplacés par
+`components/Select.js` et `components/DatePicker.js`, tous deux posés par
+`components/Popover.js`.
+
+`Popover` porte son panneau dans `<body>` : rendu sur place il serait coupé
+par le défilement d'une feuille de saisie. Il se replace à chaque défilement,
+se retourne au-dessus de l'ancre quand la place manque en dessous, et plafonne
+sa hauteur à l'espace disponible. Il se masque par l'opacité et non par
+`visibility` le temps d'être mesuré : `focus()` ne fait rien sur un élément en
+`visibility: hidden`, et la liste prendrait le clavier dans le vide.
+
+Les deux composants ont le clavier d'un vrai widget : flèches, Début / Fin,
+Entrée, Échap pour le select ; flèches, Page préc. / suiv. pour le calendrier,
+dont une seule case est atteignable au tabulateur.
+
 ## Règles
 
 - Fond de page : trame régulière de 56 px à `#ffffff09`, fixe

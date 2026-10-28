@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui";
+import Select from "@/components/Select";
 import { STUDY_SESSION_TYPES as TYPES } from "@/lib/constants";
 
 const DURATIONS = [30, 45, 60, 90, 120];
@@ -97,21 +98,18 @@ export default function StudyLogger({ themes, demo }) {
       </div>
 
       {themes.length > 0 ? (
-        <label className="mb-4 block">
-          <span className="kicker mb-2 block">Thème</span>
-          <select
+        <div className="mb-4">
+          <p className="kicker mb-2">Thème</p>
+          <Select
+            label="Thème"
             value={themeId}
-            onChange={(e) => setThemeId(e.target.value)}
-            className="bd-select"
-          >
-            <option value="">Aucun</option>
-            {themes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setThemeId}
+            options={[
+              { value: "", label: "Aucun" },
+              ...themes.map((t) => ({ value: t.id, label: t.title })),
+            ]}
+          />
+        </div>
       ) : null}
 
       <label className="mb-4 block">
