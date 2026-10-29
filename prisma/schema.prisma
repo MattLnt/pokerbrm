@@ -83,6 +83,17 @@ enum ProjectBilling {
   PAYE
 }
 
+/// Les trois emplois d'une journée, les seuls que l'agenda planifie. Chacun
+/// porte sa couleur dans l'interface (`PLAN_KINDS`, lib/constants.js).
+enum PlanKind {
+  /// Jeu : de l'heure de lancement du premier tournoi à la fin du grind.
+  GRIND
+  /// Travail de stratégie : théorie, drills, revue de mains.
+  ETUDE
+  /// Les projets web.
+  PROJET
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -106,6 +117,7 @@ model User {
   recurringCharges RecurringCharge[]
   projects         Project[]
   projectAccesses  ProjectAccess[]
+  planBlocks       PlanBlock[]
 }
 
 model Site {
@@ -440,7 +452,8 @@ model Project {
   position  Int            @default(0)
   createdAt DateTime       @default(now())
 
-  accesses ProjectAccess[]
+  accesses   ProjectAccess[]
+  planBlocks PlanBlock[]
 
   @@index([userId, stage, position])
 }
@@ -473,4 +486,41 @@ model ProjectAccess {
   createdAt DateTime @default(now())
 
   @@index([userId, projectId, position])
+}
+
+/* ------------------------------------------------------------------ */
+/* Agenda                                                              */
+/* ------------------------------------------------------------------ */
+
+/// Un créneau planifié dans la journée : grind, étude ou projet web.
+///
+/// C'est une **intention**, pas un relevé. Les heures réellement jouées
+/// vivent dans `Session` et `Tournament`, les minutes réellement étudiées
+/// dans `StudySession` — l'agenda ne les recopie pas et ne se met pas à jour
+/// tout seul quand une session dérape. Les deux lectures servent à des
+/// choses différentes : ce qu'on a prévu, ce qu'on a fait.
+model PlanBlock {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Le jour du créneau, sans heure. `@db.Date` et non un horodatage : un
+  /// jour d'agenda n'a pas de fuseau, et une `TIMESTAMP` glisserait d'un jour
+  /// selon l'endroit où elle est lue.
+  date   DateTime @db.Date
+  kind   PlanKind
+  /// Minutes depuis minuit. `endMinute` peut dépasser 1440 : un grind
+  /// terminé à 2 h appartient à la soirée qui l'a commencé, pas au lendemain
+  /// matin. Toujours `startMinute < endMinute`.
+  startMinute Int
+  endMinute   Int
+  /// Pour un créneau de projet web : lequel. Facultatif — on bloque souvent
+  /// une plage de travail avant de savoir sur quoi elle passera.
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  note      String?
+  createdAt DateTime @default(now())
+
+  // Pas de contrainte d'unicité : deux créneaux du même type dans la même
+  // journée sont légitimes — un grind du matin et un grind du soir.
+  @@index([userId, date])
 }

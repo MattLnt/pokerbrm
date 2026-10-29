@@ -11,17 +11,23 @@ import {
   Play,
   Landmark,
   Briefcase,
+  CalendarRange,
 } from "lucide-react";
 
 /**
- * Huit onglets. Les six premiers sont le poker, les deux derniers la vie
- * autour : le compte bancaire où arrivent les retraits, et les projets web
- * qui le remplissent. Ils sont au même rang parce qu'on y va aussi souvent,
- * et qu'un onglet « divers » qui en cacherait deux ne ferait qu'ajouter un
- * tap à chaque visite.
+ * Neuf onglets. Les six premiers sont le poker, les trois derniers la vie
+ * autour : le compte bancaire où arrivent les retraits, les projets web qui
+ * le remplissent, et l'agenda qui répartit les journées entre les trois.
+ * Ils sont au même rang parce qu'on y va aussi souvent, et qu'un onglet
+ * « divers » qui en cacherait trois ne ferait qu'ajouter un tap à chaque
+ * visite.
  *
- * À huit, la barre basse ne tient plus dans la largeur d'un téléphone : elle
- * défile à l'horizontale, chaque onglet gardant sa cible tactile.
+ * L'agenda vient en dernier et non dans le poker : il planifie le grind,
+ * l'étude et les projets ensemble — le ranger sous l'un des trois le
+ * cacherait aux deux autres.
+ *
+ * Passé six, la barre basse ne tient plus dans la largeur d'un téléphone :
+ * elle défile à l'horizontale, chaque onglet gardant sa cible tactile.
  */
 const TABS = [
   { href: "/", label: "Accueil", icon: Home },
@@ -32,6 +38,7 @@ const TABS = [
   { href: "/bankroll", label: "Bankroll", icon: CreditCard },
   { href: "/compte", label: "Compte", icon: Landmark },
   { href: "/projets", label: "Projets", icon: Briefcase },
+  { href: "/agenda", label: "Agenda", icon: CalendarRange },
 ];
 
 function isActive(pathname, href) {

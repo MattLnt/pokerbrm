@@ -1,8 +1,10 @@
 "use client";
 
-// Briques de formulaire des écrans Compte et Projets. Elles ne font
-// qu'habiller les classes `.bd-*` de la charte, pour que les trois
-// formulaires de ces écrans se tiennent exactement pareil.
+// Briques de formulaire des écrans Compte, Projets et Agenda. Elles ne font
+// qu'habiller les classes `.bd-*` de la charte, pour que les formulaires de
+// ces écrans se tiennent exactement pareil.
+
+import { minutesDepuisTexte, texteDepuisMinutes } from "@/lib/agenda";
 
 /** Champ texte avec son libellé. `num` pour les champs de chiffres. */
 export function Champ({ label, value, onChange, aide, num = false, ...rest }) {
@@ -41,6 +43,39 @@ export function ChampUnite({ label, unite, value, onChange, aide, ...rest }) {
           {unite}
         </span>
       </span>
+      {aide ? <span className="mt-1.5 block text-sm text-ink-muted">{aide}</span> : null}
+    </label>
+  );
+}
+
+/**
+ * Heure saisie librement : « 21:30 », « 2130 », « 21h30 », « 21 ».
+ *
+ * Pas de liste d'heures rondes ni de sélecteur natif : un grind commence à
+ * 18 h 45 aussi bien qu'à 19 h. La saisie est relue à la sortie du champ et
+ * réécrite en « 21:30 » — on voit tout de suite si elle a été comprise, sans
+ * attendre l'enregistrement. Ce qui n'est pas une heure est laissé tel quel :
+ * corriger sous les doigts de qui tape serait pire.
+ */
+export function ChampHeure({ label, value, onChange, aide, ...rest }) {
+  function relire() {
+    const minutes = minutesDepuisTexte(value);
+    if (minutes !== null) onChange(texteDepuisMinutes(minutes));
+  }
+
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm text-ink-muted">{label}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={relire}
+        className="bd-input num"
+        {...rest}
+      />
       {aide ? <span className="mt-1.5 block text-sm text-ink-muted">{aide}</span> : null}
     </label>
   );
