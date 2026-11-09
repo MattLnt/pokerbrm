@@ -361,7 +361,7 @@ export default function RangeEditor({
           colonne et dépasse le bas de l'écran. On la borne donc par la hauteur
           restante — sur mobile le plafond est plus large que l'écran, la
           grille y garde toute la largeur. */}
-      <div className="order-2 mx-auto mt-4 w-full max-w-[min(100%,calc(100dvh-230px))] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-0">
+      <div className="order-2 mx-auto mt-4 w-full max-w-[min(100%,calc(100dvh-300px),520px)] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-0">
         {aVerifier.size > 0 || estAVerifier ? (
           <div
             className={`mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-tile border px-4 py-3 text-sm ${
