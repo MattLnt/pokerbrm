@@ -18,11 +18,16 @@ import {
   melanger,
   basculerSelectionRapide,
   selectionPosee,
+  lireRangeTexte,
 } from "@/lib/hands";
-
-function spotKey({ position, action, stackDepth }) {
-  return `${position}|${action}|${stackDepth}`;
-}
+import {
+  spotKey,
+  parseSpotKey,
+  actionPossible,
+  adversairesPossibles,
+  adversaireValide,
+  demandeAdversaire,
+} from "@/lib/spots";
 
 export default function RangeEditor({ initialRanges, spot, demo }) {
   // Le spot peut venir de l'URL (une main taguée qui ouvre sa range). On ne
@@ -34,12 +39,23 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
   const [position, setPosition] = useState(() =>
     connu(spot?.position, POSITIONS, "BTN")
   );
-  const [action, setAction] = useState(() =>
-    connu(spot?.action, RANGE_ACTIONS, "RFI")
-  );
+  const [action, setAction] = useState(() => {
+    const a = connu(spot?.action, RANGE_ACTIONS, "RFI");
+    const p = connu(spot?.position, POSITIONS, "BTN");
+    return actionPossible(a, p) ? a : premiereActionPossible(p);
+  });
   const [stackDepth, setStackDepth] = useState(() =>
     connu(spot?.stackDepth, STACK_DEPTHS, "60BB_PLUS")
   );
+  // Vide : la range vaut contre n'importe quel adversaire.
+  const [vsPosition, setVsPosition] = useState(() => {
+    const p = connu(spot?.position, POSITIONS, "BTN");
+    const a = connu(spot?.action, RANGE_ACTIONS, "RFI");
+    const vs = spot?.vsPosition ?? "";
+    return adversaireValide(a, p, vs) ? vs : "";
+  });
+  const [texte, setTexte] = useState("");
+  const [illisibles, setIllisibles] = useState([]);
   const [brush, setBrush] = useState(RANGE_BRUSHES[0].key);
   const [frequency, setFrequency] = useState(100);
   const [tuning, setTuning] = useState(null);
@@ -49,7 +65,24 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
   const [pending, startTransition] = useTransition();
   const modeGeste = useRef("peindre");
 
-  const key = spotKey({ position, action, stackDepth });
+  const key = spotKey({ position, action, stackDepth, vsPosition });
+  const adversaires = adversairesPossibles(action, position);
+  const rempli = (k) => Object.keys(ranges[k] ?? {}).length > 0;
+
+  // Changer de position ou d'action ne doit jamais laisser un spot
+  // impossible à l'écran : on retombe sur l'action, puis l'adversaire, les
+  // plus proches qui se jouent.
+  function choisirPosition(p) {
+    const a = actionPossible(action, p) ? action : premiereActionPossible(p);
+    setPosition(p);
+    setAction(a);
+    if (!adversaireValide(a, p, vsPosition)) setVsPosition("");
+  }
+
+  function choisirAction(a) {
+    setAction(a);
+    if (!adversaireValide(a, position, vsPosition)) setVsPosition("");
+  }
   // useMemo sur l'objet lui-même : sans ça, le `?? {}` crée une nouvelle
   // référence à chaque rendu et invalide le calcul des stats en permanence.
   const cells = useMemo(() => ranges[key] ?? {}, [ranges, key]);
@@ -107,6 +140,21 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
     });
   }
 
+  /** Pose une range écrite en texte avec le pinceau courant. */
+  function ecrireRange() {
+    const { mains, illisibles: rejetes } = lireRangeTexte(texte);
+    setIllisibles(rejetes);
+    if (mains.length === 0) return;
+    updateCells((current) => {
+      const suivante = { ...current };
+      for (const { main, frequence: f } of mains) {
+        suivante[main] = melanger(suivante[main], brush, f ?? frequency);
+      }
+      return suivante;
+    });
+    if (rejetes.length === 0) setTexte("");
+  }
+
   function clearRange() {
     updateCells(() => ({}));
   }
@@ -127,7 +175,7 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
       const res = await fetch("/api/ranges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ position, action, stackDepth, cells }),
+        body: JSON.stringify({ position, action, stackDepth, vsPosition, cells }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -157,7 +205,7 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
         <p className="kicker mb-2">Position</p>
         <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
           {POSITIONS.map((p) => (
-            <Chip key={p} active={p === position} onClick={() => setPosition(p)}>
+            <Chip key={p} active={p === position} onClick={() => choisirPosition(p)}>
               {p}
             </Chip>
           ))}
@@ -169,12 +217,42 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
             <Chip
               key={a.key}
               active={a.key === action}
-              onClick={() => setAction(a.key)}
+              disabled={!actionPossible(a.key, position)}
+              onClick={() => choisirAction(a.key)}
             >
               {a.label}
             </Chip>
           ))}
         </div>
+
+        {demandeAdversaire(action) ? (
+          <>
+            <p className="kicker mb-2">
+              {action === "VS_3BET" ? "3bet par" : "Contre"}
+            </p>
+            <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
+              <Chip
+                active={vsPosition === ""}
+                marque={rempli(spotKey({ position, action, stackDepth }))}
+                onClick={() => setVsPosition("")}
+              >
+                Tous
+              </Chip>
+              {adversaires.map((p) => (
+                <Chip
+                  key={p}
+                  active={p === vsPosition}
+                  marque={rempli(
+                    spotKey({ position, action, stackDepth, vsPosition: p })
+                  )}
+                  onClick={() => setVsPosition(p)}
+                >
+                  {p}
+                </Chip>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         <p className="kicker mb-2">Profondeur</p>
         <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
@@ -182,6 +260,9 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
             <Chip
               key={d.key}
               active={d.key === stackDepth}
+              marque={rempli(
+                spotKey({ position, action, stackDepth: d.key, vsPosition })
+              )}
               onClick={() => setStackDepth(d.key)}
             >
               {d.label}
@@ -311,6 +392,35 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
         })}
       </div>
 
+      {/* Saisie en texte : plus rapide que peindre case par case quand on
+          recopie une range lue ailleurs. */}
+      <SectionTitle>Écrire la range</SectionTitle>
+      <textarea
+        value={texte}
+        onChange={(e) => setTexte(e.target.value)}
+        rows={3}
+        placeholder="22+, A2s+, KTo+, T8s+, 98s, A5o:50"
+        aria-label="Range en texte"
+        className="w-full rounded-tile border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted/60"
+      />
+      <p className="mt-1.5 text-sm text-ink-muted">
+        Posé avec le pinceau et la fréquence choisis. « :50 » après une main
+        fixe sa fréquence.
+      </p>
+      {illisibles.length > 0 ? (
+        <p className="mt-1.5 text-sm text-warning">
+          Non reconnu : {illisibles.join(", ")}
+        </p>
+      ) : null}
+      <Button
+        type="button"
+        className="mt-2 w-full"
+        onClick={ecrireRange}
+        disabled={texte.trim() === ""}
+      >
+        Poser sur la grille
+      </Button>
+
       {/* Outils */}
       <SectionTitle>Outils</SectionTitle>
       <div className="grid gap-2">
@@ -329,10 +439,11 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
                 if (k) copyFrom(k);
               }}
               options={filledSpots.map((k) => {
-                const [pos, action, depth] = k.split("|");
+                const { position: pos, action, stackDepth: depth, vsPosition: vs } =
+                  parseSpotKey(k);
                 return {
                   value: k,
-                  label: pos,
+                  label: vs ? `${pos} vs ${vs}` : pos,
                   sub: [
                     RANGE_ACTIONS.find((x) => x.key === action)?.label ?? action,
                     STACK_DEPTHS.find((x) => x.key === depth)?.label ?? depth,
@@ -353,7 +464,12 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
             onClick={() => {
               const next = STACK_DEPTHS.find((d) => d.key !== stackDepth);
               if (!next) return;
-              const target = spotKey({ position, action, stackDepth: next.key });
+              const target = spotKey({
+                position,
+                action,
+                stackDepth: next.key,
+                vsPosition,
+              });
               setRanges((prev) => ({ ...prev, [target]: { ...cells } }));
               setStackDepth(next.key);
             }}
@@ -432,19 +548,34 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
   );
 }
 
-function Chip({ active, children, onClick }) {
+function premiereActionPossible(position) {
+  return RANGE_ACTIONS.find((a) => actionPossible(a.key, position))?.key ?? "RFI";
+}
+
+/**
+ * `marque` : une pastille quand ce spot a déjà une range, pour voir d'un
+ * coup d'oeil ce qui reste à remplir.
+ */
+function Chip({ active, children, onClick, disabled = false, marque = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`min-h-[40px] shrink-0 rounded-pill border px-4 text-sm transition-colors ${
+      disabled={disabled}
+      className={`relative min-h-[40px] shrink-0 rounded-pill border px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
         active
           ? "border-negative/40 bg-negative/15 text-negative"
           : "border-line bg-surface-2 text-ink-section"
       }`}
     >
       {children}
+      {marque ? (
+        <span
+          className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-positive"
+          aria-label="déjà remplie"
+        />
+      ) : null}
     </button>
   );
 }

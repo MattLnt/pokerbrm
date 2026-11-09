@@ -4,6 +4,7 @@ import { prisma, hasDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/user";
 import { POSITIONS, STACK_DEPTHS, RANGE_ACTIONS, RANGE_BRUSHES } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
+import { actionPossible, adversaireValide } from "@/lib/spots";
 
 const VALID_POSITIONS = new Set(POSITIONS);
 const VALID_DEPTHS = new Set(STACK_DEPTHS.map((d) => d.key));
@@ -45,6 +46,7 @@ export async function POST(request) {
   }
 
   const { position, action, stackDepth } = body ?? {};
+  const vsPosition = typeof body?.vsPosition === "string" ? body.vsPosition : "";
   if (!VALID_POSITIONS.has(position)) {
     return NextResponse.json({ error: "Position inconnue." }, { status: 400 });
   }
@@ -54,18 +56,28 @@ export async function POST(request) {
   if (!VALID_DEPTHS.has(stackDepth)) {
     return NextResponse.json({ error: "Profondeur inconnue." }, { status: 400 });
   }
+  if (!actionPossible(action, position)) {
+    return NextResponse.json(
+      { error: "Cette action ne se joue pas depuis cette position." },
+      { status: 400 }
+    );
+  }
+  if (!adversaireValide(action, position, vsPosition)) {
+    return NextResponse.json({ error: "Adversaire impossible." }, { status: 400 });
+  }
 
   const cells = sanitizeCells(body.cells);
   const user = await getCurrentUser();
 
-  // vsPosition n'est pas encore exposé dans l'éditeur : chaîne vide pour l'instant.
+  // vsPosition vide : la range vaut contre tout adversaire. C'est aussi ce
+  // que portent les ranges saisies avant que l'éditeur ne le demande.
   const range = await prisma.range.upsert({
     where: {
       userId_position_action_vsPosition_stackDepth: {
         userId: user.id,
         position,
         action,
-        vsPosition: "",
+        vsPosition,
         stackDepth,
       },
     },
@@ -74,7 +86,7 @@ export async function POST(request) {
       userId: user.id,
       position,
       action,
-      vsPosition: "",
+      vsPosition,
       stackDepth,
       cells,
     },

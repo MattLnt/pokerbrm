@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/user";
 import { RANGE_BRUSHES } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
 import { review } from "@/lib/spaced";
+import { parseSpotKey } from "@/lib/spots";
 
 const VALID_ANSWERS = new Set(RANGE_BRUSHES.map((b) => b.key));
 const VALID_HANDS = new Set(ALL_HANDS);
@@ -35,11 +36,11 @@ export async function POST(request) {
     return NextResponse.json({ error: "Spot manquant." }, { status: 400 });
   }
 
-  const [position, action, stackDepth] = spot.split("|");
+  const { position, action, stackDepth, vsPosition } = parseSpotKey(spot);
   const user = await getCurrentUser();
 
   const range = await prisma.range.findFirst({
-    where: { userId: user.id, position, action, stackDepth },
+    where: { userId: user.id, position, action, stackDepth, vsPosition },
     select: { id: true },
   });
   if (!range) {

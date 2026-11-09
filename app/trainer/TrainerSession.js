@@ -21,6 +21,7 @@ import {
 } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
 import { gradeAnswer, construireSession } from "@/lib/spaced";
+import { parseSpotKey } from "@/lib/spots";
 import { scenario } from "@/lib/table";
 import { formatPercent, formatDuree } from "@/lib/format";
 
@@ -28,8 +29,8 @@ const LONGUEURS = [20, 50, 100];
 const ANSWERS = RANGE_BRUSHES;
 
 function decouper(cle) {
-  const [position, action, profondeur] = cle.split("|");
-  return { position, action, profondeur };
+  const { position, action, stackDepth, vsPosition } = parseSpotKey(cle);
+  return { position, action, profondeur: stackDepth, adversaire: vsPosition };
 }
 
 function libelleAction(cle) {
@@ -41,8 +42,9 @@ function libelleProfondeur(cle) {
 }
 
 function spotLabel(cle) {
-  const { position, action, profondeur } = decouper(cle);
-  return `${position} · ${libelleAction(action)} · ${libelleProfondeur(profondeur)}`;
+  const { position, action, profondeur, adversaire } = decouper(cle);
+  const contre = adversaire ? ` vs ${adversaire}` : "";
+  return `${position} · ${libelleAction(action)}${contre} · ${libelleProfondeur(profondeur)}`;
 }
 
 /**
@@ -305,8 +307,11 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
 
   const poser = useCallback((questions, rang) => {
     const question = questions[rang];
-    const { action, position } = decouper(question.spot);
-    setQuestion({ ...question, scene: scenario(action, position) });
+    const { action, position, adversaire } = decouper(question.spot);
+    setQuestion({
+      ...question,
+      scene: scenario(action, position, Math.random, adversaire),
+    });
     setVerdict(null);
   }, []);
 

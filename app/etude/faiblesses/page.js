@@ -21,11 +21,17 @@ export const metadata = { title: "Faiblesses · Poker BRM" };
  */
 function decouper(libelle) {
   const [gauche, droite] = String(libelle).split("·").map((p) => p.trim());
-  const [position, action] = (gauche ?? "").split(/\s+/);
+  // « BB DEF_VS_OPEN vs BTN » : l'adversaire, quand il y en a un, suit « vs ».
+  const [position, action, vs, adversaire] = (gauche ?? "").split(/\s+/);
   if (!POSITIONS.includes(position)) return null;
   if (!RANGE_ACTIONS.some((a) => a.key === action)) return null;
   const profondeur = STACK_DEPTHS.find((d) => d.key === droite);
-  return { position, action, depth: profondeur?.key ?? null };
+  return {
+    position,
+    action,
+    depth: profondeur?.key ?? null,
+    vs: vs === "vs" && POSITIONS.includes(adversaire) ? adversaire : null,
+  };
 }
 
 function tonalite(reussite) {
@@ -107,7 +113,7 @@ export default async function FaiblessesPage() {
                       as={Link}
                       href={`/ranges?position=${cible.position}&action=${cible.action}${
                         cible.depth ? `&depth=${cible.depth}` : ""
-                      }`}
+                      }${cible.vs ? `&vs=${cible.vs}` : ""}`}
                     >
                       Ouvrir la range
                     </Button>

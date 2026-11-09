@@ -17,6 +17,7 @@ export default async function RangesPage({ searchParams }) {
     position: typeof params?.position === "string" ? params.position : null,
     action: typeof params?.action === "string" ? params.action : null,
     stackDepth: typeof params?.depth === "string" ? params.depth : null,
+    vsPosition: typeof params?.vs === "string" ? params.vs : null,
   };
 
   return (
