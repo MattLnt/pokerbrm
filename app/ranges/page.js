@@ -1,7 +1,7 @@
 import { Screen, PageHeader } from "@/components/ui";
 import RangeEditor from "./RangeEditor";
 import { DEMO } from "@/lib/data";
-import { getRanges } from "@/lib/ranges";
+import { getRanges, getRangesAVerifier } from "@/lib/ranges";
 
 export const metadata = { title: "Ranges · Poker BRM" };
 
@@ -9,7 +9,10 @@ export const metadata = { title: "Ranges · Poker BRM" };
 export const dynamic = "force-dynamic";
 
 export default async function RangesPage({ searchParams }) {
-  const initialRanges = await getRanges();
+  const [initialRanges, aVerifier] = await Promise.all([
+    getRanges(),
+    getRangesAVerifier(),
+  ]);
   // Une main taguée ouvre la page sur son propre spot : sans ça, on
   // retombait sur BTN · RFI et il fallait recliquer trois pastilles.
   const params = await searchParams;
@@ -26,7 +29,12 @@ export default async function RangesPage({ searchParams }) {
         eyebrow={DEMO ? "Données d'exemple" : null}
         title="Ranges"
       />
-      <RangeEditor initialRanges={initialRanges} spot={spot} demo={DEMO} />
+      <RangeEditor
+        initialRanges={initialRanges}
+        aVerifierInitial={aVerifier}
+        spot={spot}
+        demo={DEMO}
+      />
     </Screen>
   );
 }

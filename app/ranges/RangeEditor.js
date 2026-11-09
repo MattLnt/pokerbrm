@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { Check, Copy, Eraser } from "lucide-react";
+import { Check, Copy, Eraser, SkipForward } from "lucide-react";
 
 import RangeGrid from "@/components/RangeGrid";
 import Select from "@/components/Select";
@@ -29,7 +29,12 @@ import {
   demandeAdversaire,
 } from "@/lib/spots";
 
-export default function RangeEditor({ initialRanges, spot, demo }) {
+export default function RangeEditor({
+  initialRanges,
+  aVerifierInitial = [],
+  spot,
+  demo,
+}) {
   // Le spot peut venir de l'URL (une main taguée qui ouvre sa range). On ne
   // garde que des valeurs connues : le reste de l'app suppose partout que
   // ces trois clés existent dans les listes.
@@ -54,6 +59,8 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
     const vs = spot?.vsPosition ?? "";
     return adversaireValide(a, p, vs) ? vs : "";
   });
+  // Spots du jeu de base pas encore relus. Enregistrer les valide.
+  const [aVerifier, setAVerifier] = useState(() => new Set(aVerifierInitial));
   const [texte, setTexte] = useState("");
   const [illisibles, setIllisibles] = useState([]);
   const [brush, setBrush] = useState(RANGE_BRUSHES[0].key);
@@ -66,8 +73,27 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
   const modeGeste = useRef("peindre");
 
   const key = spotKey({ position, action, stackDepth, vsPosition });
+  // useMemo sur l'objet lui-même : sans ça, le `?? {}` crée une nouvelle
+  // référence à chaque rendu et invalide le calcul des stats en permanence.
+  const cells = useMemo(() => ranges[key] ?? {}, [ranges, key]);
+  const stats = useMemo(() => rangeStats(cells), [cells]);
   const adversaires = adversairesPossibles(action, position);
   const rempli = (k) => Object.keys(ranges[k] ?? {}).length > 0;
+  const estAVerifier = aVerifier.has(key);
+  const suivante = prochaineAVerifier(aVerifier, key);
+  // Orange tant que la range n'est pas relue, vert une fois validée.
+  const marque = (k) => (aVerifier.has(k) ? "verifier" : rempli(k) ? "ok" : null);
+
+  /** Ouvre un spot donné par sa clé. */
+  function ouvrir(k) {
+    const cible = parseSpotKey(k);
+    setPosition(cible.position);
+    setAction(cible.action);
+    setStackDepth(cible.stackDepth);
+    setVsPosition(cible.vsPosition);
+    setSaved(false);
+    setError(null);
+  }
 
   // Changer de position ou d'action ne doit jamais laisser un spot
   // impossible à l'écran : on retombe sur l'action, puis l'adversaire, les
@@ -83,10 +109,6 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
     setAction(a);
     if (!adversaireValide(a, position, vsPosition)) setVsPosition("");
   }
-  // useMemo sur l'objet lui-même : sans ça, le `?? {}` crée une nouvelle
-  // référence à chaque rendu et invalide le calcul des stats en permanence.
-  const cells = useMemo(() => ranges[key] ?? {}, [ranges, key]);
-  const stats = useMemo(() => rangeStats(cells), [cells]);
 
   function updateCells(updater) {
     setSaved(false);
@@ -183,6 +205,12 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
         return;
       }
       setSaved(true);
+      setAVerifier((prev) => {
+        if (!prev.has(key)) return prev;
+        const suivant = new Set(prev);
+        suivant.delete(key);
+        return suivant;
+      });
     });
   }
 
@@ -233,7 +261,7 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
             <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
               <Chip
                 active={vsPosition === ""}
-                marque={rempli(spotKey({ position, action, stackDepth }))}
+                marque={marque(spotKey({ position, action, stackDepth }))}
                 onClick={() => setVsPosition("")}
               >
                 Tous
@@ -242,7 +270,7 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
                 <Chip
                   key={p}
                   active={p === vsPosition}
-                  marque={rempli(
+                  marque={marque(
                     spotKey({ position, action, stackDepth, vsPosition: p })
                   )}
                   onClick={() => setVsPosition(p)}
@@ -260,7 +288,7 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
             <Chip
               key={d.key}
               active={d.key === stackDepth}
-              marque={rempli(
+              marque={marque(
                 spotKey({ position, action, stackDepth: d.key, vsPosition })
               )}
               onClick={() => setStackDepth(d.key)}
@@ -276,6 +304,46 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
           restante — sur mobile le plafond est plus large que l'écran, la
           grille y garde toute la largeur. */}
       <div className="order-2 mx-auto mt-4 w-full max-w-[min(100%,calc(100dvh-230px))] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-0">
+        {aVerifier.size > 0 || estAVerifier ? (
+          <div
+            className={`mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-tile border px-4 py-3 text-sm ${
+              estAVerifier
+                ? "border-warning/40 bg-warning/10 text-warning"
+                : "border-line bg-surface text-ink-muted"
+            }`}
+          >
+            <p className="min-w-0 flex-1">
+              {estAVerifier ? (
+                <>
+                  <span className="font-semibold">À vérifier.</span> Range de
+                  base écrite par Claude, pas une sortie de solver. Corrige-la si
+                  besoin, puis valide.
+                </>
+              ) : (
+                <>
+                  <span className="num">{aVerifier.size}</span>{" "}
+                  {aVerifier.size > 1 ? "ranges restent" : "range reste"} à
+                  vérifier.
+                </>
+              )}
+            </p>
+            {estAVerifier ? (
+              <span className="num shrink-0 text-ink-muted">
+                {aVerifier.size} à vérifier
+              </span>
+            ) : null}
+            {suivante ? (
+              <button
+                type="button"
+                onClick={() => ouvrir(suivante)}
+                className="flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface-2 px-3 text-ink-section"
+              >
+                <SkipForward size={16} />
+                Suivante à vérifier
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <RangeGrid
           cells={cells}
           brushes={RANGE_BRUSHES}
@@ -495,7 +563,9 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
               ? "Enregistrement…"
               : saved
                 ? "Range enregistrée"
-                : "Enregistrer la range"}
+                : estAVerifier
+                  ? "Valider la range"
+                  : "Enregistrer la range"}
           </Button>
         </div>
       </div>
@@ -528,7 +598,9 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
               ? "Enregistrement…"
               : saved
                 ? "Range enregistrée"
-                : "Enregistrer la range"}
+                : estAVerifier
+                  ? "Valider la range"
+                  : "Enregistrer la range"}
           </Button>
         </div>
       </div>
@@ -548,15 +620,43 @@ export default function RangeEditor({ initialRanges, spot, demo }) {
   );
 }
 
+/** Rang d'un spot dans l'ordre de l'éditeur : position, action, profondeur, adversaire. */
+function rangDuSpot(k) {
+  const c = parseSpotKey(k);
+  return [
+    POSITIONS.indexOf(c.position),
+    RANGE_ACTIONS.findIndex((a) => a.key === c.action),
+    STACK_DEPTHS.findIndex((d) => d.key === c.stackDepth),
+    c.vsPosition ? POSITIONS.indexOf(c.vsPosition) + 1 : 0,
+  ];
+}
+
+function comparerSpots(a, b) {
+  const [ra, rb] = [rangDuSpot(a), rangDuSpot(b)];
+  for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] - rb[i];
+  return 0;
+}
+
+/**
+ * Le prochain spot à vérifier après `courant`, dans l'ordre de l'éditeur.
+ * On repart du début après le dernier ; null quand il n'en reste pas.
+ */
+function prochaineAVerifier(aVerifier, courant) {
+  const liste = [...aVerifier].filter((k) => k !== courant).sort(comparerSpots);
+  if (liste.length === 0) return null;
+  return liste.find((k) => comparerSpots(k, courant) > 0) ?? liste[0];
+}
+
 function premiereActionPossible(position) {
   return RANGE_ACTIONS.find((a) => actionPossible(a.key, position))?.key ?? "RFI";
 }
 
 /**
- * `marque` : une pastille quand ce spot a déjà une range, pour voir d'un
- * coup d'oeil ce qui reste à remplir.
+ * `marque` : une pastille quand ce spot a une range — orange si elle est
+ * encore à vérifier, verte si elle est relue. On voit d'un coup d'oeil ce
+ * qui reste à faire.
  */
-function Chip({ active, children, onClick, disabled = false, marque = false }) {
+function Chip({ active, children, onClick, disabled = false, marque = null }) {
   return (
     <button
       type="button"
@@ -572,8 +672,10 @@ function Chip({ active, children, onClick, disabled = false, marque = false }) {
       {children}
       {marque ? (
         <span
-          className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-positive"
-          aria-label="déjà remplie"
+          className={`absolute right-1.5 top-1.5 size-1.5 rounded-full ${
+            marque === "verifier" ? "bg-warning" : "bg-positive"
+          }`}
+          aria-label={marque === "verifier" ? "à vérifier" : "validée"}
         />
       ) : null}
     </button>

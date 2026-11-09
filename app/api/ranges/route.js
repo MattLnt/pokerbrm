@@ -81,7 +81,9 @@ export async function POST(request) {
         stackDepth,
       },
     },
-    update: { cells },
+    // Enregistrer depuis l'éditeur, c'est valider : une range du jeu de base
+    // perd son étiquette « à vérifier ».
+    update: { cells, name: null },
     create: {
       userId: user.id,
       position,
