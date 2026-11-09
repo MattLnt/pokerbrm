@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
-import { Check, Copy, Eraser, SkipForward } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, Copy, Eraser, SkipForward, CloudOff, Loader2 } from "lucide-react";
 
 import RangeGrid from "@/components/RangeGrid";
 import Select from "@/components/Select";
@@ -67,9 +67,15 @@ export default function RangeEditor({
   const [frequency, setFrequency] = useState(100);
   const [tuning, setTuning] = useState(null);
   const [ranges, setRanges] = useState(() => ({ ...initialRanges }));
-  const [saved, setSaved] = useState(false);
+  // Spots modifiés pas encore enregistrés. Une ref pour le minuteur, un état
+  // pour l'affichage : les deux bougent ensemble via `marquerModifie`.
+  // Spot → numéro de sa dernière retouche : un envoi ne marque un spot
+  // enregistré que si personne ne l'a retouché pendant le trajet.
+  const aSauver = useRef(new Map());
+  const [nbASauver, setNbASauver] = useState(0);
+  // "idle" | "attente" | "envoi" | "ok" | "echec"
+  const [statut, setStatut] = useState("idle");
   const [error, setError] = useState(null);
-  const [pending, startTransition] = useTransition();
   const modeGeste = useRef("peindre");
 
   const key = spotKey({ position, action, stackDepth, vsPosition });
@@ -91,7 +97,6 @@ export default function RangeEditor({
     setAction(cible.action);
     setStackDepth(cible.stackDepth);
     setVsPosition(cible.vsPosition);
-    setSaved(false);
     setError(null);
   }
 
@@ -110,8 +115,14 @@ export default function RangeEditor({
     if (!adversaireValide(a, position, vsPosition)) setVsPosition("");
   }
 
+  function marquerModifie(k) {
+    aSauver.current.set(k, (aSauver.current.get(k) ?? 0) + 1);
+    setNbASauver(aSauver.current.size);
+    setStatut("attente");
+  }
+
   function updateCells(updater) {
-    setSaved(false);
+    marquerModifie(key);
     setRanges((prev) => {
       const current = prev[key] ?? {};
       return { ...prev, [key]: updater(current) };
@@ -187,31 +198,78 @@ export default function RangeEditor({
     updateCells(() => ({ ...source }));
   }
 
-  function save() {
+  /**
+   * Enregistre des spots. Une erreur réseau (serveur arrêté, connexion
+   * coupée) s'affiche au lieu de passer inaperçue : c'est comme ça qu'une
+   * soirée de saisie s'est perdue. Les spots en échec restent à envoyer.
+   */
+  async function sauver(cles, toutes) {
     if (demo) {
       setError("Branche la base Railway pour enregistrer tes ranges.");
+      setStatut("echec");
       return;
     }
-    setError(null);
-    startTransition(async () => {
-      const res = await fetch("/api/ranges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ position, action, stackDepth, vsPosition, cells }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Enregistrement impossible.");
-        return;
+    if (cles.length === 0) return;
+    setStatut("envoi");
+    let echec = null;
+    for (const k of cles) {
+      const spotCible = parseSpotKey(k);
+      const version = aSauver.current.get(k);
+      try {
+        const res = await fetch("/api/ranges", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...spotCible, cells: toutes[k] ?? {} }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          echec = body.error ?? "Enregistrement impossible.";
+          continue;
+        }
+        if (aSauver.current.get(k) === version) aSauver.current.delete(k);
+        setAVerifier((prev) => {
+          if (!prev.has(k)) return prev;
+          const suivant = new Set(prev);
+          suivant.delete(k);
+          return suivant;
+        });
+      } catch {
+        echec = "Serveur injoignable : rien n'est perdu tant que la page reste ouverte, on réessaie à la prochaine modification.";
       }
-      setSaved(true);
-      setAVerifier((prev) => {
-        if (!prev.has(key)) return prev;
-        const suivant = new Set(prev);
-        suivant.delete(key);
-        return suivant;
-      });
-    });
+    }
+    setNbASauver(aSauver.current.size);
+    setError(echec);
+    setStatut(echec ? "echec" : aSauver.current.size > 0 ? "attente" : "ok");
+  }
+
+  // Enregistrement automatique : une seconde après la dernière retouche.
+  useEffect(() => {
+    if (aSauver.current.size === 0) return undefined;
+    const minuteur = setTimeout(() => {
+      sauver([...aSauver.current.keys()], ranges);
+    }, 1000);
+    return () => clearTimeout(minuteur);
+    // `sauver` lit l'état courant au moment de l'appel ; seule la grille
+    // doit relancer le minuteur.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ranges]);
+
+  // Fermer l'onglet avec des retouches pas encore parties : le navigateur
+  // demande confirmation.
+  useEffect(() => {
+    if (nbASauver === 0) return undefined;
+    const retenir = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", retenir);
+    return () => window.removeEventListener("beforeunload", retenir);
+  }, [nbASauver]);
+
+  /** « Valider » : enregistre le spot affiché même sans retouche. */
+  function valider() {
+    marquerModifie(key);
+    sauver([...aSauver.current.keys()], ranges);
   }
 
   // Les autres spots déjà remplis, pour la copie.
@@ -538,6 +596,7 @@ export default function RangeEditor({
                 stackDepth: next.key,
                 vsPosition,
               });
+              marquerModifie(target);
               setRanges((prev) => ({ ...prev, [target]: { ...cells } }));
               setStackDepth(next.key);
             }}
@@ -551,22 +610,11 @@ export default function RangeEditor({
             il se range ici, là où on cherche les boutons. La barre fixe du bas
             n'existe plus que sur mobile, où le pouce ne remonte pas. */}
         <div className="mt-2 max-lg:hidden">
-          <Button
-            type="button"
-            variant="primary"
-            className="w-full"
-            onClick={save}
-            disabled={pending}
-          >
-            {saved ? <Check size={18} /> : null}
-            {pending
-              ? "Enregistrement…"
-              : saved
-                ? "Range enregistrée"
-                : estAVerifier
-                  ? "Valider la range"
-                  : "Enregistrer la range"}
-          </Button>
+          <EtatEnregistrement
+            statut={statut}
+            aVerifier={estAVerifier}
+            onValider={valider}
+          />
         </div>
       </div>
 
@@ -586,22 +634,11 @@ export default function RangeEditor({
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto w-full max-w-[560px]">
-          <Button
-            type="button"
-            variant="primary"
-            className="w-full"
-            onClick={save}
-            disabled={pending}
-          >
-            {saved ? <Check size={18} /> : null}
-            {pending
-              ? "Enregistrement…"
-              : saved
-                ? "Range enregistrée"
-                : estAVerifier
-                  ? "Valider la range"
-                  : "Enregistrer la range"}
-          </Button>
+          <EtatEnregistrement
+            statut={statut}
+            aVerifier={estAVerifier}
+            onValider={valider}
+          />
         </div>
       </div>
 
@@ -645,6 +682,45 @@ function prochaineAVerifier(aVerifier, courant) {
   const liste = [...aVerifier].filter((k) => k !== courant).sort(comparerSpots);
   if (liste.length === 0) return null;
   return liste.find((k) => comparerSpots(k, courant) > 0) ?? liste[0];
+}
+
+/**
+ * Où en est l'enregistrement automatique. Sur une range de base pas encore
+ * relue, le bouton « Valider » reste : la valider sans la retoucher doit
+ * rester possible.
+ */
+function EtatEnregistrement({ statut, aVerifier, onValider }) {
+  if (aVerifier && statut !== "envoi") {
+    return (
+      <Button type="button" variant="primary" className="w-full" onClick={onValider}>
+        <Check size={18} />
+        Valider la range
+      </Button>
+    );
+  }
+  const textes = {
+    idle: { icone: Check, texte: "Enregistrement automatique", ton: "text-ink-muted" },
+    attente: { icone: Loader2, texte: "Modifications en cours…", ton: "text-ink-muted" },
+    envoi: { icone: Loader2, texte: "Enregistrement…", ton: "text-ink-muted" },
+    ok: { icone: Check, texte: "Tout est enregistré", ton: "text-positive" },
+    echec: { icone: CloudOff, texte: "Pas enregistré", ton: "text-warning" },
+  };
+  const { icone: Icone, texte, ton } = textes[statut] ?? textes.idle;
+  const tourne = statut === "attente" || statut === "envoi";
+  return (
+    <div
+      role="status"
+      className={`flex min-h-[44px] w-full items-center justify-center gap-2 rounded-tile border border-line bg-surface text-sm ${ton}`}
+    >
+      <Icone size={18} className={tourne ? "animate-spin" : undefined} />
+      {texte}
+      {statut === "echec" ? (
+        <button type="button" onClick={onValider} className="ml-1 underline">
+          Réessayer
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function premiereActionPossible(position) {
