@@ -28,6 +28,7 @@ import {
   adversaireValide,
   demandeAdversaire,
 } from "@/lib/spots";
+import { pinceauxPour, trouverPinceau } from "@/lib/pinceaux";
 
 export default function RangeEditor({
   initialRanges,
@@ -63,7 +64,7 @@ export default function RangeEditor({
   const [aVerifier, setAVerifier] = useState(() => new Set(aVerifierInitial));
   const [texte, setTexte] = useState("");
   const [illisibles, setIllisibles] = useState([]);
-  const [brush, setBrush] = useState(RANGE_BRUSHES[0].key);
+  const [pinceauChoisi, setBrush] = useState(RANGE_BRUSHES[0].key);
   const [frequency, setFrequency] = useState(100);
   const [tuning, setTuning] = useState(null);
   const [ranges, setRanges] = useState(() => ({ ...initialRanges }));
@@ -79,6 +80,12 @@ export default function RangeEditor({
   const modeGeste = useRef("peindre");
 
   const key = spotKey({ position, action, stackDepth, vsPosition });
+  // La palette dépend du spot (opens à la Suited, limp en SB). Si le
+  // pinceau choisi n'y figure pas, on prend le premier.
+  const pinceaux = pinceauxPour(action, position);
+  const brush = pinceaux.some((b) => b.key === pinceauChoisi)
+    ? pinceauChoisi
+    : pinceaux[0].key;
   // useMemo sur l'objet lui-même : sans ça, le `?? {}` crée une nouvelle
   // référence à chaque rendu et invalide le calcul des stats en permanence.
   const cells = useMemo(() => ranges[key] ?? {}, [ranges, key]);
@@ -404,7 +411,7 @@ export default function RangeEditor({
         ) : null}
         <RangeGrid
           cells={cells}
-          brushes={RANGE_BRUSHES}
+          brushes={pinceaux}
           onPaint={paint}
           onLongPress={(hand) => setTuning(hand)}
         />
@@ -424,7 +431,7 @@ export default function RangeEditor({
         {Object.keys(stats.byAction).length > 0 ? (
           <ul className="mt-3 space-y-1.5">
             {Object.entries(stats.byAction).map(([act, v]) => {
-              const brushDef = RANGE_BRUSHES.find((b) => b.key === act);
+              const brushDef = trouverPinceau(act, pinceaux);
               return (
                 <li key={act} className="flex items-center gap-2 text-sm">
                   <span
@@ -456,7 +463,7 @@ export default function RangeEditor({
         {/* Pinceaux */}
         <SectionTitle tight>Pinceau</SectionTitle>
       <div className="grid grid-cols-4 gap-2">
-        {RANGE_BRUSHES.map((b) => (
+        {pinceaux.map((b) => (
           <button
             key={b.key}
             type="button"
@@ -644,6 +651,7 @@ export default function RangeEditor({
 
       {tuning ? (
         <FrequencySheet
+          pinceaux={pinceaux}
           hand={tuning}
           actions={cells[tuning] ?? {}}
           onClose={() => setTuning(null)}
@@ -759,7 +767,7 @@ function Chip({ active, children, onClick, disabled = false, marque = null }) {
 }
 
 /** Réglage des fréquences d'une main, action par action. */
-function FrequencySheet({ hand, actions, onClose, onApply }) {
+function FrequencySheet({ hand, actions, pinceaux, onClose, onApply }) {
   const [draft, setDraft] = useState(() => ({ ...actions }));
   const total = Object.entries(draft)
     .filter(([k]) => k !== "fold")
@@ -782,7 +790,7 @@ function FrequencySheet({ hand, actions, onClose, onApply }) {
           Répartis les fréquences entre les actions.
         </p>
 
-        {RANGE_BRUSHES.filter((b) => b.key !== "fold").map((b) => (
+        {pinceaux.filter((b) => b.key !== "fold").map((b) => (
           <label key={b.key} className="mb-4 block">
             <span className="mb-1.5 flex items-center gap-2 text-sm">
               <span

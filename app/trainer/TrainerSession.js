@@ -22,6 +22,7 @@ import {
 import { ALL_HANDS } from "@/lib/hands";
 import { gradeAnswer, construireSession } from "@/lib/spaced";
 import { parseSpotKey } from "@/lib/spots";
+import { pinceauxDuSpot, trouverPinceau } from "@/lib/pinceaux";
 import { scenario } from "@/lib/table";
 import { formatPercent, formatDuree } from "@/lib/format";
 
@@ -33,7 +34,7 @@ const ANSWERS = RANGE_BRUSHES;
  * plus le fold. Sept boutons partout, c'était proposer « 3bet » sur un open
  * et « Loosifie » sur une range qui n'en a pas.
  */
-function reponsesPour(cells) {
+function reponsesPour(cells, palette) {
   const utilises = new Set(
     Object.values(cells ?? {}).flatMap((actions) =>
       Object.entries(actions ?? {})
@@ -41,7 +42,7 @@ function reponsesPour(cells) {
         .map(([cle]) => cle)
     )
   );
-  return ANSWERS.filter((a) => a.key === "fold" || utilises.has(a.key));
+  return palette.filter((a) => a.key === "fold" || utilises.has(a.key));
 }
 
 function decouper(cle) {
@@ -87,8 +88,8 @@ function tonSelon(reussite) {
 }
 
 /** Pastille d'action, dans la couleur de son pinceau. */
-function Pastille({ cle, frequence, efface = false }) {
-  const brosse = ANSWERS.find((x) => x.key === cle);
+function Pastille({ cle, frequence, efface = false, palette = ANSWERS }) {
+  const brosse = trouverPinceau(cle, palette);
   return (
     <span
       className={`num whitespace-nowrap rounded-pill px-2.5 py-0.5 text-sm font-bold text-[#0a0f1c] ${
@@ -542,12 +543,21 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
                       {spotLabel(ligne.spot)}
                     </span>
                     <span className="flex items-center gap-2">
-                      <Pastille cle={ligne.donnee} efface />
+                      <Pastille
+                        cle={ligne.donnee}
+                        efface
+                        palette={pinceauxDuSpot(ligne.spot)}
+                      />
                       <span className="text-ink-muted" aria-hidden>
                         →
                       </span>
                       {Object.entries(ligne.attendu).map(([cle, frequence]) => (
-                        <Pastille key={cle} cle={cle} frequence={frequence} />
+                        <Pastille
+                          key={cle}
+                          cle={cle}
+                          frequence={frequence}
+                          palette={pinceauxDuSpot(ligne.spot)}
+                        />
                       ))}
                     </span>
                   </div>
@@ -662,7 +672,7 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
         {/* Les réponses, pleines et sur une rangée. La marge haute laisse
             respirer la plaque du héros, qui déborde sous la table. */}
         <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {reponsesPour(ranges[question.spot]).map((a) => (
+          {reponsesPour(ranges[question.spot], pinceauxDuSpot(question.spot)).map((a) => (
             <button
               key={a.key}
               type="button"
@@ -724,7 +734,7 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
             <span className="flex flex-wrap items-center gap-2">
               <span className="kicker">Attendu</span>
               {Object.entries(verdict.expected).map(([cle, frequence]) => {
-                const brosse = ANSWERS.find((x) => x.key === cle);
+                const brosse = trouverPinceau(cle, pinceauxDuSpot(question.spot));
                 return (
                   <span
                     key={cle}
