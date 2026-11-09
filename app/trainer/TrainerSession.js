@@ -20,7 +20,12 @@ import {
   POSITIONS,
 } from "@/lib/constants";
 import { ALL_HANDS } from "@/lib/hands";
-import { gradeAnswer, construireSession } from "@/lib/spaced";
+import {
+  gradeAnswer,
+  construireSession,
+  actionJouee,
+  VARIANTES_RAISE,
+} from "@/lib/spaced";
 import { parseSpotKey } from "@/lib/spots";
 import { pinceauxDuSpot, trouverPinceau } from "@/lib/pinceaux";
 import { scenario } from "@/lib/table";
@@ -30,19 +35,28 @@ const LONGUEURS = [20, 50, 100];
 const ANSWERS = RANGE_BRUSHES;
 
 /**
- * Les réponses proposées pour un spot : les pinceaux que sa range utilise,
- * plus le fold. Sept boutons partout, c'était proposer « 3bet » sur un open
- * et « Loosifie » sur une range qui n'en a pas.
+ * Les réponses proposées pour un spot : les actions que sa range utilise,
+ * plus le fold. Loosifie et Tightifie ne sont pas des réponses : ce sont des
+ * raises, on répond Raise et la correction précise loose ou tight.
  */
 function reponsesPour(cells, palette) {
   const utilises = new Set(
     Object.values(cells ?? {}).flatMap((actions) =>
       Object.entries(actions ?? {})
         .filter(([, f]) => f > 0)
-        .map(([cle]) => cle)
+        .map(([cle]) => actionJouee(cle))
     )
   );
-  return palette.filter((a) => a.key === "fold" || utilises.has(a.key));
+  const reponses = palette.filter(
+    (a) => !VARIANTES_RAISE[a.key] && (a.key === "fold" || utilises.has(a.key))
+  );
+  // Une variante de raise dans un spot dont la palette n'a pas de Raise :
+  // le bouton doit quand même exister.
+  if (utilises.has("raise") && !reponses.some((a) => a.key === "raise")) {
+    const raise = ANSWERS.find((a) => a.key === "raise");
+    if (raise) reponses.unshift(raise);
+  }
+  return reponses;
 }
 
 function decouper(cle) {
@@ -746,6 +760,12 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
                 );
               })}
             </span>
+
+            {verdict.nuance ? (
+              <p className="basis-full text-sm text-ink-section">
+                {verdict.nuance}
+              </p>
+            ) : null}
 
             <Button
               type="button"

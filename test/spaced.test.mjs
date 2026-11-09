@@ -71,3 +71,22 @@ test("correction : hors range, la bonne réponse est fold", () => {
 
   assert.equal(gradeAnswer({ AA: { raise: 100 } }, "72o", "raise").correct, false);
 });
+
+test("loosifie et tightifie se jouent raise, avec une précision", async () => {
+  const { gradeAnswer: noter } = await import("../lib/spaced.js");
+  const cells = {
+    A5s: { loosifie: 100 },
+    K9s: { tightifie: 100 },
+    QJs: { raise: 60, tightifie: 40 },
+    AA: { raise: 100 },
+  };
+  assert.equal(noter(cells, "A5s", "raise").correct, true);
+  assert.equal(noter(cells, "A5s", "fold").correct, false);
+  assert.equal(noter(cells, "A5s", "raise").nuance, "C'est un raise loose.");
+  assert.equal(noter(cells, "K9s", "raise").nuance, "C'est un raise tight.");
+  assert.equal(
+    noter(cells, "QJs", "raise").nuance,
+    "Raise mixé : raise standard 60 %, tight 40 %."
+  );
+  assert.equal(noter(cells, "AA", "raise").nuance, null);
+});
