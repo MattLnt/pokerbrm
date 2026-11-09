@@ -72,7 +72,7 @@ test("correction : hors range, la bonne réponse est fold", () => {
   assert.equal(gradeAnswer({ AA: { raise: 100 } }, "72o", "raise").correct, false);
 });
 
-test("loosifie et tightifie se jouent raise, avec une précision", async () => {
+test("loosifie et tightifie : raise, ou l'alternative acceptée", async () => {
   const { gradeAnswer: noter } = await import("../lib/spaced.js");
   const cells = {
     A5s: { loosifie: 100 },
@@ -80,13 +80,18 @@ test("loosifie et tightifie se jouent raise, avec une précision", async () => {
     QJs: { raise: 60, tightifie: 40 },
     AA: { raise: 100 },
   };
+  // Loose : raise ou fold.
   assert.equal(noter(cells, "A5s", "raise").correct, true);
-  assert.equal(noter(cells, "A5s", "fold").correct, false);
-  assert.equal(noter(cells, "A5s", "raise").nuance, "C'est un raise loose.");
-  assert.equal(noter(cells, "K9s", "raise").nuance, "C'est un raise tight.");
-  assert.equal(
-    noter(cells, "QJs", "raise").nuance,
-    "Raise mixé : raise standard 60 %, tight 40 %."
-  );
+  assert.equal(noter(cells, "A5s", "raise").accepte, false);
+  assert.equal(noter(cells, "A5s", "fold").correct, true);
+  assert.equal(noter(cells, "A5s", "fold").accepte, true);
+  assert.equal(noter(cells, "A5s", "call").correct, false);
+  // Tight : raise, fold ou call.
+  assert.equal(noter(cells, "K9s", "call").correct, true);
+  assert.equal(noter(cells, "K9s", "fold").accepte, true);
+  assert.equal(noter(cells, "QJs", "fold").correct, true);
+  assert.equal(noter(cells, "QJs", "raise").nuance, "Raise mixé (raise standard 60 %, tight 40 %).");
+  // Rien de marqué : pas de précision, pas d'alternative.
   assert.equal(noter(cells, "AA", "raise").nuance, null);
+  assert.equal(noter(cells, "AA", "fold").correct, false);
 });

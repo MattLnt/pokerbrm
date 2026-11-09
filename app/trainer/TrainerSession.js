@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -9,6 +9,7 @@ import {
   Play,
   Settings2,
   TrendingDown,
+  ArrowRight,
 } from "lucide-react";
 
 import { Card, SectionTitle, Button, ProgressBar, StatTile } from "@/components/ui";
@@ -433,6 +434,38 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
 
   const total = score.right + score.wrong;
   const reussite = total > 0 ? (score.right / total) * 100 : 0;
+  const reponses =
+    question && !finished
+      ? reponsesPour(ranges[question.spot], pinceauxDuSpot(question.spot))
+      : [];
+
+  // Clavier : 1, 2, 3… pour répondre, Entrée ou Espace pour la main
+  // suivante. On enchaîne une session sans lâcher le clavier.
+  useEffect(() => {
+    if (!pool || finished || !question) return undefined;
+    const surTouche = (e) => {
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea")) {
+        return;
+      }
+      if (verdict) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          suivante();
+        }
+        return;
+      }
+      const rang = Number.parseInt(e.key, 10);
+      if (rang >= 1 && rang <= reponses.length) {
+        e.preventDefault();
+        repondre(reponses[rang - 1].key);
+      }
+    };
+    window.addEventListener("keydown", surTouche);
+    return () => window.removeEventListener("keydown", surTouche);
+    // Les gestionnaires lisent l'état de ce rendu ; l'effet est refait à
+    // chaque question et à chaque verdict.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, finished, question, verdict, reponses.length]);
 
   if (!pool) {
     return (
@@ -622,60 +655,89 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
   }
 
   const { position, profondeur } = decouper(question.spot);
+  const tonVerdict = !verdict
+    ? null
+    : !verdict.correct
+      ? "rate"
+      : verdict.accepte
+        ? "accepte"
+        : "juste";
+  const VERDICTS = {
+    juste: {
+      mot: "Correct",
+      bande: "border-positive/50 bg-positive/10",
+      pastille: "bg-positive text-[#06251a]",
+      texte: "text-positive",
+      Icone: Check,
+    },
+    accepte: {
+      mot: "Accepté",
+      bande: "border-accent/50 bg-accent/10",
+      pastille: "bg-accent text-accent-fg",
+      texte: "text-accent-hover",
+      Icone: Check,
+    },
+    rate: {
+      mot: "Raté",
+      bande: "border-negative/50 bg-negative/10",
+      pastille: "bg-negative text-[#2a0810]",
+      texte: "text-negative",
+      Icone: X,
+    },
+  };
+  const v = tonVerdict ? VERDICTS[tonVerdict] : null;
 
   return (
-    /* Deux zones : l'état de la session à gauche, la table au centre avec
-       ses réponses et sa correction dessous, sur la même largeur. */
-    <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-5">
-      <div className="max-lg:mb-4 lg:sticky lg:top-6">
-        <Card className="p-4">
-          <div className="mb-2 flex items-baseline justify-between">
-            <p className="kicker">Main</p>
-            <p className="num text-sm text-ink-muted">
-              {index + 1} / {longueurEffective}
-            </p>
+    /* Une colonne centrée : l'état de la session en bandeau, le spot en
+       titre, la table, puis les réponses et la correction à sa largeur. */
+    <div className="mx-auto w-full max-w-[880px]">
+      {/* Bandeau : progression, score, sortie */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-card border border-line bg-surface px-4 py-3">
+        <div className="flex min-w-[180px] flex-1 items-center gap-3">
+          <span className="num shrink-0 text-sm font-semibold text-ink">
+            {index + 1}
+            <span className="text-ink-muted"> / {longueurEffective}</span>
+          </span>
+          <div className="flex-1">
+            <ProgressBar value={index} max={longueurEffective} />
           </div>
-          <ProgressBar value={index} max={longueurEffective} />
-
-          <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-tile bg-bg-sunken py-2">
-              <p className="num text-xl font-bold text-positive">
-                {score.right}
-              </p>
-              <p className="kicker mt-0.5">Justes</p>
-            </div>
-            <div className="rounded-tile bg-bg-sunken py-2">
-              <p className="num text-xl font-bold text-negative">
-                {score.wrong}
-              </p>
-              <p className="kicker mt-0.5">Ratées</p>
-            </div>
-          </div>
-
-          <p className="kicker mb-1.5 mt-4">Le spot</p>
-          <p className="text-sm text-ink-section">{spotLabel(question.spot)}</p>
-          {question.scene?.consigne ? (
-            <p className="mt-2 text-sm leading-[var(--lh-normal)] text-ink-muted">
-              {question.scene.consigne}
-            </p>
-          ) : null}
-        </Card>
-
-        <Button
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="num flex items-center gap-1.5 font-semibold text-positive">
+            <Check size={16} strokeWidth={3} />
+            {score.right}
+          </span>
+          <span className="num flex items-center gap-1.5 font-semibold text-negative">
+            <X size={16} strokeWidth={3} />
+            {score.wrong}
+          </span>
+        </div>
+        <button
           type="button"
-          className="mt-2.5 w-full"
           onClick={() => setPool(null)}
+          className="flex min-h-[36px] items-center gap-1.5 rounded-pill border border-line bg-surface-2 px-3 text-sm text-ink-section hover:text-ink"
         >
-          <Settings2 size={18} />
+          <Settings2 size={16} />
           Changer de spots
-        </Button>
+        </button>
       </div>
 
-      {/* La table n'est plus enfermée dans une carte : le rail lui suffit
-          pour se détacher, un cadre de plus ne faisait que l'enserrer.
-          Sa largeur est plafonnée — étalée sur toute la colonne, elle
-          devenait si haute que les réponses passaient sous l'écran. */}
-      <div className="mx-auto w-full max-w-[720px]">
+      {/* Le spot, en titre */}
+      <div className="mt-6 text-center">
+        <p className="text-xl font-bold tracking-[var(--ls-heading)] lg:text-2xl">
+          {spotLabel(question.spot)}
+        </p>
+        {question.scene?.consigne ? (
+          <p className="mt-1 text-sm text-ink-muted">{question.scene.consigne}</p>
+        ) : null}
+      </div>
+
+      {/* La table se règle sur la hauteur de l'écran : les réponses doivent
+          rester visibles sans défiler. */}
+      <div
+        className="mx-auto w-full"
+        style={{ maxWidth: "min(760px, calc((100dvh - 370px) * 1.45))" }}
+      >
         <PokerTable
           heros={position}
           main={question.main}
@@ -683,76 +745,79 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
           scene={question.scene}
         />
 
-        {/* Les réponses, pleines et sur une rangée. La marge haute laisse
-            respirer la plaque du héros, qui déborde sous la table. */}
-        <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {reponsesPour(ranges[question.spot], pinceauxDuSpot(question.spot)).map((a) => (
-            <button
-              key={a.key}
-              type="button"
-              onClick={() => repondre(a.key)}
-              disabled={Boolean(verdict)}
-              style={
-                verdict && verdict.given !== a.key
-                  ? undefined
-                  : { background: a.color }
-              }
-              className={`min-h-[52px] rounded-sm text-base font-bold tracking-[var(--ls-heading)] transition-opacity ${
-                verdict && verdict.given !== a.key
-                  ? "bg-surface-2 text-ink-muted opacity-45"
-                  : "text-[#0a0f1c]"
-              }`}
-            >
-              {a.label}
-            </button>
-          ))}
+        {/* Réponses : centrées, à parts égales, avec leur touche. La couleur
+            reste celle du pinceau ; un voile en dégradé et un reflet en haut
+            leur donnent du volume. */}
+        <div className="mx-auto mt-4 flex max-w-[640px] flex-wrap justify-center gap-2.5">
+          {reponses.map((a, i) => {
+            const eteinte = verdict && verdict.given !== a.key;
+            // Le fold n'est pas une couleur de range : un bouton sombre et
+            // cerclé, plutôt qu'un gris pâle qui faisait terne.
+            const sobre = a.key === "fold";
+            return (
+              <button
+                key={a.key}
+                type="button"
+                onClick={() => repondre(a.key)}
+                disabled={Boolean(verdict)}
+                style={
+                  eteinte || sobre
+                    ? undefined
+                    : {
+                        backgroundColor: a.color,
+                        backgroundImage:
+                          "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.12) 100%)",
+                      }
+                }
+                className={`relative flex min-h-[58px] min-w-[120px] flex-1 basis-0 items-center justify-center rounded-tile text-base font-bold tracking-[var(--ls-heading)] transition-[transform,opacity,filter] duration-100 ${
+                  eteinte
+                    ? "bg-surface-2 text-ink-muted opacity-40"
+                    : sobre
+                      ? "border border-line-strong bg-surface-3 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_20px_-10px_rgba(0,0,0,0.9)] hover:bg-[#28355a] active:translate-y-px"
+                      : "text-[#0a0f1c] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_8px_20px_-10px_rgba(0,0,0,0.9)] hover:brightness-110 active:translate-y-px"
+                }`}
+              >
+                {a.label}
+                <span
+                  className={`num absolute right-2 top-1.5 text-2xs font-semibold ${
+                    eteinte || sobre ? "text-ink-muted/70" : "text-black/45"
+                  }`}
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* La correction, sur une seule ligne avec le bouton qui suit.
-            Un filet de couleur sur fond sombre ne se voyait pas : le verdict
-            est ce qu'on vient lire, il prend donc une bande teintée, une
-            pastille pleine et un mot en grand. Les fréquences attendues
-            reprennent les couleurs des boutons de réponse — on relie ce
-            qu'on a cliqué à ce qu'il fallait cliquer sans lire. */}
-        {verdict ? (
+        {/* La correction. Trois tons : juste, accepté (une alternative
+            valable sur une main loose ou tight), raté. Les fréquences
+            attendues reprennent les couleurs des réponses. */}
+        {verdict && v ? (
           <div
-            className={`mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-card border-2 p-4 ${
-              verdict.correct
-                ? "border-positive/60 bg-positive/10"
-                : "border-negative/60 bg-negative/10"
-            }`}
+            className={`mx-auto mt-4 flex max-w-[640px] flex-wrap items-center gap-x-4 gap-y-3 rounded-card border p-4 ${v.bande}`}
           >
             <span
-              className={`grid size-11 shrink-0 place-items-center rounded-full ${
-                verdict.correct
-                  ? "bg-positive text-[#06251a]"
-                  : "bg-negative text-[#2a0810]"
-              }`}
+              className={`grid size-10 shrink-0 place-items-center rounded-full ${v.pastille}`}
               aria-hidden
             >
-              {verdict.correct ? (
-                <Check size={24} strokeWidth={3} />
-              ) : (
-                <X size={24} strokeWidth={3} />
-              )}
+              <v.Icone size={22} strokeWidth={3} />
             </span>
 
             <span
-              className={`text-3xl font-bold leading-none tracking-[var(--ls-heading)] ${
-                verdict.correct ? "text-positive" : "text-negative"
-              }`}
+              className={`text-2xl font-bold leading-none tracking-[var(--ls-heading)] ${v.texte}`}
             >
-              {verdict.correct ? "Correct" : "Raté"}
+              {v.mot}
             </span>
 
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="kicker">Attendu</span>
+            <span className="flex flex-wrap items-center gap-1.5">
               {Object.entries(verdict.expected).map(([cle, frequence]) => {
                 const brosse = trouverPinceau(cle, pinceauxDuSpot(question.spot));
                 return (
                   <span
                     key={cle}
-                    className="num rounded-pill px-3 py-1 text-base font-bold text-[#0a0f1c]"
+                    className="num rounded-pill px-2.5 py-0.5 text-sm font-bold text-[#0a0f1c]"
                     style={{ background: brosse?.color ?? "#93a0ba" }}
                   >
                     {brosse?.label ?? cle} {frequence} %
@@ -761,12 +826,6 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
               })}
             </span>
 
-            {verdict.nuance ? (
-              <p className="basis-full text-sm text-ink-section">
-                {verdict.nuance}
-              </p>
-            ) : null}
-
             <Button
               type="button"
               variant="primary"
@@ -774,9 +833,20 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
               onClick={suivante}
             >
               Main suivante
+              <ArrowRight size={18} />
             </Button>
+
+            {verdict.nuance ? (
+              <p className="basis-full border-t border-white/10 pt-3 text-sm leading-[var(--lh-normal)] text-ink-section">
+                {verdict.nuance}
+              </p>
+            ) : null}
           </div>
-        ) : null}
+        ) : (
+          <p className="mt-3 text-center text-2xs text-ink-muted/70">
+            Touches 1 à {reponses.length} pour répondre · Entrée pour la main suivante
+          </p>
+        )}
       </div>
     </div>
   );
