@@ -58,7 +58,7 @@ function FormulaireMain({ main, onAnnuler, onEnregistrer, pending, erreur }) {
 
   const [position, setPosition] = useState(spotConnu?.position ?? "BTN");
   const [action, setAction] = useState(spotConnu?.action ?? "RFI");
-  const [stackDepth, setStackDepth] = useState(main?.stackDepth ?? "60BB_PLUS");
+  const [stackDepth, setStackDepth] = useState(main?.stackDepth ?? "100BB");
   const [description, setDescription] = useState(main?.description ?? "");
   const [handHistory, setHandHistory] = useState(main?.handHistory ?? "");
   const [link, setLink] = useState(main?.link ?? "");

@@ -28,10 +28,10 @@ test("clé de spot : l'adversaire fait l'aller-retour", () => {
   const spot = {
     position: "BB",
     action: "DEF_VS_OPEN",
-    stackDepth: "25BB",
+    stackDepth: "30BB",
     vsPosition: "BTN",
   };
-  assert.equal(spotKey(spot), "BB|DEF_VS_OPEN|25BB|BTN");
+  assert.equal(spotKey(spot), "BB|DEF_VS_OPEN|30BB|BTN");
   assert.deepEqual(parseSpotKey(spotKey(spot)), spot);
 });
 

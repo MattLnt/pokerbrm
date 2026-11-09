@@ -28,6 +28,22 @@ import { formatPercent, formatDuree } from "@/lib/format";
 const LONGUEURS = [20, 50, 100];
 const ANSWERS = RANGE_BRUSHES;
 
+/**
+ * Les réponses proposées pour un spot : les pinceaux que sa range utilise,
+ * plus le fold. Sept boutons partout, c'était proposer « 3bet » sur un open
+ * et « Loosifie » sur une range qui n'en a pas.
+ */
+function reponsesPour(cells) {
+  const utilises = new Set(
+    Object.values(cells ?? {}).flatMap((actions) =>
+      Object.entries(actions ?? {})
+        .filter(([, f]) => f > 0)
+        .map(([cle]) => cle)
+    )
+  );
+  return ANSWERS.filter((a) => a.key === "fold" || utilises.has(a.key));
+}
+
 function decouper(cle) {
   const { position, action, stackDepth, vsPosition } = parseSpotKey(cle);
   return { position, action, profondeur: stackDepth, adversaire: vsPosition };
@@ -646,7 +662,7 @@ export default function TrainerSession({ ranges, dues, demo, initialSpot }) {
         {/* Les réponses, pleines et sur une rangée. La marge haute laisse
             respirer la plaque du héros, qui déborde sous la table. */}
         <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {ANSWERS.map((a) => (
+          {reponsesPour(ranges[question.spot]).map((a) => (
             <button
               key={a.key}
               type="button"

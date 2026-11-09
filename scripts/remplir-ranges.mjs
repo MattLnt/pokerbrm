@@ -14,6 +14,8 @@ import { prisma } from "../lib/db.js";
 import { lireRangeTexte } from "../lib/hands.js";
 import { RANGES_BASE, BASE_NOM } from "../lib/ranges-base.js";
 import { spotKey, actionPossible, adversaireValide } from "../lib/spots.js";
+import { STACK_DEPTHS } from "../lib/constants.js";
+import { migrerProfondeurs } from "../lib/migrations-ranges.js";
 
 const ECRIRE = process.argv.includes("--ecrire");
 
@@ -46,6 +48,9 @@ if (!user) {
   console.error(`Aucun compte ${email} : ouvre l'app une fois pour le créer.`);
   process.exit(1);
 }
+// Les ranges aux anciennes profondeurs d'abord : sinon on créerait à côté.
+await migrerProfondeurs(user.id);
+const PROFONDEURS = new Set(STACK_DEPTHS.map((d) => d.key));
 const existantes = await prisma.range.findMany({ where: { userId: user.id } });
 const parCle = new Map(existantes.map((r) => [spotKey(r), r]));
 
@@ -55,7 +60,8 @@ for (const spot of RANGES_BASE) {
   const cle = spotKey(spot);
   if (
     !actionPossible(spot.action, spot.position) ||
-    !adversaireValide(spot.action, spot.position, spot.vsPosition)
+    !adversaireValide(spot.action, spot.position, spot.vsPosition) ||
+    !PROFONDEURS.has(spot.stackDepth)
   ) {
     throw new Error(`Spot impossible dans le jeu de base : ${cle}`);
   }

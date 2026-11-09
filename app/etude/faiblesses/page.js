@@ -15,7 +15,7 @@ export const metadata = { title: "Faiblesses · Poker BRM" };
 
 /**
  * `getWeakSpots` renvoie un libellé de spot assemblé côté base
- * (« BTN RFI · 25BB »). On le redécoupe ici pour pouvoir ouvrir la range
+ * (« BTN RFI · 30BB »). On le redécoupe ici pour pouvoir ouvrir la range
  * correspondante ; quand la forme ne s'y prête pas, on affiche le libellé
  * sans lien plutôt que d'ouvrir une range au hasard.
  */

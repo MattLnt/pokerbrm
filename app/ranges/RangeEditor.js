@@ -50,7 +50,7 @@ export default function RangeEditor({
     return actionPossible(a, p) ? a : premiereActionPossible(p);
   });
   const [stackDepth, setStackDepth] = useState(() =>
-    connu(spot?.stackDepth, STACK_DEPTHS, "60BB_PLUS")
+    connu(spot?.stackDepth, STACK_DEPTHS, "100BB")
   );
   // Vide : la range vaut contre n'importe quel adversaire.
   const [vsPosition, setVsPosition] = useState(() => {

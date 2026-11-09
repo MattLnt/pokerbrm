@@ -277,7 +277,7 @@ model Range {
   // Chaîne vide plutôt que NULL : en Postgres, deux NULL ne violent pas une
   // contrainte unique, ce qui casserait la déduplication des spots.
   vsPosition  String   @default("")
-  stackDepth  String // 60BB_PLUS, 40BB, 25BB, 15_20BB, SUB_12BB
+  stackDepth  String // 100BB, 75BB, 50BB, 40BB, 30BB, 20BB … 11BB, 10BB (≤10bb)
   cells       Json // { "AKs": { "raise": 60, "call": 40 }, ... }
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { construireSession } from "../lib/spaced.js";
 import { ALL_HANDS } from "../lib/hands.js";
 
-const SPOTS = ["BTN|RFI|60BB_PLUS", "BB|DEF_VS_OPEN|25BB"];
+const SPOTS = ["BTN|RFI|100BB", "BB|DEF_VS_OPEN|30BB"];
 
 /** Hasard déterministe, pour que les tests ne dépendent pas d'un tirage. */
 function hasardFige(suite) {
