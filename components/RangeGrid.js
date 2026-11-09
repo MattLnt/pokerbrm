@@ -120,49 +120,74 @@ export default function RangeGrid({ cells, brushes, onPaint, onLongPress }) {
   }
 
   return (
-    <div
-      ref={grilleRef}
-      className="grid touch-none select-none gap-[2px]"
-      style={{ gridTemplateColumns: `repeat(${TAILLE}, minmax(0, 1fr))` }}
-      onPointerDown={start}
-      onPointerMove={move}
-      onPointerUp={end}
-      onPointerCancel={end}
-      role="grid"
-      aria-label="Grille des 169 mains"
-    >
-      {RANKS.map((_, row) =>
-        RANKS.map((__, col) => {
-          const hand = handAt(row, col);
-          const fond = cellBackground(cells[hand], brushes);
-          const couverture = couvertureCase(cells[hand]);
-          // 65 % et non 50 : l'étiquette est centrée mais elle a une
-          // hauteur, et son haut court vers 62 % de la case. En dessous,
-          // elle déborderait sur le fond sombre, où du texte sombre ne se
-          // lit plus — elle reste donc claire.
-          const etiquette =
-            couverture >= 65
-              ? "text-bg-deep"
-              : couverture > 0
-                ? "text-ink"
-                : "text-ink-muted";
-          return (
-            <button
-              key={hand}
-              type="button"
-              data-hand={hand}
-              role="gridcell"
-              aria-label={hand}
-              className={`relative aspect-square rounded-[3px] bg-surface-2 text-2xs font-semibold leading-none transition-colors ${etiquette}`}
-              style={fond ? { backgroundImage: fond } : undefined}
-            >
-              <span className="pointer-events-none absolute inset-0 grid place-items-center">
-                {hand}
-              </span>
-            </button>
-          );
-        })
-      )}
+    // Le plateau : un fond creusé autour des cases, qui les pose comme des
+    // touches. `@container` : l'étiquette suit la taille de la grille, pas
+    // celle de l'écran.
+    <div className="@container rounded-card border border-line bg-bg-sunken p-1.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.45)] sm:p-2">
+      <div
+        ref={grilleRef}
+        className="grid touch-none select-none gap-[3px] sm:gap-1"
+        style={{ gridTemplateColumns: `repeat(${TAILLE}, minmax(0, 1fr))` }}
+        onPointerDown={start}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerCancel={end}
+        role="grid"
+        aria-label="Grille des 169 mains"
+      >
+        {RANKS.map((_, row) =>
+          RANKS.map((__, col) => {
+            const hand = handAt(row, col);
+            const fond = cellBackground(cells[hand], brushes);
+            const couverture = couvertureCase(cells[hand]);
+            // 65 % et non 50 : l'étiquette est centrée mais elle a une
+            // hauteur, et son haut court vers 62 % de la case. En dessous,
+            // elle déborderait sur le fond sombre, où du texte sombre ne se
+            // lit plus — elle reste donc claire.
+            const etiquette =
+              couverture >= 65
+                ? "text-bg-deep"
+                : couverture > 0
+                  ? "text-ink"
+                  : "text-ink-muted";
+            // Trois fonds à peine différents : paires sur la diagonale,
+            // suited au-dessus, offsuit en dessous. La structure de la
+            // grille se lit sans qu'on y pense.
+            const famille =
+              row === col
+                ? "bg-surface-3"
+                : row < col
+                  ? "bg-surface-2"
+                  : "bg-surface";
+            const peinte = couverture > 0;
+            const [rangs, suffixe] = [hand.slice(0, 2), hand.slice(2)];
+            return (
+              <button
+                key={hand}
+                type="button"
+                data-hand={hand}
+                role="gridcell"
+                aria-label={hand}
+                className={`relative aspect-square overflow-hidden rounded-[22%] font-semibold leading-none transition-[box-shadow,filter] duration-100 hover:brightness-125 ${famille} ${etiquette} ${
+                  peinte
+                    ? "shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(0,0,0,0.35)]"
+                    : "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]"
+                }`}
+                style={fond ? { backgroundImage: fond } : undefined}
+              >
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[clamp(8px,2.15cqw,13px)] tracking-[-0.02em]">
+                  {rangs}
+                  {suffixe ? (
+                    <span className="text-[0.78em] font-medium opacity-70">
+                      {suffixe}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
