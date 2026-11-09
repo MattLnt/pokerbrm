@@ -16,6 +16,7 @@ import { RANGES_BASE, BASE_NOM } from "../lib/ranges-base.js";
 import { spotKey, actionPossible, adversaireValide } from "../lib/spots.js";
 import { STACK_DEPTHS } from "../lib/constants.js";
 import { migrerProfondeurs } from "../lib/migrations-ranges.js";
+import { normaliserCellules } from "../lib/pinceaux.js";
 
 const ECRIRE = process.argv.includes("--ecrire");
 
@@ -24,8 +25,15 @@ if (!prisma) {
   process.exit(1);
 }
 
-/** Cellules de l'éditeur : call, puis raise, puis shove — le dernier gagne. */
-function cellules(mains) {
+/**
+ * Cellules de l'éditeur : call, puis raise, puis shove — le dernier gagne.
+ * Face à un open, « raise » s'écrit avec le pinceau 3bet.
+ */
+function cellules(action, mains) {
+  return normaliserCellules(action, cellulesBrutes(mains));
+}
+
+function cellulesBrutes(mains) {
   const cells = {};
   for (const pinceau of ["call", "raise", "shove"]) {
     if (!mains[pinceau]) continue;
@@ -66,7 +74,7 @@ for (const spot of RANGES_BASE) {
     throw new Error(`Spot impossible dans le jeu de base : ${cle}`);
   }
 
-  const cells = cellules(spot.mains);
+  const cells = cellules(spot.action, spot.mains);
   const existante = parCle.get(cle);
   const vide = !existante || Object.keys(existante.cells ?? {}).length === 0;
 

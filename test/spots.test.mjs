@@ -118,3 +118,13 @@ test("texte : les morceaux illisibles sont rendus, pas devinés", () => {
   );
   assert.deepEqual(illisibles, ["AKx", "ZZ", "A5s:300"]);
 });
+
+test("face à un open, le raise se lit comme un 3bet", async () => {
+  const { normaliserCellules } = await import("../lib/pinceaux.js");
+  assert.deepEqual(
+    normaliserCellules("3BET", { AA: { raise: 100 }, AKs: { raise: 40, threebet: 30, call: 30 } }),
+    { AA: { threebet: 100 }, AKs: { threebet: 70, call: 30 } }
+  );
+  // Un open garde son raise.
+  assert.deepEqual(normaliserCellules("RFI", { AA: { raise: 100 } }), { AA: { raise: 100 } });
+});

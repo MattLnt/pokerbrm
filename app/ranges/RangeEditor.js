@@ -28,6 +28,7 @@ import {
   adversaireValide,
   demandeAdversaire,
 } from "@/lib/spots";
+import { COOKIE_DERNIER_SPOT } from "@/lib/constants";
 import { pinceauxPour, trouverPinceau } from "@/lib/pinceaux";
 
 export default function RangeEditor({
@@ -261,6 +262,20 @@ export default function RangeEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ranges]);
 
+  // Le spot affiché est écrit dans l'adresse (et dans un cookie) :
+  // recharger la page rouvre le même spot au lieu de retomber sur LJ RFI.
+  useEffect(() => {
+    const q = new URLSearchParams({ position, action, depth: stackDepth });
+    if (vsPosition) q.set("vs", vsPosition);
+    window.history.replaceState(window.history.state, "", `?${q}`);
+    // Un cookie plutôt que le stockage local : le serveur le lit et sert
+    // directement le bon spot quand on arrive par le menu, sans afficher
+    // d'abord LJ RFI.
+    document.cookie = `${COOKIE_DERNIER_SPOT}=${encodeURIComponent(
+      q.toString()
+    )}; path=/ranges; max-age=31536000; samesite=lax`;
+  }, [position, action, stackDepth, vsPosition]);
+
   // Fermer l'onglet avec des retouches pas encore parties : le navigateur
   // demande confirmation.
   useEffect(() => {
@@ -285,18 +300,16 @@ export default function RangeEditor({
     .map(([k]) => k);
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
-      {/* Colonne principale : choix du spot, grille, statistiques.
-          À partir de xl il y a assez de largeur pour ranger le spot et les
-          stats à gauche de la grille : la grille n'est plus bornée que par la
-          hauteur de l'écran, et la place gagnée en largeur ne reste pas vide
-          à côté d'un carré centré. En dessous, tout s'empile dans l'ordre
-          spot → grille → stats. */}
-      <div className="flex flex-col xl:grid xl:grid-cols-[260px_minmax(0,1fr)] xl:grid-rows-[auto_1fr] xl:items-start xl:gap-5">
+    // Trois colonnes en xl : le spot à gauche, la grille au centre, les
+    // outils à droite — serrées autour de la grille plutôt qu'étalées, pour
+    // qu'il ne reste pas de vide de part et d'autre d'un carré plafonné. En
+    // lg, le spot passe au-dessus de la grille ; sur mobile, tout s'empile
+    // dans l'ordre spot → grille → outils.
+    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-6 xl:grid-cols-[250px_minmax(0,540px)_300px] xl:justify-center xl:gap-7">
         {/* Sélecteur de spot */}
-        <Card className="order-1 p-4 xl:col-start-1 xl:row-start-1">
+        <Card className="p-4 lg:col-start-1 lg:row-start-1 xl:sticky xl:top-6">
         <p className="kicker mb-2">Position</p>
-        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
+        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 lg:flex-wrap lg:overflow-x-visible">
           {POSITIONS.map((p) => (
             <Chip key={p} active={p === position} onClick={() => choisirPosition(p)}>
               {p}
@@ -305,7 +318,7 @@ export default function RangeEditor({
         </div>
 
         <p className="kicker mb-2">Action</p>
-        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
+        <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 lg:flex-wrap lg:overflow-x-visible">
           {RANGE_ACTIONS.map((a) => (
             <Chip
               key={a.key}
@@ -323,7 +336,7 @@ export default function RangeEditor({
             <p className="kicker mb-2">
               {action === "VS_3BET" ? "3bet par" : "Contre"}
             </p>
-            <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
+            <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 lg:flex-wrap lg:overflow-x-visible">
               <Chip
                 active={vsPosition === ""}
                 marque={marque(spotKey({ position, action, stackDepth }))}
@@ -348,7 +361,7 @@ export default function RangeEditor({
         ) : null}
 
         <p className="kicker mb-2">Profondeur</p>
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 xl:flex-wrap xl:overflow-x-visible">
+        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 lg:flex-wrap lg:overflow-x-visible">
           {STACK_DEPTHS.map((d) => (
             <Chip
               key={d.key}
@@ -365,10 +378,10 @@ export default function RangeEditor({
       </Card>
 
       {/* Grille. Elle est carrée : sans plafond, elle prend la largeur de la
-          colonne et dépasse le bas de l'écran. On la borne donc par la hauteur
-          restante — sur mobile le plafond est plus large que l'écran, la
-          grille y garde toute la largeur. */}
-      <div className="order-2 mx-auto mt-4 w-full max-w-[min(100%,calc(100dvh-300px),520px)] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-0">
+          colonne et dépasse le bas de l'écran. On la borne donc aussi par la
+          hauteur restante. Bandeau et stats prennent la même largeur qu'elle,
+          pour former un seul bloc. */}
+      <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-240px),540px)] lg:col-start-1 lg:row-start-2 xl:col-start-2 xl:row-start-1">
         {aVerifier.size > 0 || estAVerifier ? (
           <div
             className={`mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-tile border px-4 py-3 text-sm ${
@@ -415,51 +428,46 @@ export default function RangeEditor({
           onPaint={paint}
           onLongPress={(hand) => setTuning(hand)}
         />
-      </div>
 
-      {/* Stats en direct */}
-      <Card className="order-3 mt-4 p-4 xl:col-start-1 xl:row-start-2">
-        <div className="flex items-baseline justify-between">
-          <p className="text-base text-ink-muted">Range</p>
-          <p className="num text-xl font-bold">
+        {/* Stats en direct, collées sous la grille */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-line bg-surface px-4 py-3">
+          <p className="num text-lg font-bold">
             {stats.percent.toFixed(1).replace(".", ",")} %
-            <span className="ml-2 text-sm font-normal text-ink-muted">
+            <span className="ml-1.5 text-sm font-normal text-ink-muted">
               {stats.combos} combos
             </span>
           </p>
+          {Object.keys(stats.byAction).length > 0 ? (
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {Object.entries(stats.byAction).map(([act, v]) => {
+                const brushDef = trouverPinceau(act, pinceaux);
+                return (
+                  <li key={act} className="flex items-center gap-1.5 text-sm">
+                    <span
+                      className="size-2.5 rounded-[3px]"
+                      style={{ background: brushDef?.color }}
+                      aria-hidden
+                    />
+                    <span className="text-ink-section">
+                      {brushDef?.label ?? act}
+                    </span>
+                    <span className="num text-ink-muted">
+                      {v.percent.toFixed(1).replace(".", ",")} %
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              Tape une case pour peindre, maintiens pour régler la fréquence.
+            </p>
+          )}
         </div>
-        {Object.keys(stats.byAction).length > 0 ? (
-          <ul className="mt-3 space-y-1.5">
-            {Object.entries(stats.byAction).map(([act, v]) => {
-              const brushDef = trouverPinceau(act, pinceaux);
-              return (
-                <li key={act} className="flex items-center gap-2 text-sm">
-                  <span
-                    className="size-2.5 rounded-[2px]"
-                    style={{ background: brushDef?.color }}
-                    aria-hidden
-                  />
-                  <span className="flex-1 text-ink-section">
-                    {brushDef?.label ?? act}
-                  </span>
-                  <span className="num text-ink-muted">
-                    {v.percent.toFixed(1).replace(".", ",")} % · {v.combos} combos
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-ink-muted">
-            Tape une case pour peindre, maintiens pour régler la fréquence.
-          </p>
-        )}
-      </Card>
-
       </div>
 
       {/* Colonne des réglages */}
-      <div className="max-lg:mt-0 lg:sticky lg:top-6">
+      <div className="lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:col-start-3">
         {/* Pinceaux */}
         <SectionTitle tight>Pinceau</SectionTitle>
       <div className="grid grid-cols-4 gap-2">
@@ -623,13 +631,13 @@ export default function RangeEditor({
             onValider={valider}
           />
         </div>
-      </div>
 
-      {error ? (
-        <p className="mt-3 rounded-tile border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-          {error}
-        </p>
-      ) : null}
+        {error ? (
+          <p className="mt-3 rounded-tile border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+            {error}
+          </p>
+        ) : null}
+      </div>
       </div>
 
       {/* Réserve sous la barre fixe, mobile seulement */}
